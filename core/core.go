@@ -9,7 +9,7 @@ import (
 
 type UID uint64
 
-var idCount UID = 0
+var idCount UID = 100
 
 type Component interface {
 	SetActive(active bool)
@@ -90,15 +90,16 @@ func (e *Entity) Destroy() {
 }
 
 type World struct {
-	Space    *bump.Space
-	Camera   *Camera
-	entities []*Entity
-	TiledMap *TiledMap
-	Debug    bool
+	Space         *bump.Space
+	Camera        *Camera
+	entities      []*Entity
+	entitiesCache map[UID]*Entity
+	TiledMap      *TiledMap
+	Debug         bool
 }
 
 func NewWorld() *World {
-	world := &World{bump.NewSpace(), nil, nil, nil, true}
+	world := &World{bump.NewSpace(), nil, nil, map[UID]*Entity{}, nil, true}
 	return world
 }
 
@@ -110,6 +111,21 @@ func (w *World) AddEntity(entity *Entity) *Entity {
 	w.entities = append(w.entities, entity)
 	entity.InitComponents()
 	return entity
+}
+
+func (w *World) GetEntityById(id UID) *Entity {
+	if ent, ok := w.entitiesCache[id]; ok {
+		return ent
+	}
+
+	for _, ent := range w.entities {
+		if ent.Id == id {
+			w.entitiesCache[id] = ent
+			return ent
+		}
+	}
+
+	return nil
 }
 
 func (w *World) LoadTiledMap(tiledMap *TiledMap, camera *Camera, roomsLayer string) {

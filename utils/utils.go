@@ -1,8 +1,14 @@
 package utils
 
 import (
+	"game/core"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+)
+
+const (
+	Player core.UID = iota
 )
 
 type ControlPack [6]ebiten.Key

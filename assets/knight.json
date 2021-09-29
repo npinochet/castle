@@ -120,7 +120,7 @@
     "duration": 100
    },
    "knight 15.aseprite": {
-    "frame": { "x": 63, "y": 42, "w": 21, "h": 14 },
+    "frame": { "x": 21, "y": 28, "w": 21, "h": 14 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 9, "y": 8, "w": 21, "h": 14 },

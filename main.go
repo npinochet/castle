@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"game/core"
 	"game/entity"
+	"game/utils"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -36,9 +37,7 @@ type Game struct {
 }
 
 func (g *Game) init() {
-	defer func() {
-		g.inited = true
-	}()
+	defer func() { g.inited = true }()
 
 	camera := core.NewCamera(screenWidth, screenHeight, 9)
 	g.world = core.NewWorld()
@@ -50,11 +49,11 @@ func (g *Game) init() {
 	}
 	player = entity.NewPlayer(playerX, playerY, nil)
 	camera.Follow(&player.Entity, 14, 14)
-	g.world.AddEntity(&player.Entity)
+	g.world.AddEntity(&player.Entity).Id = utils.Player
 
 	g.world.TiledMap.LoadBumpObjects(g.world.Space, "collision", true)
 	g.world.TiledMap.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
-		115: entity.NewBlock,
+		115: entity.NewKnight,
 	})
 }
 

@@ -9,6 +9,8 @@ import (
 	"github.com/lafriks/go-tiled"
 )
 
+var defaultITime float64 = 0.2
+
 func (hc *HitboxComponent) IsActive() bool        { return hc.active }
 func (hc *HitboxComponent) SetActive(active bool) { hc.active = active }
 
@@ -22,23 +24,26 @@ type Hitbox struct {
 }
 
 type HitboxComponent struct {
-	active     bool
-	entX, entY *float64
-	space      *bump.Space
-	boxes      []*Hitbox
-	lastHitbox bump.Rect
-	HurtFunc   HitFunc
-	BlockFunc  HitFunc
+	active        bool
+	EntX, EntY    *float64
+	space         *bump.Space
+	boxes         []*Hitbox
+	lastHitbox    bump.Rect
+	HurtFunc      HitFunc
+	BlockFunc     HitFunc
+	ITimer, ITime float64
 }
 
 func (hc *HitboxComponent) Init(entity *core.Entity) {
-	hc.entX, hc.entY = &entity.X, &entity.Y
+	hc.EntX, hc.EntY = &entity.X, &entity.Y
+	hc.ITime = defaultITime
 	hc.space = entity.World.Space
 }
 
 func (hc *HitboxComponent) Update(dt float64) {
+	hc.ITimer -= dt
 	for _, box := range hc.boxes {
-		p := bump.Vec2{X: *hc.entX + box.rect.X, Y: *hc.entY + box.rect.Y}
+		p := bump.Vec2{X: *hc.EntX + box.rect.X, Y: *hc.EntY + box.rect.Y}
 		hc.space.Move(box, p, func(i, o bump.Item) (bump.ColType, bool) { return 0, false })
 	}
 }
@@ -88,7 +93,7 @@ func (hc *HitboxComponent) PopHitbox() *Hitbox {
 
 func (hc *HitboxComponent) Hit(x, y, w, h float64) (blocked bool) {
 	hc.lastHitbox = bump.Rect{X: x, Y: y, W: w, H: h}
-	cols := hc.space.Query(bump.Rect{X: x + *hc.entX, Y: y + *hc.entY, W: w, H: h}, hc.hitFilter())
+	cols := hc.space.Query(bump.Rect{X: x + *hc.EntX, Y: y + *hc.EntY, W: w, H: h}, hc.hitFilter())
 
 	type hitInfo struct {
 		hit bool
@@ -110,6 +115,10 @@ func (hc *HitboxComponent) Hit(x, y, w, h float64) (blocked bool) {
 		}
 	}
 	for comp, info := range doesHit {
+		if comp.ITimer > 0 {
+			continue
+		}
+		comp.ITimer = comp.ITime
 		if info.hit && comp.HurtFunc != nil {
 			comp.HurtFunc(hc, info.col)
 		} else if !info.hit && comp.BlockFunc != nil {

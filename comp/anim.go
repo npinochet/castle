@@ -15,7 +15,7 @@ type FrameCallback func(frame int)
 type AnimFsm struct {
 	Initial     string
 	Transitions map[string]string
-	Callbacks   map[string]func()
+	Callbacks   map[string]func(*AsepriteComponent)
 }
 
 type AsepriteComponent struct {
@@ -47,7 +47,7 @@ func (ac *AsepriteComponent) Update(dt float64) {
 		callback := ac.Fsm.Callbacks[ac.State]
 		nextState := ac.Fsm.Transitions[ac.State]
 		if callback != nil {
-			callback()
+			callback(ac)
 		}
 		if nextState != "" {
 			ac.SetState(nextState)
