@@ -13,9 +13,10 @@ func (ac *AsepriteComponent) SetActive(active bool) { ac.active = active }
 type FrameCallback func(frame int)
 
 type AnimFsm struct {
-	Initial     string
-	Transitions map[string]string
-	Callbacks   map[string]func(*AsepriteComponent)
+	Initial        string
+	Transitions    map[string]string
+	ExitCallbacks  map[string]func(*AsepriteComponent)
+	EnterCallbacks map[string]func(*AsepriteComponent)
 }
 
 type AsepriteComponent struct {
@@ -39,12 +40,16 @@ func (ac *AsepriteComponent) SetState(state string) {
 	ac.State = state
 	ac.MetaData.Play(ac.State)
 	ac.callback = nil
+	callback := ac.Fsm.EnterCallbacks[ac.State]
+	if callback != nil {
+		callback(ac)
+	}
 }
 
 func (ac *AsepriteComponent) Update(dt float64) {
 	ac.MetaData.Update(float32(dt))
 	if ac.Fsm != nil && ac.MetaData.AnimationFinished() {
-		callback := ac.Fsm.Callbacks[ac.State]
+		callback := ac.Fsm.ExitCallbacks[ac.State]
 		nextState := ac.Fsm.Transitions[ac.State]
 		if callback != nil {
 			callback(ac)

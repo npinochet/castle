@@ -17,11 +17,6 @@ var (
 func (sc *StatsComponent) IsActive() bool        { return sc.active }
 func (sc *StatsComponent) SetActive(active bool) { sc.active = active }
 
-/*
-	Recover Stamina only on idle and moving, not on attacking or staggering, blocking is half speed
-	Consume stamina on 1 frame of the attack, the one where the attack starts
-*/
-
 type StatsComponent struct {
 	active                          bool
 	MaxHealth, MaxStamina, MaxPoise float64

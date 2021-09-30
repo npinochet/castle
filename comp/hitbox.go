@@ -14,7 +14,7 @@ var defaultITime float64 = 0.2
 func (hc *HitboxComponent) IsActive() bool        { return hc.active }
 func (hc *HitboxComponent) SetActive(active bool) { hc.active = active }
 
-type HitFunc func(*HitboxComponent, bump.Colision)
+type HitFunc func(*HitboxComponent, bump.Colision, float64)
 
 type Hitbox struct {
 	comp  *HitboxComponent
@@ -55,7 +55,7 @@ func (hc *HitboxComponent) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM
 		screen.DrawImage(box.image, op)
 	}
 
-	if hc.lastHitbox.W > 0 {
+	if hc.lastHitbox.W > 0 && hc.lastHitbox.H > 0 {
 		image := ebiten.NewImage(int(hc.lastHitbox.W), int(hc.lastHitbox.H))
 		image.Fill(color.RGBA{255, 255, 0, 100})
 		op := &ebiten.DrawImageOptions{GeoM: enitiyPos}
@@ -91,7 +91,7 @@ func (hc *HitboxComponent) PopHitbox() *Hitbox {
 	return box
 }
 
-func (hc *HitboxComponent) Hit(x, y, w, h float64) (blocked bool) {
+func (hc *HitboxComponent) Hit(x, y, w, h, damage float64) (blocked bool) {
 	hc.lastHitbox = bump.Rect{X: x, Y: y, W: w, H: h}
 	cols := hc.space.Query(bump.Rect{X: x + *hc.EntX, Y: y + *hc.EntY, W: w, H: h}, hc.hitFilter())
 
@@ -120,9 +120,9 @@ func (hc *HitboxComponent) Hit(x, y, w, h float64) (blocked bool) {
 		}
 		comp.ITimer = comp.ITime
 		if info.hit && comp.HurtFunc != nil {
-			comp.HurtFunc(hc, info.col)
+			comp.HurtFunc(hc, info.col, damage)
 		} else if !info.hit && comp.BlockFunc != nil {
-			comp.BlockFunc(hc, info.col)
+			comp.BlockFunc(hc, info.col, damage)
 		}
 	}
 	return

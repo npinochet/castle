@@ -24,14 +24,14 @@ const (
 )
 
 func NewControlPack() ControlPack {
-	cp := ControlPack{}
-	cp[KeyRight] = ebiten.KeyArrowRight
-	cp[KeyLeft] = ebiten.KeyArrowLeft
-	cp[KeyUp] = ebiten.KeyArrowUp
-	cp[KeyDown] = ebiten.KeyArrowDown
-	cp[KeyAction] = ebiten.KeyE
-	cp[KeyGuard] = ebiten.KeyR
-	return cp
+	return ControlPack{
+		KeyRight:  ebiten.KeyArrowRight,
+		KeyLeft:   ebiten.KeyArrowLeft,
+		KeyUp:     ebiten.KeyArrowUp,
+		KeyDown:   ebiten.KeyArrowDown,
+		KeyAction: ebiten.KeyE,
+		KeyGuard:  ebiten.KeyR,
+	}
 }
 
 func (cp ControlPack) KeyDown(key ControlKey) bool {

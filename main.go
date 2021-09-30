@@ -14,13 +14,9 @@ import (
 )
 
 /*TODO
-- Add an invinsibility system, probably add to hitbox component?
 - Add animation tiles on update for Tiled map
-- Move player code and common components (body, animation, states, hitboxes, movement functions) to an Actor entity somehow?
-- Stats component? For health, stamina, poise, attack, etc calculations and display?
 - Maybe stop time while camera transition is playing, and move follower entity to border?
 - IA component for enemies
-- Control component?
 */
 
 const (

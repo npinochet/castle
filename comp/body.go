@@ -14,6 +14,7 @@ var (
 	defaultMaxX, defaultMaxY    float64 = 60, 200
 	groundFriction, airFriction float64 = 12, 1
 	collisionStiffness          float64 = 1
+	frictionEpsilon             float64 = 0.1
 )
 
 func (bc *BodyComponent) IsActive() bool        { return bc.active }
@@ -68,6 +69,9 @@ func (bc *BodyComponent) updateMovement(dt float64) {
 			fric = airFriction
 		}
 		bc.Vx -= bc.Vx * fric * dt
+		if math.Abs(bc.Vx) < frictionEpsilon {
+			bc.Vx = 0
+		}
 	}
 	bc.Vy += gravity * dt
 

@@ -13,8 +13,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-func (p *Knight) IsActive() bool        { return p.Entity.Active }
-func (p *Knight) SetActive(active bool) { p.Entity.Active = active }
+func (k *Knight) IsActive() bool        { return k.Active }
+func (k *Knight) SetActive(active bool) { k.Active = active }
 
 var (
 	knightSprite              *ebiten.Image
@@ -35,119 +35,100 @@ func init() {
 }
 
 type Knight struct {
-	core.Entity
-	body   *comp.BodyComponent
-	hitbox *comp.HitboxComponent
-	anim   *comp.AsepriteComponent
+	*Actor
 	speed  float64
+	player *core.Entity
 }
 
 func NewKnight(x, y float64, props map[string]interface{}) *core.Entity {
-	knight := &Knight{
-		Entity: core.Entity{X: x, Y: y},
-		body:   &comp.BodyComponent{W: knightWidth, H: knightHeight},
-		hitbox: &comp.HitboxComponent{},
-		anim: &comp.AsepriteComponent{X: -2, W: knightWidth + 4, H: knightHeight, Image: knightSprite, MetaData: knightMetadata, Fsm: &comp.AnimFsm{
+	body := &comp.BodyComponent{W: knightWidth, H: knightHeight}
+	anim := &comp.AsepriteComponent{X: -2, W: knightWidth + 4, H: knightHeight, Image: knightSprite, MetaData: knightMetadata,
+		Fsm: &comp.AnimFsm{
 			Transitions: map[string]string{"Walk": "Idle", "Attack": "Idle", "Stagger": "Idle"},
-		}},
+			ExitCallbacks: map[string]func(*comp.AsepriteComponent){
+				"Stagger": func(ac *comp.AsepriteComponent) { ac.MetaData.PlaySpeed = 1 },
+			},
+		},
+	}
+
+	knight := &Knight{
+		Actor: NewActor(x, y, body, anim, &comp.StatsComponent{MaxPoise: 10}),
 		speed: 50,
 	}
-	knight.AddComponent(knight.body, knight.hitbox, knight.anim)
 	knight.AddComponent(knight)
 	return &knight.Entity
 }
 
-func (p *Knight) Init(entity *core.Entity) {
-	p.hitbox.HurtFunc, p.hitbox.BlockFunc = p.KnightHurt, p.KnightBlock
-	p.hitbox.PushHitbox(0, 0, knightWidth, knightHeight, false)
-	p.Attack(1.0 / 60)
+func (k *Knight) Init(entity *core.Entity) {
+	k.hitbox.HurtFunc, k.hitbox.BlockFunc = k.Hurt, k.Block
+	k.hitbox.PushHitbox(0, 0, knightWidth, knightHeight, false)
+	k.player = k.World.GetEntityById(utils.Player)
+	k.Attack()
 }
 
-func (p *Knight) Update(dt float64) {
-	if p.anim.State == "Idle" {
-		p.Walk(dt)
+func (k *Knight) Update(dt float64) {
+	k.ManageAnim("Idle", "Walk", "Attack", "Stagger")
+	if k.anim.State == "Idle" {
+		k.anim.FlipX = k.player.X < k.X
+		k.body.Vx = k.speed
+		if k.anim.FlipX {
+			k.body.Vx *= -1
+		}
 	}
-
-	p.processAccion(dt)
 }
 
-func (p *Knight) processAccion(dt float64) {
-	if p.anim.State == "Attack" || p.anim.State == "Stagger" {
-		p.body.Vx = 0
+func (k *Knight) Attack() {
+	hitbox := bump.Rect{X: knightWidth, Y: 0, W: 10, H: knightHeight}
+	if k.anim.FlipX {
+		hitbox.X = -hitbox.W
+	}
+	k.Actor.Attack("Attack", hitbox, 1, 3, 20, 20)
+	time.AfterFunc(2*time.Second, func() { k.Attack() })
+}
+
+func (k *Knight) Stagger(force float64) {
+	k.Actor.Stagger("Stagger", force*10)
+}
+
+func (k *Knight) ShieldUp() {
+	if k.anim.State == "Block" {
 		return
 	}
-
-	moving := p.anim.State == "Walk"
-	p.body.Friction = !moving
+	k.anim.SetState("Block")
+	k.speed /= 1.2
+	k.body.MaxX /= 2
+	k.stats.StaminaRecoverRate /= 2
+	x, w := playerWidth-2, 4.0
+	if k.anim.FlipX {
+		x = -w + 2
+	}
+	k.hitbox.PushHitbox(x, 0, w, playerHeight, true)
 }
 
-func (p *Knight) Walk(dt float64) {
-	p.anim.SetState("Walk")
-
-	player := p.World.GetEntityById(utils.Player)
-	right := player.X < p.X
-	p.anim.FlipX = right
-	p.body.Vx = p.speed
-	if right {
-		p.body.Vx *= -1
+func (k *Knight) ShieldDown() {
+	if k.anim.State != "Block" {
+		return
 	}
+	k.anim.SetState("Idle")
+	k.speed *= 1.2
+	k.body.MaxX *= 2
+	k.stats.StaminaRecoverRate *= 2
+	k.hitbox.PopHitbox()
 }
 
-func (p *Knight) Attack(dt float64) {
-	p.anim.SetState("Attack")
-	force := p.speed * 5
-	if p.anim.FlipX {
-		force *= -1
+func (k *Knight) Hurt(otherHc *comp.HitboxComponent, col bump.Colision, damage float64) {
+	if k.anim.State == "Block" {
+		k.ShieldDown()
 	}
-	pushed := false
-	p.anim.OnFrames(1, 3, func(frame int) {
-		if frame == 1 && !pushed {
-			p.body.Vx += force * dt
-		} else {
-			x, w := knightWidth, 10.0
-			if p.anim.FlipX {
-				x = -w
-			}
-			if p.hitbox.Hit(x, 0, w, knightHeight) {
-				p.Stagger(dt, force)
-			}
-		}
+	k.Actor.Hurt(*otherHc.EntX, damage, func(force float64) {
+		k.Stagger(force)
 	})
-	time.AfterFunc(2*time.Second, func() { p.Attack(dt) })
 }
 
-func (p *Knight) Stagger(dt float64, force float64) {
-	p.anim.SetState("Stagger")
-	p.body.Vx = -force * 10 * dt
-}
-
-func (p *Knight) ShieldUp(dt float64) {
-	p.anim.SetState("Block")
-	p.speed /= 1.2
-	p.body.MaxX /= 2
-	x, w := knightWidth, 2.0
-	if p.anim.FlipX {
-		x = -w
-	}
-	p.hitbox.PushHitbox(x, 0, w, knightHeight, true)
-}
-
-func (p *Knight) ShieldDown(dt float64) {
-	p.anim.SetState("Idle")
-	p.speed *= 1.2
-	p.body.MaxX *= 2
-	p.hitbox.PopHitbox()
-}
-
-func (p *Knight) KnightHurt(otherHc *comp.HitboxComponent, col bump.Colision) {
-	dt := 1.0 / 60
-	force := 5 * p.speed
-	if *p.hitbox.EntX > *otherHc.EntX {
-		force *= -1
-	}
-	p.Stagger(dt, force)
-}
-
-func (p *Knight) KnightBlock(otherHc *comp.HitboxComponent, col bump.Colision) {
-	p.Stagger(1.0/60, 0)
+func (k *Knight) Block(otherHc *comp.HitboxComponent, col bump.Colision, damage float64) {
+	k.Actor.Block(*otherHc.EntX, damage, func(force float64) {
+		k.ShieldDown()
+		k.Stagger(force)
+		k.anim.MetaData.PlaySpeed = 0.5 // double time stagger
+	})
 }
