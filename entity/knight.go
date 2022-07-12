@@ -5,34 +5,13 @@ import (
 	"game/core"
 	"game/libs/bump"
 	"game/utils"
-	"log"
 	"time"
-
-	"github.com/damienfamed75/aseprite"
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
+
+const knightAnimFile = "assets/knight"
 
 func (k *Knight) IsActive() bool        { return k.Active }
 func (k *Knight) SetActive(active bool) { k.Active = active }
-
-var (
-	knightSprite              *ebiten.Image
-	knightMetadata            *aseprite.File
-	knightWidth, knightHeight float64 = 10, 14 // Image 14x14
-)
-
-func init() {
-	var err error
-	knightSprite, _, err = ebitenutil.NewImageFromFile("assets/knight.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	knightMetadata, err = aseprite.Open("assets/knight.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 type Knight struct {
 	*Actor
@@ -41,28 +20,31 @@ type Knight struct {
 }
 
 func NewKnight(x, y float64, props map[string]interface{}) *core.Entity {
-	body := &comp.BodyComponent{W: knightWidth, H: knightHeight}
-	anim := &comp.AsepriteComponent{X: -2, W: knightWidth + 4, H: knightHeight, Image: knightSprite, MetaData: knightMetadata,
+	anim := &comp.AsepriteComponent{FilesName: knightAnimFile,
 		Fsm: &comp.AnimFsm{
 			Transitions: map[string]string{"Walk": "Idle", "Attack": "Idle", "Stagger": "Idle"},
 			ExitCallbacks: map[string]func(*comp.AsepriteComponent){
-				"Stagger": func(ac *comp.AsepriteComponent) { ac.MetaData.PlaySpeed = 1 },
+				"Stagger": func(ac *comp.AsepriteComponent) { ac.Data.PlaySpeed = 1 },
 			},
 		},
 	}
+	// hurtbox, _, _ := anim.GetFrameHitboxes().
+	body := &comp.BodyComponent{W: 10, H: 14}
 
 	knight := &Knight{
 		Actor: NewActor(x, y, body, anim, &comp.StatsComponent{MaxPoise: 10}),
 		speed: 50,
 	}
 	knight.AddComponent(knight)
+
 	return &knight.Entity
 }
 
 func (k *Knight) Init(entity *core.Entity) {
 	k.hitbox.HurtFunc, k.hitbox.BlockFunc = k.Hurt, k.Block
-	k.hitbox.PushHitbox(0, 0, knightWidth, knightHeight, false)
-	k.player = k.World.GetEntityById(utils.Player)
+	hurtbox, _, _ := k.anim.GetFrameHitboxes()
+	k.hitbox.PushHitbox(hurtbox.X, hurtbox.Y, hurtbox.W, hurtbox.H, false)
+	k.player = k.World.GetEntityByID(utils.PlayerUID)
 	k.Attack()
 }
 
@@ -78,11 +60,7 @@ func (k *Knight) Update(dt float64) {
 }
 
 func (k *Knight) Attack() {
-	hitbox := bump.Rect{X: knightWidth, Y: 0, W: 10, H: knightHeight}
-	if k.anim.FlipX {
-		hitbox.X = -hitbox.W
-	}
-	k.Actor.Attack("Attack", hitbox, 1, 3, 20, 20)
+	k.Actor.Attack("Attack", 20, 20)
 	time.AfterFunc(2*time.Second, func() { k.Attack() })
 }
 
@@ -95,14 +73,11 @@ func (k *Knight) ShieldUp() {
 		return
 	}
 	k.anim.SetState("Block")
+	_, _, blockbox := k.anim.GetFrameHitboxes()
 	k.speed /= 1.2
 	k.body.MaxX /= 2
 	k.stats.StaminaRecoverRate /= 2
-	x, w := playerWidth-2, 4.0
-	if k.anim.FlipX {
-		x = -w + 2
-	}
-	k.hitbox.PushHitbox(x, 0, w, playerHeight, true)
+	k.hitbox.PushHitbox(blockbox.X, blockbox.Y, blockbox.W, blockbox.H, true)
 }
 
 func (k *Knight) ShieldDown() {
@@ -129,6 +104,6 @@ func (k *Knight) Block(otherHc *comp.HitboxComponent, col bump.Colision, damage 
 	k.Actor.Block(*otherHc.EntX, damage, func(force float64) {
 		k.ShieldDown()
 		k.Stagger(force)
-		k.anim.MetaData.PlaySpeed = 0.5 // double time stagger
+		k.anim.Data.PlaySpeed = 0.5 // double time stagger
 	})
 }

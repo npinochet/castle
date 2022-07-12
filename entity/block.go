@@ -9,6 +9,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+const blockSize = 20
+
 func (b *BlockComponent) IsActive() bool        { return b.active }
 func (b *BlockComponent) SetActive(active bool) { b.active = active }
 
@@ -19,17 +21,15 @@ type BlockComponent struct {
 }
 
 func NewBlock(x, y float64, props map[string]interface{}) *core.Entity {
-	w, h := props["w"].(float64), props["h"].(float64)
+	w, _ := props["w"].(float64)
+	h, _ := props["h"].(float64)
 	image := ebiten.NewImage(int(w), int(h))
 	image.Fill(color.White)
 
 	block := &core.Entity{X: x, Y: y}
 	body := &comp.BodyComponent{W: 8, H: 8}
 	hitbox := &comp.HitboxComponent{}
-	block.AddComponent(body)
-	block.AddComponent(hitbox)
-	block.AddComponent(&comp.RenderComponent{Image: image})
-	block.AddComponent(&BlockComponent{body: body, hitbox: hitbox})
+	block.AddComponent(body, hitbox, &comp.RenderComponent{Image: image}, &BlockComponent{body: body, hitbox: hitbox})
 
 	return block
 }
@@ -37,7 +37,7 @@ func NewBlock(x, y float64, props map[string]interface{}) *core.Entity {
 func (b *BlockComponent) Init(entity *core.Entity) {
 	b.hitbox.HurtFunc = b.BlockHurt
 	b.hitbox.BlockFunc = b.BlockBlock
-	b.hitbox.PushHitbox(b.body.X, b.body.X, 20, 20, false)
+	b.hitbox.PushHitbox(b.body.X, b.body.X, blockSize, blockSize, false)
 }
 
 func (b *BlockComponent) BlockHurt(otherHc *comp.HitboxComponent, col bump.Colision, damage float64) {

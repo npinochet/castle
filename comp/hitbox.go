@@ -9,7 +9,7 @@ import (
 	"github.com/lafriks/go-tiled"
 )
 
-var defaultITime float64 = 0.2
+const defaultITime = 0.2
 
 func (hc *HitboxComponent) IsActive() bool        { return hc.active }
 func (hc *HitboxComponent) SetActive(active bool) { hc.active = active }
@@ -24,14 +24,13 @@ type Hitbox struct {
 }
 
 type HitboxComponent struct {
-	active        bool
-	EntX, EntY    *float64
-	space         *bump.Space
-	boxes         []*Hitbox
-	lastHitbox    bump.Rect
-	HurtFunc      HitFunc
-	BlockFunc     HitFunc
-	ITimer, ITime float64
+	active              bool
+	EntX, EntY          *float64
+	space               *bump.Space
+	boxes               []*Hitbox
+	debugLastHitbox     bump.Rect
+	HurtFunc, BlockFunc HitFunc
+	ITimer, ITime       float64
 }
 
 func (hc *HitboxComponent) Init(entity *core.Entity) {
@@ -55,13 +54,13 @@ func (hc *HitboxComponent) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM
 		screen.DrawImage(box.image, op)
 	}
 
-	if hc.lastHitbox.W > 0 && hc.lastHitbox.H > 0 {
-		image := ebiten.NewImage(int(hc.lastHitbox.W), int(hc.lastHitbox.H))
+	if hc.debugLastHitbox.W > 0 && hc.debugLastHitbox.H > 0 {
+		image := ebiten.NewImage(int(hc.debugLastHitbox.W), int(hc.debugLastHitbox.H))
 		image.Fill(color.RGBA{255, 255, 0, 100})
 		op := &ebiten.DrawImageOptions{GeoM: enitiyPos}
-		op.GeoM.Translate(hc.lastHitbox.X, hc.lastHitbox.Y)
+		op.GeoM.Translate(hc.debugLastHitbox.X, hc.debugLastHitbox.Y)
 		screen.DrawImage(image, op)
-		hc.lastHitbox.W = 0
+		hc.debugLastHitbox.W = 0
 	}
 }
 
@@ -88,11 +87,12 @@ func (hc *HitboxComponent) PopHitbox() *Hitbox {
 	box := hc.boxes[size]
 	hc.space.Remove(box)
 	hc.boxes = hc.boxes[:size]
+
 	return box
 }
 
 func (hc *HitboxComponent) Hit(x, y, w, h, damage float64) (blocked bool) {
-	hc.lastHitbox = bump.Rect{X: x, Y: y, W: w, H: h}
+	hc.debugLastHitbox = bump.Rect{X: x, Y: y, W: w, H: h}
 	cols := hc.space.Query(bump.Rect{X: x + *hc.EntX, Y: y + *hc.EntY, W: w, H: h}, hc.hitFilter())
 
 	type hitInfo struct {
@@ -102,8 +102,7 @@ func (hc *HitboxComponent) Hit(x, y, w, h, damage float64) (blocked bool) {
 
 	doesHit := map[*HitboxComponent]hitInfo{}
 	for _, col := range cols {
-		other, ok := col.Other.(*Hitbox)
-		if ok {
+		if other, ok := col.Other.(*Hitbox); ok {
 			if other.block {
 				doesHit[other.comp] = hitInfo{false, col}
 				blocked = true
@@ -118,14 +117,14 @@ func (hc *HitboxComponent) Hit(x, y, w, h, damage float64) (blocked bool) {
 		if comp.ITimer > 0 {
 			continue
 		}
-		comp.ITimer = comp.ITime
 		if info.hit && comp.HurtFunc != nil {
 			comp.HurtFunc(hc, info.col, damage)
 		} else if !info.hit && comp.BlockFunc != nil {
 			comp.BlockFunc(hc, info.col, damage)
 		}
 	}
-	return
+
+	return blocked
 }
 
 func (hc *HitboxComponent) hitFilter() bump.SimpleFilter {
@@ -133,6 +132,7 @@ func (hc *HitboxComponent) hitFilter() bump.SimpleFilter {
 		if box, ok := item.(*Hitbox); ok {
 			return box.comp != hc
 		}
+
 		return true
 	}
 }

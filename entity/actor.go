@@ -6,10 +6,10 @@ import (
 	"game/libs/bump"
 )
 
-func (p *Actor) IsActive() bool        { return p.Active }
-func (p *Actor) SetActive(active bool) { p.Active = active }
+const defaultForce = 1800
 
-var defaultForce float64 = 1800
+func (a *Actor) IsActive() bool        { return a.Active }
+func (a *Actor) SetActive(active bool) { a.Active = active }
 
 type Actor struct {
 	core.Entity
@@ -38,6 +38,7 @@ func NewActor(x, y float64, body *comp.BodyComponent, anim *comp.AsepriteCompone
 	actor.hitbox.BlockFunc = func(otherHc *comp.HitboxComponent, col bump.Colision, damange float64) {
 		actor.Block(*otherHc.EntX, damange, nil)
 	}
+
 	return actor
 }
 
@@ -59,24 +60,24 @@ func (a *Actor) ManageAnim(idle, walk, attack, stagger string) {
 	}
 }
 
-func (a *Actor) Attack(state string, hitbox bump.Rect, frameStart, frameEnd int, stamina, damage float64) {
+func (a *Actor) Attack(state string, stamina, damage float64) {
 	if a.stats.Stamina <= 0 {
 		return
 	}
 	force := a.reactForce
 	a.anim.SetState(state)
 	if a.anim.FlipX {
-		force = force * -1
+		force *= -1
 	}
+
 	once := false
-	a.anim.OnFrames(frameStart, frameEnd, func(frame int) {
-		if frame == frameStart {
-			a.body.Vx += force * 1.0 / 60
+	a.anim.OnFrames(func(frame int) {
+		if _, hitbox, _ := a.anim.GetFrameHitboxes(); hitbox != nil {
 			if !once {
 				once = true
+				a.body.Vx += force * 1.0 / 60
 				a.stats.AddStamina(-stamina)
 			}
-		} else {
 			if a.hitbox.Hit(hitbox.X, hitbox.Y, hitbox.W, hitbox.H, damage) {
 				// p.Stagger(dt, force) when shield has too much defense?
 				a.body.Vx -= (force / 2) * 1.0 / 60

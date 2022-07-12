@@ -13,54 +13,47 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-/*TODO
+/* lista
 - Add animation tiles on update for Tiled map
 - Maybe stop time while camera transition is playing, and move follower entity to border?
-- IA component for enemies
+- IA component for enemies.
 */
 
 const (
-	scale        = 3
-	screenWidth  = 160 //320
-	screenHeight = 90  //240
+	scale                     = 3
+	screenWidth, screenHeight = 160, 90 // 320, 240
 )
 
-var player *entity.Player
+var (
+	game   = &Game{}
+	player *entity.Player
+)
 
 type Game struct {
-	inited bool
-	world  *core.World
+	world *core.World
 }
 
 func (g *Game) init() {
-	defer func() { g.inited = true }()
+	g.world = core.NewWorld(screenWidth, screenHeight)
+	g.world.SetMap(core.NewMap("maps/test/first/test.tmx", "foreground", "background"), "rooms")
 
-	camera := core.NewCamera(screenWidth, screenHeight, 9)
-	g.world = core.NewWorld()
-	g.world.LoadTiledMap(core.NewTiledMap("maps/test/first/test.tmx", "foreground", "background"), camera, "rooms")
-
-	playerX, playerY, err := g.world.TiledMap.FindObjectPosition("entities", 114)
+	playerX, playerY, err := g.world.Map.FindObjectPosition("entities", 114)
 	if err != nil {
-		fmt.Println("Error finding player entity:", err.Error())
+		log.Println("Error finding player entity:", err)
 	}
 	player = entity.NewPlayer(playerX, playerY, nil)
-	camera.Follow(&player.Entity, 14, 14)
-	g.world.AddEntity(&player.Entity).Id = utils.Player
+	g.world.Camera.Follow(player, 14, 14)
+	g.world.AddEntity(&player.Entity).ID = utils.PlayerUID
 
-	g.world.TiledMap.LoadBumpObjects(g.world.Space, "collision", true)
-	g.world.TiledMap.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
+	g.world.Map.LoadBumpObjects(g.world.Space, "collision")
+	g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
 		115: entity.NewKnight,
 	})
 }
 
 func (g *Game) Update() error {
 	dt := 1.0 / 60
-	if !g.inited {
-		g.init()
-	}
-
 	g.world.Update(dt)
-	g.world.Camera.Update(dt, 9)
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
 		return errors.New("Exited")
@@ -83,12 +76,12 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return screenWidth, screenHeight
 }
 
-var game *Game = &Game{}
-
 func main() {
 	ebiten.SetWindowSize(screenWidth*scale, screenHeight*scale)
 	ebiten.SetWindowTitle("Castle")
 	ebiten.SetWindowResizable(true)
+
+	game.init()
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}

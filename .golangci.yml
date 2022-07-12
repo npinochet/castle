@@ -1,0 +1,42 @@
+linters:
+  enable-all: true
+  disable:
+    - dogsled
+    - errchkjson
+    - exhaustivestruct
+    - exhaustruct
+    - gci
+    - gochecknoglobals
+    - gochecknoinits
+    - godox
+    - goerr113
+    - gofumpt
+    - ireturn
+    - nonamedreturns
+    - paralleltest
+    - tagliatelle
+    - varnamelen
+    - wrapcheck
+    - wsl
+
+linters-settings:
+  funlen:
+    lines: 80
+    statements: 50
+  godot:
+    scope: all
+  gomnd:
+    ignored-numbers:
+      - '2'
+      - '8'
+      - '10'
+      - '16'
+      - '32'
+      - '60'
+      - '64'
+      - '100'
+  gosec:
+    excludes:
+      - G404
+  lll:
+    line-length: 140

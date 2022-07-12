@@ -7,11 +7,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var (
-	defaultHealth      float64 = 100
-	defaultStamina     float64 = 100
-	defaultPoise       float64 = 100
-	defaultRecoverRate float64 = 10
+const (
+	defaultHealth      = 100
+	defaultStamina     = 100
+	defaultPoise       = 100
+	defaultRecoverRate = 10
 )
 
 func (sc *StatsComponent) IsActive() bool        { return sc.active }

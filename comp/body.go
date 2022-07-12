@@ -9,28 +9,27 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var (
-	gravity                     float64 = 300
-	defaultMaxX, defaultMaxY    float64 = 60, 200
-	groundFriction, airFriction float64 = 12, 1
-	collisionStiffness          float64 = 1
-	frictionEpsilon             float64 = 0.1
+const (
+	gravity                     = 300
+	defaultMaxX, defaultMaxY    = 60, 200
+	groundFriction, airFriction = 12, 1
+	collisionStiffness          = 1
+	frictionEpsilon             = 0.1
 )
 
 func (bc *BodyComponent) IsActive() bool        { return bc.active }
 func (bc *BodyComponent) SetActive(active bool) { bc.active = active }
 
 type BodyComponent struct {
-	active     bool
-	Static     bool
-	Ground     bool
-	space      *bump.Space
-	entX, entY *float64
-	X, Y, W, H float64
-	Vx, Vy     float64
-	MaxX, MaxY float64
-	Friction   bool
-	image      *ebiten.Image
+	active         bool
+	Static, Ground bool
+	Friction       bool
+	space          *bump.Space
+	entX, entY     *float64
+	X, Y, W, H     float64
+	Vx, Vy         float64
+	MaxX, MaxY     float64
+	image          *ebiten.Image
 }
 
 func (bc *BodyComponent) Init(entity *core.Entity) {
@@ -64,7 +63,7 @@ func (bc *BodyComponent) Destroy() {
 
 func (bc *BodyComponent) updateMovement(dt float64) {
 	if bc.Friction {
-		fric := groundFriction
+		var fric float64 = groundFriction
 		if !bc.Ground {
 			fric = airFriction
 		}

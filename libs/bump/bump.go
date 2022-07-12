@@ -4,9 +4,9 @@ import (
 	"math"
 )
 
-// Collision detection and resolution lib based on bump.lua by kikito
+// Collision detection and resolution lib based on bump.lua by kikito.
 
-const DELTA float64 = 1e-10 // floating-point margin of error
+const DELTA = 1e-10 // floating-point margin of error.
 
 type Item interface{}
 type Rect struct{ X, Y, W, H float64 }
@@ -67,9 +67,11 @@ func NewSpace() *Space {
 				}
 			}
 			col.TypeData = goal
+
 			return goal, space.Project(col.Item, Rect{col.Touch.X, col.Touch.Y, col.ItemRect.W, col.ItemRect.H}, goal, filter)
 		},
 	}
+
 	return space
 }
 
@@ -79,6 +81,7 @@ func (s *Space) Move(item Item, targetGoal Vec2, filter Filter) (goal Vec2, cols
 	goal, cols = s.Check(item, targetGoal, filter)
 	rect := s.rects[item]
 	s.Set(item, Rect{goal.X, goal.Y, rect.W, rect.H})
+
 	return
 }
 
@@ -95,6 +98,7 @@ func (s *Space) Check(item Item, targetGoal Vec2, filter Filter) (goal Vec2, col
 		if visited[other] {
 			return
 		}
+
 		return filter(item, other)
 	}
 
@@ -158,10 +162,10 @@ func Overlaps(r1, r2 Rect) bool {
 	return rectContainsPoint(rectDiff(r1, r2), Vec2{})
 }
 
-// Liang-Barsky algorithm
+// Liang-Barsky algorithm.
 func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (i1, i2 float64, normal Vec2, ok bool) {
 	dx, dy := p2.X-p1.X, p2.Y-p1.Y
-	p := [4]float64{-dx, dx, -dy, dy} // left, right, top, bottom
+	p := [4]float64{-dx, dx, -dy, dy} // left, right, top, bottom.
 	q := [4]float64{p1.X - rect.X, rect.X + rect.W - p1.X, p1.Y - rect.Y, rect.Y + rect.H - p1.Y}
 	nx := [4]float64{-1, 1, 0, 0}
 	ny := [4]float64{0, 0, -1, 1}
@@ -194,7 +198,8 @@ func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (i1, i2 float64, normal Vec
 	}
 
 	ok = true
-	return
+
+	return i1, i2, normal, ok
 }
 
 func detectCollision(rect1, rect2 Rect, goal Vec2) (col Colision, ok bool) {
@@ -246,10 +251,11 @@ func detectCollision(rect1, rect2 Rect, goal Vec2) (col Colision, ok bool) {
 	}
 
 	ok = true
-	return
+
+	return col, ok
 }
 
-// Minkowsky Difference between 2 Rects
+// Minkowsky Difference between 2 Rects.
 func rectDiff(r1, r2 Rect) Rect {
 	return Rect{r2.X - r1.X - r1.W, r2.Y - r1.Y - r1.H, r1.W + r2.W, r1.H + r2.H}
 }
@@ -264,7 +270,9 @@ func rectNearestCorner(rect Rect, p Vec2) Vec2 {
 		if math.Abs(a-x) < math.Abs(b-x) {
 			ret = a
 		}
+
 		return ret
 	}
+
 	return Vec2{nearest(p.X, rect.X, rect.X+rect.W), nearest(p.Y, rect.Y, rect.Y+rect.H)}
 }

@@ -1,4 +1,4 @@
-package core
+package camera
 
 import (
 	"game/libs/bump"
@@ -10,14 +10,14 @@ import (
 	"github.com/tanema/gween/ease"
 )
 
-func damper(dx, dy float64, stiffness int) (float64, float64) {
-	dts := (1.0 / 60) * float64(stiffness)
-	return dx * dts, dy * dts
-}
+const defaultTransitionDuration = 0.8
+const defaultStiffness = 9
+
+type Positioner interface{ Position() (float64, float64) }
 
 type Camera struct {
 	x, y, w, h               float64
-	following                *Entity
+	following                Positioner
 	fw, fh                   float64
 	shakeTween               *gween.Tween
 	shakeMagnitude           float64
@@ -25,17 +25,18 @@ type Camera struct {
 	rooms                    []bump.Rect
 	transitionTween          *gween.Tween
 	transitionX, transitionY float64
+	stiffness                int
 	transitionDuration       float32
 }
 
-func NewCamera(w, h float64, stiffness int) *Camera {
-	return &Camera{w: w, h: h, transitionDuration: 0.8}
+func New(w, h float64) *Camera {
+	return &Camera{w: w, h: h, transitionDuration: defaultTransitionDuration, stiffness: defaultStiffness}
 }
 
 func (c *Camera) Position() (float64, float64) { return c.x, c.y }
 func (c *Camera) SetPosition(x, y float64)     { c.x, c.y = x, y }
 func (c *Camera) SetRooms(rooms []bump.Rect)   { c.rooms = rooms }
-func (c *Camera) Follow(e *Entity, w, h float64) {
+func (c *Camera) Follow(e Positioner, w, h float64) {
 	c.following = e
 	c.fw, c.fh = w, h
 }
@@ -48,18 +49,20 @@ func (c *Camera) Translate(x, y float64) {
 func (c *Camera) Bounds() image.Rectangle {
 	min := image.Point{int(c.x), int(c.y)}
 	max := image.Point{int(math.Max(c.x, 0) + c.w), int(math.Max(c.y, 0) + c.h)}
+
 	return image.Rectangle{min, max}
 }
 
-func (c *Camera) Update(dt float64, stiffness int) {
+func (c *Camera) Update(dt float64) {
 	if c.following == nil {
 		return
 	}
 
-	x, y := c.following.X+c.fw/2-c.w/2, c.following.Y+c.fh/2-c.h/2
+	ex, ey := c.following.Position()
+	x, y := ex+c.fw/2-c.w/2, ey+c.fh/2-c.h/2
 	dx, dy := x-c.x, y-c.y
 
-	c.Translate(damper(dx, dy, stiffness))
+	c.Translate(damper(dt, dx, dy, c.stiffness))
 	c.SetRoomBorders()
 	if c.borders != nil {
 		x := math.Max(math.Min(c.x, c.borders.X+c.borders.W-c.w), c.borders.X)
@@ -99,7 +102,8 @@ func (c *Camera) SetRoomBorders() {
 		return
 	}
 
-	x, y := c.following.X+c.fw/2, c.following.Y+c.fh/2
+	ex, ey := c.following.Position()
+	x, y := ex+c.fw/2, ey+c.fh/2
 	follow := bump.Rect{X: x, Y: y, W: c.fw, H: c.fh}
 
 	currentRoom, found := c.borders, false
@@ -107,11 +111,13 @@ func (c *Camera) SetRoomBorders() {
 		if bump.Overlaps(follow, room) {
 			c.borders = &c.rooms[i]
 			found = true
+
 			break
 		}
 	}
 	if !found {
 		c.borders = nil
+
 		return
 	}
 
@@ -119,4 +125,10 @@ func (c *Camera) SetRoomBorders() {
 		c.transitionX, c.transitionY = currentRoom.X-c.borders.X, currentRoom.Y-c.borders.Y
 		c.transitionTween = gween.New(1, 0, c.transitionDuration, ease.OutCubic)
 	}
+}
+
+func damper(dt, dx, dy float64, stiffness int) (float64, float64) {
+	dts := dt * float64(stiffness)
+
+	return dx * dts, dy * dts
 }
