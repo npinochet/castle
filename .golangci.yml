@@ -28,6 +28,7 @@ linters-settings:
   gomnd:
     ignored-numbers:
       - '2'
+      - '4'
       - '8'
       - '10'
       - '16'

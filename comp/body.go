@@ -14,7 +14,7 @@ const (
 	defaultMaxX, defaultMaxY    = 60, 200
 	groundFriction, airFriction = 12, 4
 	collisionStiffness          = 1
-	frictionEpsilon             = 0.1
+	frictionEpsilon             = 0.05
 )
 
 func (bc *BodyComponent) IsActive() bool        { return bc.active }
