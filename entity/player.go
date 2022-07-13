@@ -6,12 +6,16 @@ import (
 	"game/core"
 	"game/libs/bump"
 	"game/utils"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-const playerAnimFile = "assets/knight"
+const (
+	playerAnimFile            = "assets/knight"
+	playerWidth, playerHeight = 10, 11
+)
 
 func (p *Player) IsActive() bool        { return p.Active }
 func (p *Player) SetActive(active bool) { p.Active = active }
@@ -24,8 +28,8 @@ type Player struct {
 }
 
 func NewPlayer(x, y float64, props map[string]interface{}) *Player {
-	body := &comp.BodyComponent{W: 10, H: 14}
-	anim := &comp.AsepriteComponent{FilesName: playerAnimFile, X: 0, Y: 0,
+	body := &comp.BodyComponent{W: playerWidth, H: playerHeight}
+	anim := &comp.AsepriteComponent{FilesName: playerAnimFile, X: -2, Y: -3,
 		Fsm: &comp.AnimFsm{
 			Transitions: map[string]string{"Walk": "Idle", "Attack": "Idle", "Stagger": "Idle"},
 			ExitCallbacks: map[string]func(*comp.AsepriteComponent){
@@ -55,6 +59,7 @@ func (p *Player) Init(entity *core.Entity) {
 func (p *Player) Update(dt float64) {
 	moving := p.control(dt)
 	p.ManageAnim("Idle", "Walk", "Attack", "Stagger")
+	// TODO: This needs to be in Actor.ManageAnim somehow.
 	if p.anim.State == "Walk" && !moving {
 		p.anim.SetState("Idle")
 	}
@@ -79,11 +84,15 @@ func (p *Player) control(dt float64) bool {
 
 	moving, flip := false, p.anim.FlipX
 	if p.pad.KeyDown(utils.KeyLeft) {
-		p.body.Vx -= p.speed * dt
+		if math.Abs(p.body.Vx) <= p.body.MaxX {
+			p.body.Vx -= p.speed * dt
+		}
 		moving, flip = true, true
 	}
 	if p.pad.KeyDown(utils.KeyRight) {
-		p.body.Vx += p.speed * dt
+		if math.Abs(p.body.Vx) <= p.body.MaxX {
+			p.body.Vx += p.speed * dt
+		}
 		moving, flip = true, false
 	}
 
@@ -107,7 +116,7 @@ func (p *Player) Attack() {
 }
 
 func (p *Player) Stagger(force float64) {
-	p.Actor.Stagger("Stagger", force*50)
+	p.Actor.Stagger("Stagger", force)
 }
 
 func (p *Player) ShieldUp() {
@@ -115,10 +124,10 @@ func (p *Player) ShieldUp() {
 		return
 	}
 	p.anim.SetState("Block")
-	_, _, blockbox := p.anim.GetFrameHitboxes()
 	p.speed /= 1.2
 	p.body.MaxX /= 2
 	p.stats.StaminaRecoverRate /= 2
+	_, _, blockbox := p.anim.GetFrameHitboxes()
 	p.hitbox.PushHitbox(blockbox.X, blockbox.Y, blockbox.W, blockbox.H, true)
 }
 
@@ -133,7 +142,7 @@ func (p *Player) ShieldDown() {
 	p.hitbox.PopHitbox()
 }
 
-func (p *Player) OnHurt(otherHc *comp.HitboxComponent, col bump.Colision, damage float64) {
+func (p *Player) OnHurt(otherHc *comp.HitboxComponent, col bump.Collision, damage float64) {
 	if p.anim.State == "Block" {
 		p.ShieldDown()
 	}
@@ -143,7 +152,7 @@ func (p *Player) OnHurt(otherHc *comp.HitboxComponent, col bump.Colision, damage
 	p.World.Camera.Shake(0.2, 1)
 }
 
-func (p *Player) OnBlock(otherHc *comp.HitboxComponent, col bump.Colision, damage float64) {
+func (p *Player) OnBlock(otherHc *comp.HitboxComponent, col bump.Collision, damage float64) {
 	p.Actor.Block(*otherHc.EntX, damage, func(force float64) {
 		p.ShieldDown()
 		p.Stagger(force)

@@ -12,7 +12,7 @@ import (
 const (
 	gravity                     = 300
 	defaultMaxX, defaultMaxY    = 60, 200
-	groundFriction, airFriction = 12, 1
+	groundFriction, airFriction = 12, 4
 	collisionStiffness          = 1
 	frictionEpsilon             = 0.1
 )
@@ -62,7 +62,7 @@ func (bc *BodyComponent) Destroy() {
 }
 
 func (bc *BodyComponent) updateMovement(dt float64) {
-	if bc.Friction {
+	if bc.Friction || math.Abs(bc.Vx) > bc.MaxX { // Redo line 79??
 		var fric float64 = groundFriction
 		if !bc.Ground {
 			fric = airFriction
@@ -73,8 +73,6 @@ func (bc *BodyComponent) updateMovement(dt float64) {
 		}
 	}
 	bc.Vy += gravity * dt
-
-	bc.Vx = math.Min(bc.MaxX, math.Max(-bc.MaxX, bc.Vx))
 	bc.Vy = math.Min(bc.MaxY, math.Max(-bc.MaxY, bc.Vy))
 
 	p := bump.Vec2{X: *bc.entX + bc.X + bc.Vx*dt, Y: *bc.entY + bc.Y + bc.Vy*dt}
@@ -98,7 +96,7 @@ func (bc *BodyComponent) updateMovement(dt float64) {
 	}
 }
 
-func (bc *BodyComponent) applyOverlapForce(col bump.Colision) {
+func (bc *BodyComponent) applyOverlapForce(col bump.Collision) {
 	irect, orect := col.ItemRect, col.OtherRect
 	overlap := (math.Min(irect.X+irect.W, orect.X+orect.W) - math.Max(irect.X, orect.X)) / math.Min(irect.W, orect.W)
 	side := col.ItemRect.X + col.ItemRect.W/2 - (col.OtherRect.X + col.OtherRect.W/2)
@@ -113,5 +111,6 @@ func bodyFilter(item, other bump.Item) (bump.ColType, bool) {
 	if _, ok := other.(*Hitbox); ok {
 		return bump.Cross, false
 	}
+
 	return bump.Slide, true
 }

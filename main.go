@@ -14,14 +14,15 @@ import (
 )
 
 /* lista
-- Add animation tiles on update for Tiled map
+- Add animation tiles on update for Tiled map.
 - Maybe stop time while camera transition is playing, and move follower entity to border?
 - IA component for enemies.
+- Don't cap max speed when guarding in mid-air.
 */
 
 const (
-	scale                     = 3
-	screenWidth, screenHeight = 160, 90 // 320, 240
+	scale                     = 4
+	screenWidth, screenHeight = 160, 90 // 320, 240.
 )
 
 var (
@@ -79,7 +80,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 func main() {
 	ebiten.SetWindowSize(screenWidth*scale, screenHeight*scale)
 	ebiten.SetWindowTitle("Castle")
-	ebiten.SetWindowResizable(true)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	game.init()
 	if err := ebiten.RunGame(game); err != nil {

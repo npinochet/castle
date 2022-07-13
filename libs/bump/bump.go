@@ -14,8 +14,8 @@ type Vec2 struct{ X, Y float64 }
 
 type Filter func(item, other Item) (response ColType, ok bool)
 type SimpleFilter func(item Item) bool
-type Response func(goal Vec2, col Colision, filter Filter) (newGoal Vec2, newCols []Colision)
-type Colision struct {
+type Response func(goal Vec2, col Collision, filter Filter) (newGoal Vec2, newCols []Collision)
+type Collision struct {
 	Overlaps            bool
 	Intersection        float64
 	Move                Vec2
@@ -52,13 +52,13 @@ func NewSpace() *Space {
 	space := &Space{}
 	space.rects = make(map[Item]Rect)
 	space.responses = map[ColType]Response{
-		Touch: func(goal Vec2, col Colision, filter Filter) (newGoal Vec2, cols []Colision) {
-			return col.Touch, []Colision{}
+		Touch: func(goal Vec2, col Collision, filter Filter) (newGoal Vec2, cols []Collision) {
+			return col.Touch, []Collision{}
 		},
-		Cross: func(goal Vec2, col Colision, filter Filter) (newGoal Vec2, cols []Colision) {
+		Cross: func(goal Vec2, col Collision, filter Filter) (newGoal Vec2, cols []Collision) {
 			return goal, space.Project(col.Item, col.ItemRect, goal, filter)
 		},
-		Slide: func(goal Vec2, col Colision, filter Filter) (newGoal Vec2, cols []Colision) {
+		Slide: func(goal Vec2, col Collision, filter Filter) (newGoal Vec2, cols []Collision) {
 			if col.Move.X != 0 || col.Move.Y != 0 {
 				if col.Normal.X != 0 {
 					goal.X = col.Touch.X
@@ -77,7 +77,7 @@ func NewSpace() *Space {
 
 func (s *Space) Set(item Item, rect Rect) { s.rects[item] = rect }
 func (s *Space) Remove(item Item)         { delete(s.rects, item) }
-func (s *Space) Move(item Item, targetGoal Vec2, filter Filter) (goal Vec2, cols []Colision) {
+func (s *Space) Move(item Item, targetGoal Vec2, filter Filter) (goal Vec2, cols []Collision) {
 	goal, cols = s.Check(item, targetGoal, filter)
 	rect := s.rects[item]
 	s.Set(item, Rect{goal.X, goal.Y, rect.W, rect.H})
@@ -85,7 +85,7 @@ func (s *Space) Move(item Item, targetGoal Vec2, filter Filter) (goal Vec2, cols
 	return
 }
 
-func (s *Space) Check(item Item, targetGoal Vec2, filter Filter) (goal Vec2, cols []Colision) {
+func (s *Space) Check(item Item, targetGoal Vec2, filter Filter) (goal Vec2, cols []Collision) {
 	goal = targetGoal
 	if filter == nil {
 		filter = DefaultFilter
@@ -115,7 +115,7 @@ func (s *Space) Check(item Item, targetGoal Vec2, filter Filter) (goal Vec2, col
 	return
 }
 
-func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter) (cols []Colision) {
+func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter) (cols []Collision) {
 	if filter == nil {
 		filter = DefaultFilter
 	}
@@ -140,7 +140,7 @@ func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter) (cols []
 	return
 }
 
-func (s *Space) Query(rect Rect, filter SimpleFilter) (cols []Colision) {
+func (s *Space) Query(rect Rect, filter SimpleFilter) (cols []Collision) {
 	if filter == nil {
 		filter = DefaultSimpleFilter
 	}
@@ -202,36 +202,17 @@ func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (i1, i2 float64, normal Vec
 	return i1, i2, normal, ok
 }
 
-func detectCollision(rect1, rect2 Rect, goal Vec2) (col Colision, ok bool) {
+func detectCollision(rect1, rect2 Rect, goal Vec2) (col Collision, ok bool) {
 	col.Move = Vec2{goal.X - rect1.X, goal.Y - rect1.Y}
-	col.ItemRect = rect1
-	col.OtherRect = rect2
+	col.ItemRect, col.OtherRect = rect1, rect2
 	interRect := rectDiff(rect1, rect2)
 
-	var colisioned bool
-	if rectContainsPoint(interRect, Vec2{}) {
-		p := rectNearestCorner(interRect, Vec2{})
-		wi, hi := math.Min(rect1.W, math.Abs(p.X)), math.Min(rect1.H, math.Abs(p.Y))
-		col.Intersection = -wi * hi
-		col.Overlaps = true
-		colisioned = true
-	} else {
-		i1, i2, normal, found := lineSegmentIntersection(interRect, Vec2{}, col.Move)
-		if found && i1 < 1 && math.Abs(i1-i2) >= DELTA && (i1 > -DELTA || i1 == 0 && i2 > 0) {
-			col.Normal = normal
-			col.Intersection = i1
-			col.Overlaps = false
-			colisioned = true
-			col.Touch = Vec2{rect1.X + col.Move.X*col.Intersection, rect1.Y + col.Move.Y*col.Intersection}
-		}
-	}
-
-	if !colisioned {
+	if !detectCollisionPhase1(interRect, rect1, &col) {
 		return
 	}
 
 	if col.Overlaps {
-		if col.Move.X == 0 && col.Move.Y == 0 {
+		if (col.Move == Vec2{}) {
 			p := rectNearestCorner(interRect, Vec2{})
 			if math.Abs(p.X) < math.Abs(p.Y) {
 				p.Y = 0
@@ -253,6 +234,28 @@ func detectCollision(rect1, rect2 Rect, goal Vec2) (col Colision, ok bool) {
 	ok = true
 
 	return col, ok
+}
+
+func detectCollisionPhase1(interRect, rect1 Rect, col *Collision) bool {
+	collisioned := false
+	if rectContainsPoint(interRect, Vec2{}) {
+		p := rectNearestCorner(interRect, Vec2{})
+		wi, hi := math.Min(rect1.W, math.Abs(p.X)), math.Min(rect1.H, math.Abs(p.Y))
+		col.Intersection = -wi * hi
+		col.Overlaps = true
+		collisioned = true
+	} else {
+		i1, i2, normal, found := lineSegmentIntersection(interRect, Vec2{}, col.Move)
+		if found && i1 < 1 && math.Abs(i1-i2) >= DELTA && (i1 > -DELTA || i1 == 0 && i2 > 0) {
+			col.Normal = normal
+			col.Intersection = i1
+			col.Overlaps = false
+			collisioned = true
+			col.Touch = Vec2{rect1.X + col.Move.X*col.Intersection, rect1.Y + col.Move.Y*col.Intersection}
+		}
+	}
+
+	return collisioned
 }
 
 // Minkowsky Difference between 2 Rects.

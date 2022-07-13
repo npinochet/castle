@@ -9,12 +9,12 @@ import (
 	"github.com/lafriks/go-tiled"
 )
 
-const defaultITime = 0.2
+const defaultITime = 1
 
 func (hc *HitboxComponent) IsActive() bool        { return hc.active }
 func (hc *HitboxComponent) SetActive(active bool) { hc.active = active }
 
-type HitFunc func(*HitboxComponent, bump.Colision, float64)
+type HitFunc func(*HitboxComponent, bump.Collision, float64)
 
 type Hitbox struct {
 	comp  *HitboxComponent
@@ -97,7 +97,7 @@ func (hc *HitboxComponent) Hit(x, y, w, h, damage float64) (blocked bool) {
 
 	type hitInfo struct {
 		hit bool
-		col bump.Colision
+		col bump.Collision
 	}
 
 	doesHit := map[*HitboxComponent]hitInfo{}
@@ -113,6 +113,7 @@ func (hc *HitboxComponent) Hit(x, y, w, h, damage float64) (blocked bool) {
 			blocked = true
 		}
 	}
+
 	for comp, info := range doesHit {
 		if comp.ITimer > 0 {
 			continue
@@ -121,6 +122,12 @@ func (hc *HitboxComponent) Hit(x, y, w, h, damage float64) (blocked bool) {
 			comp.HurtFunc(hc, info.col, damage)
 		} else if !info.hit && comp.BlockFunc != nil {
 			comp.BlockFunc(hc, info.col, damage)
+		}
+	}
+
+	for comp, info := range doesHit {
+		if comp.ITimer <= 0 && info.hit {
+			comp.ITimer = comp.ITime
 		}
 	}
 

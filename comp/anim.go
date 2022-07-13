@@ -63,6 +63,9 @@ func (ac *AsepriteComponent) Init(entity *core.Entity) {
 }
 
 func (ac *AsepriteComponent) SetState(state string) {
+	if ac.State == state {
+		return
+	}
 	ac.State = state
 	_ = ac.Data.Play(state)
 	ac.callback = nil
@@ -120,15 +123,23 @@ func (ac *AsepriteComponent) findCurrenctSlice(slice *aseprite.Slice) *bump.Rect
 		return nil
 	}
 	currentFrame := ac.Data.CurrentFrame
+	frame := ac.Data.Frames.FrameAtIndex(currentFrame)
+	ssx, ssy := float64(frame.SpriteSourceSize.X), float64(frame.SpriteSourceSize.Y)
+	sw, sh := float64(frame.SourceSize.Width), float64(frame.SourceSize.Height)
+
 	for _, key := range slice.Keys {
 		if key.FrameNum == currentFrame {
 			bound := key.Bounds
 			rect := &bump.Rect{
-				X: -float64(bound.X), Y: float64(bound.Y),
+				X: float64(bound.X) - ssx + ac.X, Y: float64(bound.Y) - ssy + ac.Y,
 				W: float64(bound.Width), H: float64(bound.Height),
 			}
+
 			if ac.FlipX {
-				rect.X = -rect.W // TODO: Recheck this? what is this? should FlixY affect this?
+				rect.X += sw - rect.W - float64(bound.X)*2
+			}
+			if ac.FlipY {
+				rect.Y += sh - rect.W - float64(bound.Y)*2
 			}
 
 			return rect

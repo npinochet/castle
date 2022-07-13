@@ -40,3 +40,5 @@ linters-settings:
       - G404
   lll:
     line-length: 140
+  cyclop:
+    max-complexity: 12

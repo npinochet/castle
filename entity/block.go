@@ -40,7 +40,7 @@ func (b *BlockComponent) Init(entity *core.Entity) {
 	b.hitbox.PushHitbox(b.body.X, b.body.X, blockSize, blockSize, false)
 }
 
-func (b *BlockComponent) BlockHurt(otherHc *comp.HitboxComponent, col bump.Colision, damage float64) {
+func (b *BlockComponent) BlockHurt(otherHc *comp.HitboxComponent, col bump.Collision, damage float64) {
 	b.body.Vy -= 30
 
 	force := 50.0
@@ -50,7 +50,7 @@ func (b *BlockComponent) BlockHurt(otherHc *comp.HitboxComponent, col bump.Colis
 	b.body.Vx += force
 }
 
-func (b *BlockComponent) BlockBlock(otherHc *comp.HitboxComponent, col bump.Colision, damage float64) {
+func (b *BlockComponent) BlockBlock(otherHc *comp.HitboxComponent, col bump.Collision, damage float64) {
 	force := 50.0
 	if col.Normal.X > 0 {
 		force *= -1

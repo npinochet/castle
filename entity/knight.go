@@ -65,7 +65,7 @@ func (k *Knight) Attack() {
 }
 
 func (k *Knight) Stagger(force float64) {
-	k.Actor.Stagger("Stagger", force*10)
+	k.Actor.Stagger("Stagger", force)
 }
 
 func (k *Knight) ShieldUp() {
@@ -91,7 +91,7 @@ func (k *Knight) ShieldDown() {
 	k.hitbox.PopHitbox()
 }
 
-func (k *Knight) Hurt(otherHc *comp.HitboxComponent, col bump.Colision, damage float64) {
+func (k *Knight) Hurt(otherHc *comp.HitboxComponent, col bump.Collision, damage float64) {
 	if k.anim.State == "Block" {
 		k.ShieldDown()
 	}
@@ -100,10 +100,10 @@ func (k *Knight) Hurt(otherHc *comp.HitboxComponent, col bump.Colision, damage f
 	})
 }
 
-func (k *Knight) Block(otherHc *comp.HitboxComponent, col bump.Colision, damage float64) {
+func (k *Knight) Block(otherHc *comp.HitboxComponent, col bump.Collision, damage float64) {
 	k.Actor.Block(*otherHc.EntX, damage, func(force float64) {
 		k.ShieldDown()
 		k.Stagger(force)
-		k.anim.Data.PlaySpeed = 0.5 // double time stagger
+		k.anim.Data.PlaySpeed = 0.5 // double time stagger.
 	})
 }

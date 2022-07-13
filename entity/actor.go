@@ -32,10 +32,10 @@ func NewActor(x, y float64, body *comp.BodyComponent, anim *comp.AsepriteCompone
 		reactForce: defaultForce,
 	}
 	actor.AddComponent(actor.body, actor.hitbox, actor.anim, actor.stats)
-	actor.hitbox.HurtFunc = func(otherHc *comp.HitboxComponent, col bump.Colision, damange float64) {
+	actor.hitbox.HurtFunc = func(otherHc *comp.HitboxComponent, col bump.Collision, damange float64) {
 		actor.Hurt(*otherHc.EntX, damange, nil)
 	}
-	actor.hitbox.BlockFunc = func(otherHc *comp.HitboxComponent, col bump.Colision, damange float64) {
+	actor.hitbox.BlockFunc = func(otherHc *comp.HitboxComponent, col bump.Collision, damange float64) {
 		actor.Block(*otherHc.EntX, damange, nil)
 	}
 
@@ -45,11 +45,7 @@ func NewActor(x, y float64, body *comp.BodyComponent, anim *comp.AsepriteCompone
 func (a *Actor) ManageAnim(idle, walk, attack, stagger string) {
 	state := a.anim.State
 	a.body.Friction = !(state == walk && a.body.Vx != 0)
-
-	a.stats.SetActive(true)
-	if state == attack || state == stagger {
-		a.stats.SetActive(false)
-	}
+	a.stats.SetActive(state != attack && state != stagger)
 
 	if state == idle || state == walk {
 		nextState := idle
@@ -65,10 +61,10 @@ func (a *Actor) Attack(state string, stamina, damage float64) {
 		return
 	}
 	force := a.reactForce
-	a.anim.SetState(state)
 	if a.anim.FlipX {
 		force *= -1
 	}
+	a.anim.SetState(state)
 
 	once := false
 	a.anim.OnFrames(func(frame int) {
@@ -91,25 +87,25 @@ func (a *Actor) Stagger(state string, force float64) {
 		return
 	}
 	a.anim.SetState(state)
-	a.body.Vx = -force * 1.0 / 60
+	a.body.Vx = -force
 }
 
-func (a *Actor) Hurt(otherX float64, damage float64, stagger func(force float64)) {
+func (a *Actor) Hurt(otherX float64, damage float64, poiseBreak func(force float64)) {
 	force := a.reactForce
-	if *a.hitbox.EntX > otherX {
+	if a.X > otherX {
 		force *= -1
 	}
 	a.body.Vx -= (force / 2) * 1.0 / 60
 	a.stats.AddPoise(-damage)
 	a.stats.AddHealth(-damage)
-	if a.stats.Poise < 0 && stagger != nil {
-		stagger(force)
+	if a.stats.Poise <= 0 && poiseBreak != nil {
+		poiseBreak(force)
 	}
 }
 
 func (a *Actor) Block(otherX float64, damage float64, blockBreak func(force float64)) {
 	force := a.reactForce
-	if *a.hitbox.EntX > otherX {
+	if a.X > otherX {
 		force *= -1
 	}
 	a.body.Vx -= (force / 2) * 1.0 / 60
