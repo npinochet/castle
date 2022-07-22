@@ -16,8 +16,12 @@ import (
 /* TODO
 - Add animation tiles on update for Tiled map.
 - Maybe stop time while camera transition is playing, and move follower entity to border?
-- IA component for enemies.
+- AI component for enemies.
 - Don't cap max speed when guarding in mid-air.
+- Add slopes.
+- Think of a system to manage animations.
+- Make more enemies, make some of them shoot arrows.
+- Make actor default params presets.
 */
 
 const (
