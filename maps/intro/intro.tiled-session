@@ -1,0 +1,33 @@
+{
+    "activeFile": "",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "": {
+            "scaleInDock": 1.8745
+        },
+        "intro.tmx": {
+            "scale": 1.72,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 1980.232558139535,
+                "y": 2037.5
+            }
+        },
+        "tiles.tsx": {
+            "scaleInDock": 2.427,
+            "scaleInEditor": 3.4
+        }
+    },
+    "last.imagePath": "/Users/nico/Desktop/nico/castle/maps/intro",
+    "openFiles": [
+    ],
+    "project": "intro.tiled-project",
+    "recentFiles": [
+        "tiles.tsx",
+        "intro.tmx"
+    ],
+    "resizeMap.removeObjects": false
+}

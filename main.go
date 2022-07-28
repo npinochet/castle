@@ -6,6 +6,7 @@ import (
 	"game/core"
 	"game/entity"
 	"game/utils"
+	"image/color"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -26,7 +27,7 @@ import (
 
 const (
 	scale                     = 4
-	screenWidth, screenHeight = 160, 90 // 320, 240.
+	screenWidth, screenHeight = 160, 96 // 320, 240.
 )
 
 var (
@@ -40,9 +41,9 @@ type Game struct {
 
 func (g *Game) init() {
 	g.world = core.NewWorld(screenWidth, screenHeight)
-	g.world.SetMap(core.NewMap("maps/test/first/test.tmx", "foreground", "background"), "rooms")
+	g.world.SetMap(core.NewMap("maps/intro/intro.tmx", "foreground", "background"), "rooms")
 
-	playerX, playerY, err := g.world.Map.FindObjectPosition("entities", 114)
+	playerX, playerY, err := g.world.Map.FindObjectPosition("entities", 25)
 	if err != nil {
 		log.Println("Error finding player entity:", err)
 	}
@@ -50,9 +51,9 @@ func (g *Game) init() {
 	g.world.Camera.Follow(player, 14, 14)
 	g.world.AddEntity(&player.Entity).ID = utils.PlayerUID
 
-	g.world.Map.LoadBumpObjects(g.world.Space, "collision")
+	g.world.Map.LoadBumpObjects(g.world.Space, "collisions")
 	g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
-		115: entity.NewKnight,
+		26: entity.NewKnight,
 	})
 }
 
@@ -71,6 +72,7 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	screen.Fill(color.RGBA{50, 60, 57, 255}) // default background color.
 	g.world.Draw(screen)
 	if g.world.Debug {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf(`TPS: %0.2f`, ebiten.CurrentTPS()))

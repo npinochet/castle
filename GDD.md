@@ -99,7 +99,7 @@ The player can guard with his shield anytime he wants:
 To add dread and difficulty, the player can only save at designated points (like Bonfires):
 * If the player dies, he loses his currency, he must go back for them to retrieve it.
 * If the player dies 3 times in a row starting on the same checkpoint, the checkpoint is deactivated and the player spawns on the last previous activated checkpoint. Where he needs to traverse the map again to activate the deactivated checkpoint.
-    * This can add dread if the player is on it's last life before the checkpoint deactivates, making the player play more carefully.
+    * This can add dread if the player is on it's last life before the checkpoint deactivates, progress is at stake, making the player play more carefully.
     * Needs play testing, it can sound a bit annoying.
 
 #### Misc

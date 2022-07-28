@@ -39,6 +39,7 @@ func (c *Camera) SetRooms(rooms []bump.Rect)   { c.rooms = rooms }
 func (c *Camera) Follow(e Positioner, w, h float64) {
 	c.following = e
 	c.fw, c.fh = w, h
+	c.SetRoomBorders(false)
 }
 
 func (c *Camera) Translate(x, y float64) {
@@ -63,7 +64,7 @@ func (c *Camera) Update(dt float64) {
 	dx, dy := x-c.x, y-c.y
 
 	c.Translate(damper(dt, dx, dy, c.stiffness))
-	c.SetRoomBorders()
+	c.SetRoomBorders(true)
 	if c.borders != nil {
 		x := math.Max(math.Min(c.x, c.borders.X+c.borders.W-c.w), c.borders.X)
 		y := math.Max(math.Min(c.y, c.borders.Y+c.borders.H-c.h), c.borders.Y)
@@ -74,7 +75,7 @@ func (c *Camera) Update(dt float64) {
 		if done {
 			c.transitionTween = nil
 		}
-		c.SetPosition(c.x+float64(prog)*c.transitionX, c.y+float64(prog)*c.transitionY)
+		c.Translate(float64(prog)*c.transitionX, float64(prog)*c.transitionY)
 	}
 
 	if c.shakeTween != nil {
@@ -85,7 +86,7 @@ func (c *Camera) Update(dt float64) {
 
 		shakex := (rand.Float64()*2 - 1) * c.shakeMagnitude * float64(prog)
 		shakey := (rand.Float64()*2 - 1) * c.shakeMagnitude * float64(prog)
-		c.SetPosition(c.x+shakex, c.y+shakey)
+		c.Translate(shakex, shakey)
 	}
 }
 
@@ -97,7 +98,7 @@ func (c *Camera) Shake(duration float32, magnitude float64) {
 	c.shakeMagnitude = magnitude
 }
 
-func (c *Camera) SetRoomBorders() {
+func (c *Camera) SetRoomBorders(transition bool) {
 	if c.following == nil || c.rooms == nil {
 		return
 	}
@@ -106,23 +107,20 @@ func (c *Camera) SetRoomBorders() {
 	x, y := ex+c.fw/2, ey+c.fh/2
 	follow := bump.Rect{X: x, Y: y, W: c.fw, H: c.fh}
 
-	currentRoom, found := c.borders, false
+	prevRoom := c.borders
+	c.borders = nil
 	for i, room := range c.rooms {
 		if bump.Overlaps(follow, room) {
 			c.borders = &c.rooms[i]
-			found = true
 
 			break
 		}
 	}
-	if !found {
-		c.borders = nil
 
-		return
-	}
-
-	if currentRoom != c.borders && currentRoom != nil && c.borders != nil {
-		c.transitionX, c.transitionY = currentRoom.X-c.borders.X, currentRoom.Y-c.borders.Y
+	if transition && prevRoom != c.borders && c.borders != nil {
+		targetX := math.Max(math.Min(c.x, c.borders.X+c.borders.W-c.w), c.borders.X)
+		targetY := math.Max(math.Min(c.y, c.borders.Y+c.borders.H-c.h), c.borders.Y)
+		c.transitionX, c.transitionY = c.x-targetX, c.y-targetY
 		c.transitionTween = gween.New(1, 0, c.transitionDuration, ease.OutCubic)
 	}
 }
