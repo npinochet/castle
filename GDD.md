@@ -68,6 +68,7 @@ A 2D deliberate hack and slash game focused on animations and stamina management
         * Caveats: **Don't make health sponge enemies**. Make them hit harder if I must do.
     * Can also punish the player for dying, with lost progress or other mechanics.
 * Have a semi-maze like map, where you have to be aware of your surrounding to navigate it.
+* To a lesser extent have, have a great emphasis on enemy AI, this will add complexity to decision making and difficulty.
 * **Do not make a CastleVania: No item gates, minimal backtracking**.
 
 ### Main game mechanics

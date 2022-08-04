@@ -57,7 +57,7 @@ func (p *Player) Update(dt float64) {
 
 func (p *Player) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
 	hud := fmt.Sprintf("%0.2f/%0.2f/%0.2f", p.Stats.Health, p.Stats.Stamina, p.Stats.Poise)
-	ebitenutil.DebugPrintAt(screen, hud, 0, 10)
+	ebitenutil.DebugPrintAt(screen, hud, 35, 0)
 }
 
 func (p *Player) control(dt float64) bool {

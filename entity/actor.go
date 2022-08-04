@@ -34,6 +34,7 @@ type Actor struct {
 	Hitbox                              *comp.HitboxComponent
 	Anim                                *comp.AsepriteComponent
 	Stats                               *comp.StatsComponent
+	AI                                  *comp.AIComponent
 	Damage, StaminaDamage               float64
 	BlockMaxXDiv, BlockRecoverRateDiv   float64
 	ReactForce, AttackPushForce         float64
@@ -99,7 +100,7 @@ func (a *Actor) ManageAnim() {
 }
 
 func (a *Actor) Attack() {
-	if a.Stats.Stamina <= 0 {
+	if a.Stats.Stamina <= 0 || a.Anim.State == animAttackTag {
 		return
 	}
 	force := a.AttackPushForce

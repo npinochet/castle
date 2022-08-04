@@ -54,6 +54,10 @@ func (sc *StatsComponent) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM)
 
 }
 
+func (sc *StatsComponent) HealthPercent() float64  { return sc.Health / sc.MaxHealth }
+func (sc *StatsComponent) StaminaPercent() float64 { return sc.Stamina / sc.MaxStamina }
+func (sc *StatsComponent) PoisePercent() float64   { return sc.Poise / sc.MaxPoise }
+
 func (sc *StatsComponent) AddHealth(amount float64) {
 	sc.Health = math.Min(sc.Health+amount, sc.MaxHealth)
 }

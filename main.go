@@ -20,9 +20,14 @@ import (
 - AI component for enemies.
 - Don't cap max speed when guarding in mid-air.
 - Add slopes.
+- Combos for attacks.
 - Think of a system to manage animations.
 - Make more enemies, make some of them shoot arrows.
 - Make actor default params presets.
+
+- Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
+- Add a Timeout system for AI states.
+- Clean up AI code, Make a default AI behaviour for actors if none are present. Make it tweekable with other params maybe.
 */
 
 const (
@@ -75,7 +80,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{50, 60, 57, 255}) // default background color.
 	g.world.Draw(screen)
 	if g.world.Debug {
-		ebitenutil.DebugPrint(screen, fmt.Sprintf(`TPS: %0.2f`, ebiten.CurrentTPS()))
+		ebitenutil.DebugPrint(screen, fmt.Sprintf(`%0.2f`, ebiten.CurrentTPS()))
 	}
 }
 

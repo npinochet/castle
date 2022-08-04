@@ -34,8 +34,11 @@ type BodyComponent struct {
 
 func (bc *BodyComponent) Init(entity *core.Entity) {
 	bc.entX, bc.entY = &entity.X, &entity.Y
-	if bc.MaxX == 0 && bc.MaxY == 0 {
-		bc.MaxX, bc.MaxY = defaultMaxX, defaultMaxY
+	if bc.MaxX == 0 {
+		bc.MaxX = defaultMaxX
+	}
+	if bc.MaxY == 0 {
+		bc.MaxY = defaultMaxY
 	}
 	bc.Friction = true
 	bc.space = entity.World.Space
@@ -62,7 +65,7 @@ func (bc *BodyComponent) Destroy() {
 }
 
 func (bc *BodyComponent) updateMovement(dt float64) {
-	if bc.Friction || math.Abs(bc.Vx) > bc.MaxX { // Redo line 79??
+	if bc.Friction || math.Abs(bc.Vx) > bc.MaxX {
 		var fric float64 = groundFriction
 		if !bc.Ground {
 			fric = airFriction

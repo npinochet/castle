@@ -12,14 +12,14 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-func (ac *AsepriteComponent) IsActive() bool        { return ac.active }
-func (ac *AsepriteComponent) SetActive(active bool) { ac.active = active }
-
 const (
 	HurtboxSliceName = "hurtbox"
 	HitboxSliceName  = "hitbox"
 	BlockSliceName   = "blockbox"
 )
+
+func (ac *AsepriteComponent) IsActive() bool        { return ac.active }
+func (ac *AsepriteComponent) SetActive(active bool) { ac.active = active }
 
 type FrameCallback func(frame int)
 
@@ -115,7 +115,7 @@ func (ac *AsepriteComponent) GetFrameHitboxes() (hurtbox, hitbox, blockbox *bump
 	hitbox = ac.findCurrenctSlice(ac.slices[1])
 	blockbox = ac.findCurrenctSlice(ac.slices[2])
 
-	return
+	return hurtbox, hitbox, blockbox
 }
 
 func (ac *AsepriteComponent) findCurrenctSlice(slice *aseprite.Slice) *bump.Rect {
