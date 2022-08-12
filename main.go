@@ -24,6 +24,7 @@ import (
 - Think of a system to manage animations.
 - Make more enemies, make some of them shoot arrows.
 - Make actor default params presets.
+- Change background color and characters outline color.
 
 - Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
 - Add a Timeout system for AI states.
@@ -33,6 +34,9 @@ import (
 const (
 	scale                     = 4
 	screenWidth, screenHeight = 160, 96 // 320, 240.
+
+	playerID   = 25
+	playerSize = 14
 )
 
 var (
@@ -48,12 +52,12 @@ func (g *Game) init() {
 	g.world = core.NewWorld(screenWidth, screenHeight)
 	g.world.SetMap(core.NewMap("maps/intro/intro.tmx", "foreground", "background"), "rooms")
 
-	playerX, playerY, err := g.world.Map.FindObjectPosition("entities", 25)
+	playerX, playerY, err := g.world.Map.FindObjectPosition("entities", playerID)
 	if err != nil {
 		log.Println("Error finding player entity:", err)
 	}
 	player = entity.NewPlayer(playerX, playerY, nil)
-	g.world.Camera.Follow(player, 14, 14)
+	g.world.Camera.Follow(player, playerSize, playerSize)
 	g.world.AddEntity(&player.Entity).ID = utils.PlayerUID
 
 	g.world.Map.LoadBumpObjects(g.world.Space, "collisions")

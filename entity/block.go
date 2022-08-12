@@ -1,7 +1,9 @@
 package entity
 
 import (
-	"game/comp"
+	"game/comps/body"
+	"game/comps/hitbox"
+	"game/comps/render"
 	"game/core"
 	"game/libs/bump"
 	"image/color"
@@ -16,8 +18,8 @@ func (b *BlockComponent) SetActive(active bool) { b.active = active }
 
 type BlockComponent struct {
 	active bool
-	body   *comp.BodyComponent
-	hitbox *comp.HitboxComponent
+	body   *body.Comp
+	hitbox *hitbox.Comp
 }
 
 func NewBlock(x, y float64, props map[string]interface{}) *core.Entity {
@@ -27,9 +29,9 @@ func NewBlock(x, y float64, props map[string]interface{}) *core.Entity {
 	image.Fill(color.White)
 
 	block := &core.Entity{X: x, Y: y}
-	body := &comp.BodyComponent{W: 8, H: 8}
-	hitbox := &comp.HitboxComponent{}
-	block.AddComponent(body, hitbox, &comp.RenderComponent{Image: image}, &BlockComponent{body: body, hitbox: hitbox})
+	body := &body.Comp{W: 8, H: 8}
+	hitbox := &hitbox.Comp{}
+	block.AddComponent(body, hitbox, &render.Comp{Image: image}, &BlockComponent{body: body, hitbox: hitbox})
 
 	return block
 }
@@ -40,7 +42,7 @@ func (b *BlockComponent) Init(entity *core.Entity) {
 	b.hitbox.PushHitbox(b.body.X, b.body.X, blockSize, blockSize, false)
 }
 
-func (b *BlockComponent) BlockHurt(otherHc *comp.HitboxComponent, col bump.Collision, damage float64) {
+func (b *BlockComponent) BlockHurt(otherHc *hitbox.Comp, col bump.Collision, damage float64) {
 	b.body.Vy -= 30
 
 	force := 50.0
@@ -50,7 +52,7 @@ func (b *BlockComponent) BlockHurt(otherHc *comp.HitboxComponent, col bump.Colli
 	b.body.Vx += force
 }
 
-func (b *BlockComponent) BlockBlock(otherHc *comp.HitboxComponent, col bump.Collision, damage float64) {
+func (b *BlockComponent) BlockBlock(otherHc *hitbox.Comp, col bump.Collision, damage float64) {
 	force := 50.0
 	if col.Normal.X > 0 {
 		force *= -1

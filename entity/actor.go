@@ -1,7 +1,11 @@
 package entity
 
 import (
-	"game/comp"
+	"game/comps/ai"
+	"game/comps/anim"
+	"game/comps/body"
+	"game/comps/hitbox"
+	"game/comps/stats"
 	"game/core"
 	"game/libs/bump"
 )
@@ -11,30 +15,19 @@ const (
 	defaultReactForce                         = 200
 	deafultDamage, defaultStaminaDamage       = 20, 20
 	defaultMaxXDiv, defaultMaxXRecoverRateDiv = 1.2, 2
-	animIdleTag                               = "Idle"
-	animWalkTag                               = "Walk"
-	animAttackTag                             = "Attack"
-	animBlockTag                              = "Block"
-	animStaggerTag                            = "Stagger"
 )
-
-var DefaultAnimFsm = &comp.AnimFsm{
-	Transitions: map[string]string{animWalkTag: animIdleTag, animAttackTag: animIdleTag, animStaggerTag: animIdleTag},
-	ExitCallbacks: map[string]func(*comp.AsepriteComponent){
-		animStaggerTag: func(ac *comp.AsepriteComponent) { ac.Data.PlaySpeed = 1 },
-	},
-}
 
 func (a *Actor) IsActive() bool        { return a.Active }
 func (a *Actor) SetActive(active bool) { a.Active = active }
 
 type Actor struct {
 	core.Entity
-	Body                                *comp.BodyComponent
-	Hitbox                              *comp.HitboxComponent
-	Anim                                *comp.AsepriteComponent
-	Stats                               *comp.StatsComponent
-	AI                                  *comp.AIComponent
+	Body                                *body.Comp
+	Hitbox                              *hitbox.Comp
+	Anim                                *anim.Comp
+	Stats                               *stats.Comp
+	AI                                  *ai.Comp
+	speed                               float64
 	Damage, StaminaDamage               float64
 	BlockMaxXDiv, BlockRecoverRateDiv   float64
 	ReactForce, AttackPushForce         float64
@@ -43,16 +36,16 @@ type Actor struct {
 
 func NewActor(
 	x, y float64,
-	body *comp.BodyComponent,
-	anim *comp.AsepriteComponent,
-	stats *comp.StatsComponent,
+	body *body.Comp,
+	animc *anim.Comp,
+	stat *stats.Comp,
 	damage, staminaDamage float64,
 ) *Actor {
-	if stats == nil {
-		stats = &comp.StatsComponent{}
+	if stat == nil {
+		stat = &stats.Comp{}
 	}
-	if anim.Fsm == nil {
-		anim.Fsm = DefaultAnimFsm
+	if animc.Fsm == nil {
+		animc.Fsm = anim.DefaultFsm()
 	}
 	if damage == 0 {
 		damage = deafultDamage
@@ -63,21 +56,21 @@ func NewActor(
 
 	actor := &Actor{
 		Entity: core.Entity{X: x, Y: y},
-		Hitbox: &comp.HitboxComponent{},
-		Body:   body, Anim: anim, Stats: stats,
+		Hitbox: &hitbox.Comp{},
+		Body:   body, Anim: animc, Stats: stat,
 		Damage: damage, StaminaDamage: staminaDamage,
 		BlockMaxXDiv: defaultMaxXDiv, BlockRecoverRateDiv: defaultMaxXRecoverRateDiv,
 		AttackPushForce: defaultAttackPushForce,
 		ReactForce:      defaultReactForce,
 	}
 	actor.AddComponent(actor.Body, actor.Hitbox, actor.Anim, actor.Stats)
-	actor.Hitbox.HurtFunc = func(otherHc *comp.HitboxComponent, col bump.Collision, damange float64) {
-		if actor.Anim.State == animBlockTag {
+	actor.Hitbox.HurtFunc = func(otherHc *hitbox.Comp, col bump.Collision, damange float64) {
+		if actor.Anim.State == anim.BlockTag {
 			actor.ShieldDown()
 		}
 		actor.Hurt(*otherHc.EntX, damage, nil)
 	}
-	actor.Hitbox.BlockFunc = func(otherHc *comp.HitboxComponent, col bump.Collision, damange float64) {
+	actor.Hitbox.BlockFunc = func(otherHc *hitbox.Comp, col bump.Collision, damange float64) {
 		actor.Block(*otherHc.EntX, damange, nil)
 	}
 
@@ -85,29 +78,29 @@ func NewActor(
 }
 
 func (a *Actor) ManageAnim() {
-	// TODO: Make more general.
+	// TODO: Make more general, maybe add speed in the mix.
 	state := a.Anim.State
-	a.Body.Friction = !(state == animWalkTag && a.Body.Vx != 0)
-	a.Stats.SetActive(state != animAttackTag && state != animStaggerTag)
+	a.Body.Friction = !(state == anim.WalkTag && a.Body.Vx != 0)
+	a.Stats.SetActive(state != anim.AttackTag && state != anim.StaggerTag)
 
-	if state == animIdleTag || state == animWalkTag {
-		nextState := animIdleTag
+	if state == anim.IdleTag || state == anim.WalkTag {
+		nextState := anim.IdleTag
 		if a.Body.Vx != 0 {
-			nextState = animWalkTag
+			nextState = anim.WalkTag
 		}
 		a.Anim.SetState(nextState)
 	}
 }
 
 func (a *Actor) Attack() {
-	if a.Stats.Stamina <= 0 || a.Anim.State == animAttackTag {
+	if a.Stats.Stamina <= 0 || a.Anim.State == anim.AttackTag {
 		return
 	}
 	force := a.AttackPushForce
 	if a.Anim.FlipX {
 		force *= -1
 	}
-	a.Anim.SetState(animAttackTag)
+	a.Anim.SetState(anim.AttackTag)
 
 	once := false
 	onceReaction := false
@@ -130,18 +123,18 @@ func (a *Actor) Attack() {
 }
 
 func (a *Actor) Stagger(force float64) {
-	if a.Anim.State == animStaggerTag {
+	if a.Anim.State == anim.StaggerTag {
 		return
 	}
-	a.Anim.SetState(animStaggerTag)
+	a.Anim.SetState(anim.StaggerTag)
 	a.Body.Vx = -force
 }
 
 func (a *Actor) ShieldUp() {
-	if a.Anim.State == animBlockTag {
+	if a.Anim.State == anim.BlockTag || a.Anim.State == anim.StaggerTag {
 		return
 	}
-	a.Anim.SetState(animBlockTag)
+	a.Anim.SetState(anim.BlockTag)
 	a.blockMaxXSave = a.Body.MaxX
 	a.blockRecoverRateSave = a.Stats.StaminaRecoverRate
 	a.Body.MaxX /= a.BlockMaxXDiv
@@ -151,10 +144,10 @@ func (a *Actor) ShieldUp() {
 }
 
 func (a *Actor) ShieldDown() {
-	if a.Anim.State != animBlockTag {
+	if a.Anim.State != anim.BlockTag {
 		return
 	}
-	a.Anim.SetState(animIdleTag)
+	a.Anim.SetState(anim.IdleTag)
 	a.Body.MaxX = a.blockMaxXSave
 	a.Stats.StaminaRecoverRate = a.blockRecoverRateSave
 	a.Hitbox.PopHitbox()
