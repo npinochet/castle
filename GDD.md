@@ -109,7 +109,7 @@ To add dread and difficulty, the player can only save at designated points (like
 * Tiled base maps, with slopes and ladders.
 * Probably have a few enemies than can shoot from a distance.
 * The player can side step (dodge) to the left or right to avoid an attack (no invincibility frames) (uses stamina).
-* 2 type of attack (for now), light attack (short windup) and heavy attack (long windup).
+* 2 type of attack (for now), light attack (short windup) and heavy attack (long windup), by holding and charging the attack button.
 
 #### Imposed limitations
 * No leveling up.

@@ -25,10 +25,22 @@ import (
 - Make more enemies, make some of them shoot arrows.
 - Make actor default params presets.
 - Change background color and characters outline color.
+- Rethink Poise mechanic, is shouldn't be a bar that increses with time, it should be more like a health that resets.
+- Implement estus flasks.
+- Implement backstepping (kind of life rolling). (think about adding I frames or not).
 
 - Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
 - Add a Timeout system for AI states.
 - Clean up AI code, Make a default AI behaviour for actors if none are present. Make it tweekable with other params maybe.
+
+
+-- Dark Souls Combat Findings
+- When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.
+- Poise break are really small, just to interrupt animation.
+- When using a big shield (stability high) and guarding, an enemy attack can be deflect.
+- When blocking an attack, a little stagger animation is played.
+- Stagger animation can be reset if hit again.
+	- Only the player can be stun locked. -> poise is reset onyl after stagger animation finishes.
 */
 
 const (
@@ -64,13 +76,14 @@ func (g *Game) init() {
 	g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
 		26: entity.NewKnight,
 	})
+	g.world.Debug = false
 }
 
 func (g *Game) Update() error {
 	dt := 1.0 / 60
 	g.world.Update(dt)
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return errors.New("Exited")
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
@@ -80,12 +93,14 @@ func (g *Game) Update() error {
 	return nil
 }
 
-func (g *Game) Draw(screen *ebiten.Image) {
+func (g *Game) Draw(screen *ebiten.Image) error {
 	screen.Fill(color.RGBA{50, 60, 57, 255}) // default background color.
 	g.world.Draw(screen)
 	if g.world.Debug {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf(`%0.2f`, ebiten.CurrentTPS()))
 	}
+
+	return nil
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {

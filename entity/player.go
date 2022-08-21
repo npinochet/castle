@@ -39,6 +39,7 @@ func NewPlayer(x, y float64, props map[string]interface{}) *Player {
 		speed: 350, jumpSpeed: 110,
 	}
 	player.AddComponent(player)
+	player.Stats.Hud = true
 
 	return player
 }

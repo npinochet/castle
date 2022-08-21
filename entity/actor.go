@@ -81,7 +81,7 @@ func (a *Actor) ManageAnim() {
 	// TODO: Make more general, maybe add speed in the mix.
 	state := a.Anim.State
 	a.Body.Friction = !(state == anim.WalkTag && a.Body.Vx != 0)
-	a.Stats.SetActive(state != anim.AttackTag && state != anim.StaggerTag)
+	a.Stats.Pause = state == anim.AttackTag || state == anim.StaggerTag
 
 	if state == anim.IdleTag || state == anim.WalkTag {
 		nextState := anim.IdleTag

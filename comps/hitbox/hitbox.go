@@ -118,16 +118,15 @@ func (c *Comp) Hit(x, y, w, h, damage float64) (blocked bool) {
 		if comp.ITimer > 0 {
 			continue
 		}
-		if info.hit && comp.HurtFunc != nil {
-			comp.HurtFunc(c, info.col, damage)
-		} else if !info.hit && comp.BlockFunc != nil {
-			comp.BlockFunc(c, info.col, damage)
-		}
-	}
-
-	for comp, info := range doesHit {
-		if comp.ITimer <= 0 && info.hit {
+		if info.hit {
 			comp.ITimer = comp.ITime
+			if comp.HurtFunc != nil {
+				comp.HurtFunc(c, info.col, damage)
+			}
+		} else {
+			if comp.BlockFunc != nil {
+				comp.BlockFunc(c, info.col, damage)
+			}
 		}
 	}
 
