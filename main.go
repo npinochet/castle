@@ -8,6 +8,7 @@ import (
 	"game/utils"
 	"image/color"
 	"log"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -52,8 +53,9 @@ const (
 )
 
 var (
-	game   = &Game{}
-	player *entity.Player
+	game       = &Game{}
+	player     *entity.Player
+	canRestart = true
 )
 
 type Game struct {
@@ -80,6 +82,10 @@ func (g *Game) init() {
 }
 
 func (g *Game) Update() error {
+	if !canRestart {
+		return nil
+	}
+
 	dt := 1.0 / 60
 	g.world.Update(dt)
 
@@ -90,17 +96,26 @@ func (g *Game) Update() error {
 		g.world.Debug = !g.world.Debug
 	}
 
+	if player.Stats.Health <= 0 && canRestart {
+		canRestart = false
+		time.AfterFunc(2, func() {
+			game.init()
+			canRestart = true
+		})
+	}
+
 	return nil
 }
 
-func (g *Game) Draw(screen *ebiten.Image) error {
+func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{50, 60, 57, 255}) // default background color.
+	if !canRestart {
+		return
+	}
 	g.world.Draw(screen)
 	if g.world.Debug {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf(`%0.2f`, ebiten.CurrentTPS()))
 	}
-
-	return nil
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {

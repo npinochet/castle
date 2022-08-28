@@ -70,13 +70,13 @@ func (e *Entity) Draw(screen *ebiten.Image) {
 	}
 }
 
-// Is it necessary? Isn't enough with the GC?
+// TODO: Is it necessary? Isn't enough with the GC?
 func (e *Entity) Destroy() {
 	e.Active = false
 	for _, c := range e.Components {
-		if destroyer, ok := c.(Destroyer); ok {
-			c.SetActive(false)
-			destroyer.Destroy()
-		}
+		c.SetActive(false)
+		// if destroyer, ok := c.(Destroyer); ok {
+		//   destroyer.Destroy()
+		// }
 	}
 }

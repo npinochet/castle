@@ -19,7 +19,6 @@ func (k *Knight) SetActive(active bool) { k.Active = active }
 
 type Knight struct {
 	*Actor
-	speed  float64
 	player *core.Entity
 }
 
@@ -30,8 +29,8 @@ func NewKnight(x, y float64, props map[string]interface{}) *core.Entity {
 
 	knight := &Knight{
 		Actor: NewActor(x, y, body, anim, &stats.Comp{MaxPoise: 25}, 20, 20),
-		speed: speed,
 	}
+	knight.speed = speed
 	knight.AI = NewDefaultAI(knight.Actor, nil)
 	knight.AddComponent(knight.AI)
 	knight.AddComponent(knight)
@@ -48,7 +47,7 @@ func (k *Knight) Init(entity *core.Entity) {
 
 func (k *Knight) Update(dt float64) {
 	k.ManageAnim()
-	if k.Anim.State == anim.WalkTag && !(k.speed != 0) {
+	if k.Anim.State == anim.WalkTag && k.speed == 0 {
 		k.Anim.SetState(anim.IdleTag)
 	}
 	if k.Anim.State == anim.WalkTag || k.Anim.State == anim.IdleTag {
@@ -60,6 +59,10 @@ func (k *Knight) Update(dt float64) {
 		} else {
 			k.Body.Vx += k.speed * dt
 		}
+	}
+
+	if k.Stats.Health <= 0 {
+		k.World.RemoveEntity(k.ID) // creats recursion loop
 	}
 }
 

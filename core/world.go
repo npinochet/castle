@@ -93,13 +93,13 @@ func (w *World) RemoveEntity(id uint64) {
 	deleteCount := -1
 	for i, e := range w.entities {
 		if e.ID == id {
+			e.Destroy()
 			deleteCount = i
 
 			break
 		}
 	}
 	if deleteCount >= 0 {
-		w.entities[deleteCount].Destroy()
 		w.entities = append(w.entities[:deleteCount], w.entities[deleteCount+1:]...)
 	}
 }

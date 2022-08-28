@@ -12,9 +12,10 @@ type Config struct {
 	minAttackStamina              float64
 }
 
-// nolint: gomnd
+// nolint: gomnd, nolintlint
 func defaultConfig() *Config {
-	return &Config{minDist: 20,
+	return &Config{
+		minDist:          20,
 		attackCloseMax:   30,
 		attackMaxDist:    40,
 		maxDist:          50,
@@ -27,12 +28,12 @@ func NewDefaultAI(actor *Actor, config *Config) *ai.Comp {
 		config = defaultConfig()
 	}
 	speed := actor.speed
-	fms := &ai.Fsm{Initial: "Ready"}
+	fms := &ai.Fsm{Initial: "Idle"}
 
-	think := []ai.Action{{State: "Thinking", Timeout: ai.Timeout{"Ready", 0.4, 0.8}}}
+	think := []ai.Action{{State: "Thinking", Timeout: ai.Timeout{"Act", 1, 2}}}
 	decide := []ai.Action{
-		{State: "Approaching", Weight: 2, Timeout: ai.Timeout{"Ready", 2.0, 0}, Condition: inRangeStamina(config.minDist, -1, config.minAttackStamina, actor)},
-		{State: "BackingUp", Weight: 0.1, Timeout: ai.Timeout{"Ready", 2.0, 0}, Condition: inRange(0, config.attackMaxDist, nil)},
+		{State: "Approaching", Weight: 2, Timeout: ai.Timeout{"Act", 2.0, 0}, Condition: inRangeStamina(config.minDist, -1, config.minAttackStamina, actor)},
+		{State: "BackingUp", Weight: 0.1, Timeout: ai.Timeout{"Act", 2.0, 0}, Condition: inRange(0, config.attackMaxDist, nil)},
 		{State: "Attack", Weight: 2, Condition: inRangeStamina(0, config.attackMaxDist, config.minAttackStamina, actor)},
 		{State: "Guarding", Weight: 0.2, Timeout: ai.Timeout{"Unguarding", 1.0, 0}, Condition: inRange(0, config.maxDist, nil)},
 	}
@@ -42,8 +43,17 @@ func NewDefaultAI(actor *Actor, config *Config) *ai.Comp {
 	}
 
 	fms.Updates = map[string]ai.UpdateFunc{
-		"Ready":  func() []ai.Action { return decide },
+		"Act":    func() []ai.Action { return decide },
 		"Attack": func() []ai.Action { return attack },
+		"Idle": func() []ai.Action {
+			if !actor.AI.InTargetRange(0, config.maxDist) {
+				actor.speed = 0
+
+				return nil
+			}
+
+			return decide
+		},
 		"Approaching": func() []ai.Action {
 			if actor.AI.InTargetRange(config.minDist, -1) {
 				actor.speed = speed

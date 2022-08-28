@@ -64,6 +64,9 @@ func (p *Player) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
 }
 
 func (p *Player) control(dt float64) bool {
+	if p.Stats.Health <= 0 {
+		return false
+	}
 	if p.Anim.State == anim.AttackTag || p.Anim.State == anim.StaggerTag {
 		return false
 	}
