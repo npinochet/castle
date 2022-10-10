@@ -2,7 +2,7 @@
 **Working title**: Mini souls: Eternal Castle whatever
 # Inspirations
 * Dark Souls (Maybe a little too much).
-* "El inmortal", by Jorge Luis Borges.
+* "El inmortal" by Jorge Luis Borges.
 
 ## Setting
 ### Introduction
@@ -34,13 +34,13 @@ After year or centuries of being prisoners on the castle, strange social bonds a
 * Garden.
 
 ### Possible area themes
-* A dungeon full of deadly attractions, where people can pay (to a greedy man) for a *supposed* certain death.
+* A dungeon full of abandoned deadly attractions, where people paid (a greedy man) for a *supposed* certain death.
 * A garden/jungle: As the years passed, plants can grow limitless.
-* A Library housing mindless intellectuals who worship books
+* A Library housing mindless intellectuals who worship books.
 
 #### Imposed limitations
 * Must have at most 3 areas, presenting one covenant/group per area.
-* At least 3 enemies types per area. (3*3 = 9 enemies).
+* At least 3 enemies types per area. (3x3 = 9 enemies).
 * There must be a central kind of central area hub.
 * There must be a small tutorial area that directly connect to the central hub.
 * Areas must connect to each other and have unlockable shortcuts, these can be elevator of ladders.
@@ -134,3 +134,11 @@ To add dread and difficulty, the player can only save at designated points (like
 * Think of the item that can lift the curse.
 * Think of a story progression.
 * Add depth to combat mechanics.
+* Consider input/button weight to player controls.
+
+Level design tips:
+- search castle layouts.
+- keep it random and unpredictable.
+- New londo ruins can be accessed through the beginning, but has unkillable enemies to prevent new players going through it.
+- you can still takle difficult areas early to get cool items.
+- difficulty curves, no more than 2-3 bosses that needs to be killed in any order.
