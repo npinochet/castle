@@ -20,12 +20,12 @@ type World struct {
 }
 
 func NewWorld(width, height float64) *World {
-	return &World{bump.NewSpace(), camera.New(width, height), nil, map[uint64]*Entity{}, nil, true}
+	return &World{bump.NewSpace(), camera.New(width, height), nil, map[uint64]*Entity{}, nil, false}
 }
 
 func (w *World) AddEntity(entity *Entity) *Entity {
-	entity.Active = true
 	entity.ID = IDCount
+	w.entitiesCache[IDCount] = entity
 	IDCount++
 	entity.World = w
 	w.entities = append(w.entities, entity)
@@ -37,14 +37,6 @@ func (w *World) AddEntity(entity *Entity) *Entity {
 func (w *World) GetEntityByID(id uint64) *Entity {
 	if ent, ok := w.entitiesCache[id]; ok {
 		return ent
-	}
-
-	for _, ent := range w.entities {
-		if ent.ID == id {
-			w.entitiesCache[id] = ent
-
-			return ent
-		}
 	}
 
 	return nil
@@ -66,22 +58,18 @@ func (w *World) Update(dt float64) {
 		w.Map.Update(dt)
 	}
 	for _, e := range w.entities {
-		if e.Active {
-			e.Update(dt)
-		}
+		e.Update(dt)
 	}
 }
 
 func (w *World) Draw(screen *ebiten.Image) {
-	// TODO: Hide BackgroundImage and ForegroundImage on Tiled package.
+	// TODO: Hide BackgroundImage and ForegroundImage draw code on Map package.
 	if w.Map != nil {
 		background, _ := w.Map.backgroundImage.SubImage(w.Camera.Bounds()).(*ebiten.Image)
 		screen.DrawImage(background, nil)
 	}
 	for _, e := range w.entities {
-		if e.Active {
-			e.Draw(screen)
-		}
+		e.Draw(screen)
 	}
 	if w.Map != nil {
 		foreground, _ := w.Map.foregroundImage.SubImage(w.Camera.Bounds()).(*ebiten.Image)
@@ -90,16 +78,11 @@ func (w *World) Draw(screen *ebiten.Image) {
 }
 
 func (w *World) RemoveEntity(id uint64) {
-	deleteCount := -1
 	for i, e := range w.entities {
 		if e.ID == id {
-			e.Destroy()
-			deleteCount = i
+			w.entities = append(w.entities[:i], w.entities[i+1:]...)
 
 			break
 		}
-	}
-	if deleteCount >= 0 {
-		w.entities = append(w.entities[:deleteCount], w.entities[deleteCount+1:]...)
 	}
 }

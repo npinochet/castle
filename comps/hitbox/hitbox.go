@@ -11,9 +11,6 @@ import (
 
 const defaultITime = 1
 
-func (c *Comp) IsActive() bool        { return c.active }
-func (c *Comp) SetActive(active bool) { c.active = active }
-
 type HitFunc func(*Comp, bump.Collision, float64)
 
 type Hitbox struct {
@@ -24,7 +21,6 @@ type Hitbox struct {
 }
 
 type Comp struct {
-	active              bool
 	EntX, EntY          *float64
 	space               *bump.Space
 	boxes               []*Hitbox

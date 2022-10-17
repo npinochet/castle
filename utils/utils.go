@@ -7,9 +7,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-const (
-	PlayerUID = iota
-)
+const PlayerUID = 100
 
 type ControlPack [6]ebiten.Key
 type ControlKey int

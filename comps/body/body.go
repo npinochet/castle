@@ -18,11 +18,7 @@ const (
 	frictionEpsilon             = 0.05
 )
 
-func (c *Comp) IsActive() bool        { return c.active }
-func (c *Comp) SetActive(active bool) { c.active = active }
-
 type Comp struct {
-	active         bool
 	Static, Ground bool
 	Friction       bool
 	space          *bump.Space

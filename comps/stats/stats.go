@@ -38,11 +38,8 @@ var (
 	lagColor          = color.RGBA{251, 242, 54, 255}
 )
 
-func (c *Comp) IsActive() bool        { return c.active }
-func (c *Comp) SetActive(active bool) { c.active = active }
-
 type Comp struct {
-	active, Hud, Pause                      bool
+	Hud, Pause                              bool
 	MaxHealth, MaxStamina, MaxPoise         float64
 	Health, Stamina, Poise                  float64
 	StaminaRecoverRate, PoiseRecoverSeconds float64

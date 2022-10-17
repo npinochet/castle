@@ -22,7 +22,7 @@ type Knight struct {
 	player *core.Entity
 }
 
-func NewKnight(x, y float64, props map[string]interface{}) *core.Entity {
+func NewKnight(x, y, w, h float64, props map[string]string) *core.Entity {
 	speed := 180.0
 	anim := &anim.Comp{FilesName: knightAnimFile, X: -2, Y: -3}
 	body := &body.Comp{W: 10, H: 11, MaxX: 35}
@@ -31,7 +31,7 @@ func NewKnight(x, y float64, props map[string]interface{}) *core.Entity {
 		Actor: NewActor(x, y, body, anim, &stats.Comp{MaxPoise: 25}, 20, 20),
 	}
 	knight.speed = speed
-	knight.AI = NewDefaultAI(knight.Actor, nil)
+	knight.AI = knight.NewDefaultAI(nil)
 	knight.AddComponent(knight.AI)
 	knight.AddComponent(knight)
 
@@ -62,7 +62,7 @@ func (k *Knight) Update(dt float64) {
 	}
 
 	if k.Stats.Health <= 0 {
-		k.World.RemoveEntity(k.ID) // creats recursion loop
+		k.World.RemoveEntity(k.ID) // TODO: creates infinite/recursive loop sometimes I think.
 	}
 }
 

@@ -18,9 +18,6 @@ const (
 	BlockSliceName   = "blockbox"
 )
 
-func (c *Comp) IsActive() bool        { return c.active }
-func (c *Comp) SetActive(active bool) { c.active = active }
-
 type FrameCallback func(frame int)
 
 type Fsm struct {
@@ -31,10 +28,9 @@ type Fsm struct {
 }
 
 type Comp struct {
-	active       bool
-	FlipX, FlipY bool
 	FilesName    string
 	X, Y         float64
+	FlipX, FlipY bool
 	w, h         float64
 	State        string
 	Image        *ebiten.Image
@@ -84,7 +80,7 @@ func (c *Comp) Update(dt float64) {
 			c.SetState(nextState)
 		}
 	}
-	if c.callback != nil {
+	if c.callback != nil { // TODO: review and refactor whole per frame callback frame mechanic.
 		c.callback(c.Data.CurrentFrame - c.Data.CurrentAnimation.From)
 	}
 }
@@ -127,23 +123,25 @@ func (c *Comp) findCurrenctSlice(slice *aseprite.Slice) *bump.Rect {
 	ssx, ssy := float64(frame.SpriteSourceSize.X), float64(frame.SpriteSourceSize.Y)
 	sw, sh := float64(frame.SourceSize.Width), float64(frame.SourceSize.Height)
 
+	// TODO: Find a way to get the truly frame slices, aseprite goes nuts on these.
 	for _, key := range slice.Keys {
-		if key.FrameNum == currentFrame {
-			bound := key.Bounds
-			rect := &bump.Rect{
-				X: float64(bound.X) - ssx + c.X, Y: float64(bound.Y) - ssy + c.Y,
-				W: float64(bound.Width), H: float64(bound.Height),
-			}
-
-			if c.FlipX {
-				rect.X += sw - rect.W - float64(bound.X)*2
-			}
-			if c.FlipY {
-				rect.Y += sh - rect.W - float64(bound.Y)*2
-			}
-
-			return rect
+		if key.FrameNum != currentFrame {
+			continue
 		}
+		bound := key.Bounds
+		rect := &bump.Rect{
+			X: float64(bound.X) - ssx + c.X, Y: float64(bound.Y) - ssy + c.Y,
+			W: float64(bound.Width), H: float64(bound.Height),
+		}
+
+		if c.FlipX {
+			rect.X += sw - rect.W - float64(bound.X)*2
+		}
+		if c.FlipY {
+			rect.Y += sh - rect.W - float64(bound.Y)*2
+		}
+
+		return rect
 	}
 
 	return nil

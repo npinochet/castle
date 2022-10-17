@@ -10,8 +10,10 @@ import (
 	"github.com/tanema/gween/ease"
 )
 
-const defaultTransitionDuration = 0.8
-const defaultStiffness = 9
+const (
+	defaultTransitionDuration = 0.8
+	defaultStiffness          = 9
+)
 
 type Positioner interface{ Position() (float64, float64) }
 
@@ -77,7 +79,6 @@ func (c *Camera) Update(dt float64) {
 		}
 		c.Translate(float64(prog)*c.transitionX, float64(prog)*c.transitionY)
 	}
-
 	if c.shakeTween != nil {
 		prog, done := c.shakeTween.Update(float32(dt))
 		if done {

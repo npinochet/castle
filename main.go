@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"game/core"
 	"game/entity"
-	"game/utils"
 	"image/color"
 	"log"
 	"time"
@@ -33,7 +32,7 @@ import (
 - Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
 - Add a Timeout system for AI states.
 - Clean up AI code, Make a default AI behaviour for actors if none are present. Make it tweekable with other params maybe.
-
+- Think of movement accion or states the anim component can have.
 
 -- Dark Souls Combat Findings
 - When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.
@@ -41,7 +40,11 @@ import (
 - When using a big shield (stability high) and guarding, an enemy attack can be deflect.
 - When blocking an attack, a little stagger animation is played.
 - Stagger animation can be reset if hit again.
-	- Only the player can be stun locked. -> poise is reset onyl after stagger animation finishes.
+	- Only the player can be stun locked. -> poise is reset only after stagger animation finishes.
+- No invinsibility frames after getting hit.
+	- Each enemy can hit the player after being in contact with the hitbox once.
+	- If the hitbox gets away from the player hurtbox in one frame and then it overlaps again on the next frame, it should hit again.
+- Add teams to actor, the AI should only target player and not other enemies (unless hit by enemy).
 */
 
 const (
@@ -72,7 +75,7 @@ func (g *Game) init() {
 	}
 	player = entity.NewPlayer(playerX, playerY, nil)
 	g.world.Camera.Follow(player, playerSize, playerSize)
-	g.world.AddEntity(&player.Entity).ID = utils.PlayerUID
+	g.world.AddEntity(&player.Entity)
 
 	g.world.Map.LoadBumpObjects(g.world.Space, "collisions")
 	g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{

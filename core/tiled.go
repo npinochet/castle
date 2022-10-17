@@ -9,7 +9,7 @@ import (
 	"github.com/lafriks/go-tiled/render"
 )
 
-type EntityContructor func(x, y float64, props map[string]interface{}) *Entity
+type EntityContructor func(x, y, w, h float64, props map[string]string) *Entity
 
 type Map struct {
 	data                             *tiled.Map
@@ -111,12 +111,11 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 			continue
 		}
 		if construct, ok := entityBindMap[tile.ID]; ok {
-			props := map[string]interface{}{}
-			props["w"], props["h"] = obj.Width, obj.Height
+			props := map[string]string{}
 			for _, prop := range obj.Properties {
 				props[prop.Name] = prop.Value
 			}
-			world.AddEntity(construct(obj.X, obj.Y, props))
+			world.AddEntity(construct(obj.X, obj.Y, obj.Width, obj.Height, props))
 		}
 	}
 }

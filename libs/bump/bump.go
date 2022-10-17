@@ -1,8 +1,6 @@
 package bump
 
-import (
-	"math"
-)
+import "math"
 
 // Collision detection and resolution lib based on bump.lua by kikito.
 

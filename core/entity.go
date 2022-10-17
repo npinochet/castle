@@ -2,10 +2,7 @@ package core
 
 import "github.com/hajimehoshi/ebiten/v2"
 
-type Component interface {
-	SetActive(active bool)
-	IsActive() bool
-}
+type Component interface{}
 
 type Initializer interface{ Init(*Entity) }
 type Updater interface{ Update(dt float64) }
@@ -28,15 +25,13 @@ type Entity struct {
 func (e *Entity) Position() (float64, float64) { return e.X, e.Y }
 
 func (e *Entity) AddComponent(components ...Component) Component {
-	for _, component := range components {
-		component.SetActive(true)
-		e.Components = append(e.Components, component)
-	}
+	e.Components = append(e.Components, components...)
 
 	return components[0]
 }
 
 func (e *Entity) InitComponents() {
+	e.Active = true
 	for _, c := range e.Components {
 		if initializer, ok := c.(Initializer); ok {
 			initializer.Init(e)
@@ -45,38 +40,32 @@ func (e *Entity) InitComponents() {
 }
 
 func (e *Entity) Update(dt float64) {
+	if !e.Active {
+		return
+	}
 	for _, c := range e.Components {
-		if updater, ok := c.(Updater); c.IsActive() && ok {
+		if updater, ok := c.(Updater); ok {
 			updater.Update(dt)
 		}
 	}
 }
 
 func (e *Entity) Draw(screen *ebiten.Image) {
+	if !e.Active {
+		return
+	}
+
 	enitiyPos := ebiten.GeoM{}
 	enitiyPos.Translate(e.X, e.Y)
 	x, y := e.World.Camera.Position()
 	enitiyPos.Translate(-x, -y)
 
 	for _, c := range e.Components {
-		if c.IsActive() {
-			if drawer, ok := c.(Drawer); ok {
-				drawer.Draw(screen, enitiyPos)
-			}
-			if drawer, ok := c.(DebugDrawer); e.World.Debug && ok {
-				drawer.DebugDraw(screen, enitiyPos)
-			}
+		if drawer, ok := c.(Drawer); ok {
+			drawer.Draw(screen, enitiyPos)
 		}
-	}
-}
-
-// TODO: Is it necessary? Isn't enough with the GC?
-func (e *Entity) Destroy() {
-	e.Active = false
-	for _, c := range e.Components {
-		c.SetActive(false)
-		// if destroyer, ok := c.(Destroyer); ok {
-		//   destroyer.Destroy()
-		// }
+		if drawer, ok := c.(DebugDrawer); e.World.Debug && ok {
+			drawer.DebugDraw(screen, enitiyPos)
+		}
 	}
 }
