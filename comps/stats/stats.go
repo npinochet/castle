@@ -16,7 +16,7 @@ import (
 const (
 	defaultHealth         = 100
 	defaultStamina        = 80
-	defaultPoise          = 60
+	defaultPoise          = 30
 	defaultRecoverRate    = 20
 	defaultRecoverSeconds = 3
 
@@ -160,7 +160,7 @@ func (c *Comp) drawHud() *ebiten.Image {
 	c.drawSegment(hud, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
 	c.drawSegment(hud, 1, c.Stamina, c.MaxStamina, c.staminaLag, staminaColor)
 	c.drawSegment(hud, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
-	c.drawCount(hud, 3, 12)
+	c.drawCount(hud, 3, 12) //nolint: gomnd
 
 	return hud
 }

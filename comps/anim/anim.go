@@ -51,7 +51,7 @@ func (c *Comp) Init(entity *core.Entity) {
 
 	c.SetState(c.Data.Meta.Animations[0].Name)
 	rect := c.Data.Frames.FrameAtIndex(c.Data.CurrentFrame).SpriteSourceSize
-	c.w, c.h = float64(rect.Width), float64(rect.Height)
+	c.w, c.h = float64(rect.Width), float64(rect.Height) // TODO: Do we need c.w and c.h?
 
 	for i, sliceName := range [3]string{HurtboxSliceName, HitboxSliceName, BlockSliceName} {
 		c.slices[i] = c.Data.Slice(sliceName)

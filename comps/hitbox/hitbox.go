@@ -14,23 +14,22 @@ const defaultITime = 1
 type HitFunc func(*Comp, bump.Collision, float64)
 
 type Hitbox struct {
-	comp  *Comp
 	rect  bump.Rect
+	comp  *Comp
 	block bool
-	image *ebiten.Image
 }
 
 type Comp struct {
-	EntX, EntY          *float64
+	Entity              *core.Entity
 	space               *bump.Space
 	boxes               []*Hitbox
-	debugLastHitbox     bump.Rect
+	debugLastHitbox     *bump.Rect
 	HurtFunc, BlockFunc HitFunc
 	ITimer, ITime       float64
 }
 
 func (c *Comp) Init(entity *core.Entity) {
-	c.EntX, c.EntY = &entity.X, &entity.Y
+	c.Entity = entity
 	c.ITime = defaultITime
 	c.space = entity.World.Space
 }
@@ -38,42 +37,36 @@ func (c *Comp) Init(entity *core.Entity) {
 func (c *Comp) Update(dt float64) {
 	c.ITimer -= dt
 	for _, box := range c.boxes {
-		p := bump.Vec2{X: *c.EntX + box.rect.X, Y: *c.EntY + box.rect.Y}
-		c.space.Move(box, p, func(i, o bump.Item) (bump.ColType, bool) { return 0, false })
+		p := bump.Vec2{X: c.Entity.X + box.rect.X, Y: c.Entity.Y + box.rect.Y}
+		c.space.Move(box, p, bump.NilFilter)
 	}
 }
 
 func (c *Comp) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
 	for _, box := range c.boxes {
+		image := ebiten.NewImage(int(box.rect.W), int(box.rect.H))
+		image.Fill(color.RGBA{0, 0, 255, 100})
+		if box.block {
+			image.Fill(color.RGBA{255, 0, 0, 100})
+		}
 		op := &ebiten.DrawImageOptions{GeoM: enitiyPos}
 		op.GeoM.Translate(box.rect.X, box.rect.Y)
-		screen.DrawImage(box.image, op)
+		screen.DrawImage(image, op)
 	}
 
-	if c.debugLastHitbox.W > 0 && c.debugLastHitbox.H > 0 {
+	if c.debugLastHitbox != nil {
 		image := ebiten.NewImage(int(c.debugLastHitbox.W), int(c.debugLastHitbox.H))
 		image.Fill(color.RGBA{255, 255, 0, 100})
 		op := &ebiten.DrawImageOptions{GeoM: enitiyPos}
 		op.GeoM.Translate(c.debugLastHitbox.X, c.debugLastHitbox.Y)
 		screen.DrawImage(image, op)
-		c.debugLastHitbox.W = 0
-	}
-}
-
-func (c *Comp) Destroy() {
-	for len(c.boxes) > 0 {
-		c.PopHitbox()
+		c.debugLastHitbox = nil
 	}
 }
 
 func (c *Comp) PushHitbox(x, y, w, h float64, block bool) {
-	image := ebiten.NewImage(int(w), int(h))
 	rect := bump.Rect{X: x, Y: y, W: w, H: h}
-	image.Fill(color.RGBA{0, 0, 255, 100})
-	if block {
-		image.Fill(color.RGBA{255, 0, 0, 100})
-	}
-	box := &Hitbox{c, rect, block, image}
+	box := &Hitbox{rect, c, block}
 	c.space.Set(box, rect)
 	c.boxes = append(c.boxes, box)
 }
@@ -87,9 +80,11 @@ func (c *Comp) PopHitbox() *Hitbox {
 	return box
 }
 
-func (c *Comp) Hit(x, y, w, h, damage float64) (blocked bool) {
-	c.debugLastHitbox = bump.Rect{X: x, Y: y, W: w, H: h}
-	cols := c.space.Query(bump.Rect{X: x + *c.EntX, Y: y + *c.EntY, W: w, H: h}, c.hitFilter())
+// TODO: Review how this function works, it's complicated.
+// Remove I frames, and let one hit per hurtbox, for the duration of the attack somehow.
+func (c *Comp) HitFromSpriteBox(rect *bump.Rect, damage float64) (blocked bool) {
+	c.debugLastHitbox = rect
+	cols := c.space.Query(bump.Rect{X: rect.X + c.Entity.X, Y: rect.Y + c.Entity.Y, W: rect.W, H: rect.H}, c.hitFilter())
 
 	type hitInfo struct {
 		hit bool
@@ -119,14 +114,28 @@ func (c *Comp) Hit(x, y, w, h, damage float64) (blocked bool) {
 			if comp.HurtFunc != nil {
 				comp.HurtFunc(c, info.col, damage)
 			}
-		} else {
-			if comp.BlockFunc != nil {
-				comp.BlockFunc(c, info.col, damage)
-			}
+		} else if comp.BlockFunc != nil {
+			comp.BlockFunc(c, info.col, damage)
 		}
 	}
 
 	return blocked
+}
+
+func (c *Comp) QueryFront(dist, height float64, lookingRight bool) []*core.Entity { // TODO: This should be on body Comp.
+	rect := bump.Rect{X: c.Entity.X - dist, Y: c.Entity.Y - height/2, W: dist, H: height}
+	if lookingRight {
+		rect.X += dist
+	}
+	cols := c.space.Query(rect, c.hitFilter())
+	var ents []*core.Entity
+	for _, c := range cols {
+		if box, ok := c.Item.(*Hitbox); ok {
+			ents = append(ents, box.comp.Entity)
+		}
+	}
+
+	return ents
 }
 
 func (c *Comp) hitFilter() bump.SimpleFilter {

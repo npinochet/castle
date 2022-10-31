@@ -9,11 +9,11 @@
             "scaleInDock": 1.8745
         },
         "intro.tmx": {
-            "scale": 1.72,
-            "selectedLayer": 4,
+            "scale": 2.65,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 1980.232558139535,
-                "y": 2037.5
+                "x": 2029.433962264151,
+                "y": 2012.6415094339623
             }
         },
         "tiles.tsx": {
@@ -26,8 +26,8 @@
     ],
     "project": "intro.tiled-project",
     "recentFiles": [
-        "tiles.tsx",
-        "intro.tmx"
+        "intro.tmx",
+        "tiles.tsx"
     ],
     "resizeMap.removeObjects": false
 }

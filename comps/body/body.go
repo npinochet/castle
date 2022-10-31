@@ -57,10 +57,6 @@ func (c *Comp) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
 	screen.DrawImage(c.image, op)
 }
 
-func (c *Comp) Destroy() {
-	c.space.Remove(c)
-}
-
 func (c *Comp) updateMovement(dt float64) {
 	if c.Friction || math.Abs(c.Vx) > c.MaxX {
 		var fric float64 = groundFriction

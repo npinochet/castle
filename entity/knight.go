@@ -6,7 +6,6 @@ import (
 	"game/comps/body"
 	"game/comps/stats"
 	"game/core"
-	"game/utils"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -19,11 +18,10 @@ func (k *Knight) SetActive(active bool) { k.Active = active }
 
 type Knight struct {
 	*Actor
-	player *core.Entity
 }
 
 func NewKnight(x, y, w, h float64, props map[string]string) *core.Entity {
-	speed := 180.0
+	speed := 100.0
 	anim := &anim.Comp{FilesName: knightAnimFile, X: -2, Y: -3}
 	body := &body.Comp{W: 10, H: 11, MaxX: 35}
 
@@ -41,8 +39,6 @@ func NewKnight(x, y, w, h float64, props map[string]string) *core.Entity {
 func (k *Knight) Init(entity *core.Entity) {
 	hurtbox, _, _ := k.Anim.GetFrameHitboxes()
 	k.Hitbox.PushHitbox(hurtbox.X, hurtbox.Y, hurtbox.W, hurtbox.H, false)
-	k.player = k.World.GetEntityByID(utils.PlayerUID)
-	k.AI.Target = k.player
 }
 
 func (k *Knight) Update(dt float64) {
@@ -50,8 +46,10 @@ func (k *Knight) Update(dt float64) {
 	if k.Anim.State == anim.WalkTag && k.speed == 0 {
 		k.Anim.SetState(anim.IdleTag)
 	}
-	if k.Anim.State == anim.WalkTag || k.Anim.State == anim.IdleTag {
-		k.Anim.FlipX = k.player.X < k.X
+	if k.AI.Target != nil {
+		if k.Anim.State == anim.WalkTag || k.Anim.State == anim.IdleTag {
+			k.Anim.FlipX = k.AI.Target.X < k.X
+		}
 	}
 	if k.Anim.State != anim.AttackTag && k.Anim.State != anim.StaggerTag {
 		if k.Anim.FlipX {

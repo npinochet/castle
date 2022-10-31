@@ -17,12 +17,16 @@ type Timeout struct {
 	Duration, MaxDuration float64
 }
 
+type Cooldown struct {
+	Duration, MaxDuration float64
+}
+
 type Action struct {
 	Timeout     Timeout
+	Cooldown    Cooldown
 	Condition   func() bool
 	Next        func() []WeightedState
 	Entry, Exit func()
-	// TODO: recovery time? or just depend on stamina bars?
 }
 
 type Fsm struct {
@@ -31,11 +35,7 @@ type Fsm struct {
 	State, Initial State
 	timer          float64
 	timeoutTarget  State
-}
-
-type actionIndex struct {
-	action *Action
-	index  int
+	cooldowns      map[State]float64
 }
 
 func (f *Fsm) update(dt float64) {
@@ -54,16 +54,42 @@ func (f *Fsm) update(dt float64) {
 			f.timeoutTarget = ""
 		}
 	}
+	if f.cooldowns == nil {
+		f.cooldowns = map[State]float64{}
+	}
+	for state, timer := range f.cooldowns {
+		f.cooldowns[state] -= dt
+		if timer <= 0 {
+			delete(f.cooldowns, state)
+		}
+	}
 }
 
 func (f *Fsm) setState(states []WeightedState) {
-	if action := f.Actions[f.State]; action != nil && action.Exit != nil {
-		action.Exit()
+	if action := f.Actions[f.State]; action != nil {
+		if action.Cooldown.Duration > 0 {
+			f.cooldowns[f.State] = action.Cooldown.Duration
+			if action.Cooldown.MaxDuration > action.Cooldown.Duration {
+				f.cooldowns[f.State] += rand.Float64() * (action.Cooldown.MaxDuration - action.Cooldown.Duration)
+			}
+		}
+		if action.Exit != nil {
+			action.Exit()
+		}
 	}
-	f.timeoutTarget = ""
 	f.State = f.selectState(states)
-	if action := f.Actions[f.State]; action != nil && action.Entry != nil {
-		action.Entry()
+	f.timeoutTarget = ""
+	if action := f.Actions[f.State]; action != nil {
+		if action.Timeout.Duration > 0 {
+			f.timer = action.Timeout.Duration
+			if action.Timeout.MaxDuration > action.Timeout.Duration {
+				f.timer += rand.Float64() * (action.Timeout.MaxDuration - action.Timeout.Duration)
+			}
+			f.timeoutTarget = action.Timeout.Target
+		}
+		if action.Entry != nil {
+			action.Entry()
+		}
 	}
 }
 
@@ -74,34 +100,25 @@ func (f *Fsm) selectState(states []WeightedState) State {
 		if action == nil {
 			log.Panicf("AI: no action found for state %s\n", s.State)
 		}
-		if s.Weight == 0 {
+		if s.Weight < 0 {
 			s.Weight = 1.0 / float64(len(states))
 		}
 		actions[i] = action
 	}
 
-	var selected []actionIndex
+	var selected []int
 	totalWeight := 0.0
 	for i, a := range actions {
-		if a.Condition == nil || a.Condition() {
+		if (a.Condition == nil || a.Condition()) && f.cooldowns[states[i].State] <= 0 {
 			totalWeight += states[i].Weight
-			selected = append(selected, actionIndex{a, i})
+			selected = append(selected, i)
 		}
 	}
 
 	r := rand.Float64() * totalWeight
-	for _, a := range selected {
-		if r -= states[a.index].Weight; r <= 0 {
-			action := a.action
-			if action.Timeout.Duration > 0 {
-				f.timer = action.Timeout.Duration
-				if action.Timeout.MaxDuration > action.Timeout.Duration {
-					f.timer += rand.Float64() * (action.Timeout.MaxDuration - action.Timeout.Duration)
-				}
-				f.timeoutTarget = action.Timeout.Target
-			}
-
-			return states[a.index].State
+	for _, i := range selected {
+		if r -= states[i].Weight; r <= 0 {
+			return states[i].State
 		}
 	}
 

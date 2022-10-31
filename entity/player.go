@@ -108,6 +108,6 @@ func (p *Player) control(dt float64) bool {
 }
 
 func (p *Player) OnHurt(otherHc *hitbox.Comp, col bump.Collision, damage float64) {
-	p.Actor.Hurt(*otherHc.EntX, damage, nil)
+	p.Actor.Hurt(otherHc.Entity.X, damage, nil)
 	p.World.Camera.Shake(0.5, 1)
 }

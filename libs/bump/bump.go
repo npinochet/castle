@@ -33,9 +33,8 @@ const (
 	Slide
 )
 
-func DefaultFilter(item, other Item) (response ColType, collide bool) {
-	return Slide, true
-}
+func DefaultFilter(item, other Item) (response ColType, collide bool) { return Slide, true }
+func NilFilter(item, other Item) (ColType, bool)                      { return 0, false }
 
 func DefaultSimpleFilter(item Item) bool {
 	return true
@@ -176,22 +175,24 @@ func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (i1, i2 float64, normal Vec
 			if q[i] <= 0 {
 				return
 			}
-		} else {
-			r := q[i] / p[i]
-			if p[i] < 0 {
-				if r > i2 {
-					return
-				} else if r > i1 {
-					i1 = r
-					normal = Vec2{nx[i], ny[i]}
-				}
-			} else {
-				if r < i1 {
-					return
-				} else if r < i2 {
-					i2 = r
-				}
+
+			continue
+		}
+		r := q[i] / p[i]
+		if p[i] < 0 {
+			if r > i2 {
+				return
+			} else if r > i1 {
+				i1 = r
+				normal = Vec2{nx[i], ny[i]}
 			}
+
+			continue
+		}
+		if r < i1 {
+			return
+		} else if r < i2 {
+			i2 = r
 		}
 	}
 
@@ -206,32 +207,32 @@ func detectCollision(rect1, rect2 Rect, goal Vec2) (col Collision, ok bool) {
 	interRect := rectDiff(rect1, rect2)
 
 	if !detectCollisionPhase1(interRect, rect1, &col) {
-		return
+		return col, false
 	}
 
-	if col.Overlaps {
-		if (col.Move == Vec2{}) {
-			p := rectNearestCorner(interRect, Vec2{})
-			if math.Abs(p.X) < math.Abs(p.Y) {
-				p.Y = 0
-			} else {
-				p.X = 0
-			}
-			col.Normal = Vec2{math.Copysign(1, p.X), math.Copysign(1, p.Y)}
-			col.Touch = Vec2{rect1.X + p.X, rect1.Y + p.Y}
+	if !col.Overlaps {
+		return col, true
+	}
+
+	if (col.Move == Vec2{}) {
+		p := rectNearestCorner(interRect, Vec2{})
+		if math.Abs(p.X) < math.Abs(p.Y) {
+			p.Y = 0
 		} else {
-			i1, _, normal, found := lineSegmentIntersection(interRect, Vec2{}, col.Move)
-			if !found {
-				return
-			}
-			col.Normal = normal
-			col.Touch = Vec2{rect1.X + col.Move.X*i1, rect1.Y + col.Move.Y*i1}
+			p.X = 0
 		}
+		col.Normal = Vec2{math.Copysign(1, p.X), math.Copysign(1, p.Y)}
+		col.Touch = Vec2{rect1.X + p.X, rect1.Y + p.Y}
+	} else {
+		i1, _, normal, found := lineSegmentIntersection(interRect, Vec2{}, col.Move)
+		if !found {
+			return col, false
+		}
+		col.Normal = normal
+		col.Touch = Vec2{rect1.X + col.Move.X*i1, rect1.Y + col.Move.Y*i1}
 	}
 
-	ok = true
-
-	return col, ok
+	return col, true
 }
 
 func detectCollisionPhase1(interRect, rect1 Rect, col *Collision) bool {

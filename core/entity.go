@@ -6,7 +6,6 @@ type Component interface{}
 
 type Initializer interface{ Init(*Entity) }
 type Updater interface{ Update(dt float64) }
-type Destroyer interface{ Destroy() }
 type Drawer interface {
 	Draw(screen *ebiten.Image, enitiyPos ebiten.GeoM)
 }

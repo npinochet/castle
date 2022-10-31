@@ -13,7 +13,7 @@ import (
 const (
 	defaultAttackPushForce                    = 100
 	defaultReactForce                         = 200
-	deafultDamage, defaultStaminaDamage       = 20, 20
+	deafultDamage, defaultStaminaDamage       = 40, 20
 	defaultMaxXDiv, defaultMaxXRecoverRateDiv = 1.2, 2
 )
 
@@ -68,10 +68,10 @@ func NewActor(
 		if actor.Anim.State == anim.BlockTag {
 			actor.ShieldDown()
 		}
-		actor.Hurt(*otherHc.EntX, damage, nil)
+		actor.Hurt(otherHc.Entity.X, damage, nil)
 	}
 	actor.Hitbox.BlockFunc = func(otherHc *hitbox.Comp, col bump.Collision, damange float64) {
-		actor.Block(*otherHc.EntX, damange, nil)
+		actor.Block(otherHc.Entity.X, damange, nil)
 	}
 
 	return actor
@@ -111,7 +111,7 @@ func (a *Actor) Attack() {
 				a.Body.Vx += force
 				a.Stats.AddStamina(-a.StaminaDamage)
 			}
-			if a.Hitbox.Hit(hitbox.X, hitbox.Y, hitbox.W, hitbox.H, a.Damage) {
+			if a.Hitbox.HitFromSpriteBox(hitbox, a.Damage) {
 				if !onceReaction {
 					onceReaction = true
 					// TODO: a.Stagger(force) when shield has too much defense?

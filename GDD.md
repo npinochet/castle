@@ -140,5 +140,28 @@ Level design tips:
 - search castle layouts.
 - keep it random and unpredictable.
 - New londo ruins can be accessed through the beginning, but has unkillable enemies to prevent new players going through it.
-- you can still takle difficult areas early to get cool items.
+- you can still tackle difficult areas early to get cool items.
 - difficulty curves, no more than 2-3 bosses that needs to be killed in any order.
+
+
+Stages:
+* Gameplay:
+    * Tweak enemy behavior:
+        1. Make a way to query if an entity/actor is in front of you
+        * Rename config vars, use something more descriptive
+        * Starts IDLE until something comes up his viewport (an aabb box) and anything that touches it becomes his target.
+        * Is it is too far, the enemy runs until combat distance.
+        * On combat distance, the enemy speed reduces and wait's patiently pacing around.
+        * If player comes closer maybe the shield is raise? or the enemy attacks (can be tweak with aggressive parameter?)
+    * Finish skeleton animations?
+    * Implement skeleton enemy
+    * Make simple test map with multiple enemies, see how they behave
+    * Think about adding roll/dodge for gameplay experimentation
+
+    Future:
+    * Ladders
+    * Bonfire
+
+* Level Design:
+    * Test when possible
+

@@ -27,7 +27,10 @@ import (
 - Change background color and characters outline color.
 - Rethink Poise mechanic, is shouldn't be a bar that increses with time, it should be more like a health that resets.
 - Implement estus flasks.
-- Implement backstepping (kind of life rolling). (think about adding I frames or not).
+- Implement backstepping (kind of life rolling). (think about adding I frames or not, maybe just shrink the hurtbox).
+- Consider scapping core.Entity all together, use interface{} (pointer) as entities and use Actor for everything.
+	Every Comp will have an actor referencing it's owner.
+
 
 - Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
 - Add a Timeout system for AI states.

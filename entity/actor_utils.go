@@ -3,21 +3,26 @@ package entity
 import (
 	"game/comps/ai"
 	"game/comps/anim"
+	"math/rand"
 )
 
 type AIConfig struct {
-	minDist, maxDist              float64
-	attackCloseMax, attackMaxDist float64
-	minAttackStamina              float64
+	viewDist         float64
+	combatDist       float64
+	backUpDist       float64
+	reactDist        float64
+	minAttackStamina float64
 }
 
 // nolint: gomnd, nolintlint
 func defaultConfig() *AIConfig {
+	// TODO: Review config attributes and make them more understandable.
+
 	return &AIConfig{
-		minDist:          20,
-		attackCloseMax:   30,
-		attackMaxDist:    40,
-		maxDist:          50,
+		viewDist:         100,
+		combatDist:       100,
+		backUpDist:       50,
+		reactDist:        20,
 		minAttackStamina: 0.2,
 	}
 }
@@ -26,93 +31,106 @@ func (a *Actor) NewDefaultAI(config *AIConfig) *ai.Comp {
 	if config == nil {
 		config = defaultConfig()
 	}
+	maxX := a.Body.MaxX
 	speed := a.speed
-
-	decide := []ai.WeightedState{{"Pursuit", 2}, {"BackUp", 0.5}, {"DecideAttack", 2}, {"Guard", 0.1}}
-	attack := []ai.WeightedState{{"AttackClose", 1}, {"AttackFast", 1}}
+	act := []ai.WeightedState{{"Wait", 2}, {"Pace", 0.5}, {"Attack", 1}, {"RunAttack", 1}, {"Guard", 0.1}}
+	react := []ai.WeightedState{{"Attack", 1}, {"Guard", 0.5}, {"Wait", 0.8}}
 
 	actions := map[ai.State]*ai.Action{
-		"Act": {Next: func() []ai.WeightedState { return decide }},
-		"DecideAttack": {
-			Condition: func() bool {
-				return a.AI.InTargetRange(0, config.attackMaxDist) && a.Stats.Stamina > config.minAttackStamina
-			},
-			Next: func() []ai.WeightedState { return attack },
-		},
-		"AttackClose": {
-			Condition: func() bool {
-				return a.AI.InTargetRange(0, config.attackCloseMax) && a.Stats.Stamina > config.minAttackStamina
-			},
-			Entry: func() { a.Attack() },
+		"Act": {Next: func() []ai.WeightedState { return act }},
+		"Idle": {
+			Entry: func() { a.speed = 0 },
 			Next: func() []ai.WeightedState {
-				if a.Anim.State != anim.AttackTag {
-					return []ai.WeightedState{{"Think", 0}}
+				if targets := a.Hitbox.QueryFront(config.viewDist, 40, a.Anim.FlipX); len(targets) > 0 {
+					a.AI.Target = targets[0]
+				}
+				if a.AI.Target != nil {
+					return []ai.WeightedState{{"Pursuit", 1}, {"Pace", 0}}
 				}
 
 				return nil
 			},
 		},
-		"AttackFast": {
-			Condition: func() bool {
-				return a.AI.InTargetRange(0, config.attackCloseMax) && a.Stats.Stamina > config.minAttackStamina
+		"Wait": {
+			Cooldown: ai.Cooldown{1, 2},
+			Timeout:  ai.Timeout{"Act", 1, 1.2},
+			Entry:    func() { a.speed = 0 },
+		},
+		"Pursuit": {
+			Condition: func() bool { return !a.AI.InTargetRange(0, config.combatDist) },
+			Entry: func() {
+				a.speed = speed
+				a.Body.MaxX = maxX
 			},
-			Entry: func() { a.Attack() },
+			Next: func() []ai.WeightedState {
+				if a.AI.InTargetRange(0, config.combatDist) {
+					return []ai.WeightedState{{"Pace", 0}}
+				}
+
+				return nil
+			},
+		},
+		"Pace": {
+			Cooldown:  ai.Cooldown{1, 2},
+			Timeout:   ai.Timeout{"Act", 1, 3},
+			Condition: func() bool { return a.AI.InTargetRange(0, config.combatDist) },
+			Entry: func() {
+				div := 2 + rand.Float64()*1
+				a.Body.MaxX = maxX / div
+				a.speed = speed
+				if a.AI.InTargetRange(0, config.backUpDist) {
+					a.speed *= -1
+				}
+			},
+			Next: func() []ai.WeightedState {
+				if !a.AI.InTargetRange(0, config.combatDist) {
+					return []ai.WeightedState{{"Pursuit", 1}}
+				}
+				if a.AI.InTargetRange(0, config.reactDist) {
+					return react
+				}
+
+				return nil
+			},
+		},
+		"Attack": {
+			Cooldown:  ai.Cooldown{2, 3},
+			Condition: func() bool { return a.Stats.Stamina > config.minAttackStamina },
+			Entry:     func() { a.Attack() },
 			Next: func() []ai.WeightedState {
 				if a.Anim.State != anim.AttackTag {
-					return []ai.WeightedState{{"Think", 0}}
+					return []ai.WeightedState{{"Pace", 0}}
+				}
+
+				return nil
+			},
+		},
+		"RunAttack": {
+			Cooldown: ai.Cooldown{2, 3},
+			Condition: func() bool {
+				return a.Stats.Stamina > config.minAttackStamina && !a.AI.InTargetRange(0, config.reactDist)
+			},
+			Entry: func() {
+				a.speed = speed
+				a.Body.MaxX = maxX
+			},
+			Next: func() []ai.WeightedState {
+				if a.AI.InTargetRange(0, config.reactDist) {
+					return []ai.WeightedState{{"Attack", 0}}
 				}
 
 				return nil
 			},
 		},
 		"Guard": {
-			Timeout:   ai.Timeout{"Think", 1, 0},
-			Condition: func() bool { return a.AI.InTargetRange(0, config.maxDist) },
+			Cooldown: ai.Cooldown{3, 0},
+			Timeout:  ai.Timeout{"Pace", 1, 2},
 			Entry: func() {
-				a.speed = 0
+				a.speed = -speed
+				a.Body.MaxX = maxX / 4
 				a.ShieldUp()
 			},
 			Exit: func() { a.ShieldDown() },
-		},
-		"Idle": {
-			Entry: func() { a.speed = 0 },
-			Next: func() []ai.WeightedState {
-				if a.AI.InTargetRange(0, config.maxDist) {
-					return decide
-				}
-
-				return nil
-			},
-		},
-		"Pursuit": {
-			Timeout: ai.Timeout{"Act", 2, 0},
-			Condition: func() bool {
-				return a.AI.InTargetRange(config.minDist, -1) && a.Stats.Stamina > config.minAttackStamina
-			},
-			Entry: func() { a.speed = speed },
-			Next: func() []ai.WeightedState {
-				if !a.AI.InTargetRange(config.minDist, -1) {
-					return decide
-				}
-
-				return nil
-			},
-		},
-		"BackUp": {
-			Timeout:   ai.Timeout{"Act", 2, 0},
-			Condition: func() bool { return a.AI.InTargetRange(0, config.attackMaxDist) },
-			Entry:     func() { a.speed = -speed },
-			Next: func() []ai.WeightedState {
-				if !a.AI.InTargetRange(0, config.maxDist) {
-					return []ai.WeightedState{{"Think", 0}}
-				}
-
-				return nil
-			},
-		},
-		"Think": {
-			Timeout: ai.Timeout{"Act", 1, 2},
-			Entry:   func() { a.speed = 0 },
 		},
 	}
 
