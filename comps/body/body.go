@@ -92,7 +92,7 @@ func (c *Comp) updateMovement(dt float64) {
 	}
 }
 
-func (c *Comp) applyOverlapForce(col bump.Collision) {
+func (c *Comp) applyOverlapForce(col *bump.Collision) {
 	irect, orect := col.ItemRect, col.OtherRect
 	overlap := (math.Min(irect.X+irect.W, orect.X+orect.W) - math.Max(irect.X, orect.X)) / math.Min(irect.W, orect.W)
 	side := col.ItemRect.X + col.ItemRect.W/2 - (col.OtherRect.X + col.OtherRect.W/2)

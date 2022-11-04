@@ -91,7 +91,8 @@ func (m *Map) LoadBumpObjects(space *bump.Space, objectGroupName string) {
 	}
 
 	for _, obj := range objects {
-		space.Set(obj, bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height})
+		// TODO: If it's a slope, change priority to -1.
+		space.Set(obj, bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height, Priority: -2})
 	}
 }
 

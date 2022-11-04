@@ -1,24 +1,30 @@
 package bump
 
-import "math"
+import (
+	"math"
+	"sort"
+)
 
-// Collision detection and resolution lib based on bump.lua by kikito.
+// Collision detection and resolution library based on bump.lua by kikito.
 
 const DELTA = 1e-10 // floating-point margin of error.
 
 type Item interface{}
-type Rect struct{ X, Y, W, H float64 }
+type Slope struct{ L, R float64 } // Rect left and right heights, ([0, 1]) 0 = full height, 1 = zero height.
+type Rect struct {
+	X, Y, W, H float64
+	Priority   int   // Which rects should be evaluated for collision first (Slopes should have higher priority than solid blocks).
+	Slope      Slope // Slope adjusted H accordingly.
+}
 type Vec2 struct{ X, Y float64 }
 
 type Filter func(item, other Item) (response ColType, ok bool)
 type SimpleFilter func(item Item) bool
-type Response func(goal Vec2, col Collision, filter Filter) (newGoal Vec2, newCols []Collision)
+type Response func(goal Vec2, col *Collision, filter Filter) (newGoal Vec2, newCols []*Collision)
 type Collision struct {
 	Overlaps            bool
 	Intersection        float64
-	Move                Vec2
-	Touch               Vec2
-	Normal              Vec2
+	Move, Touch, Normal Vec2
 	Item, Other         Item
 	ItemRect, OtherRect Rect
 	Type                ColType
@@ -30,32 +36,33 @@ type ColType int
 const (
 	Touch ColType = iota
 	Cross
+	PureSlide
 	Slide
 )
 
-func DefaultFilter(item, other Item) (response ColType, collide bool) { return Slide, true }
-func NilFilter(item, other Item) (ColType, bool)                      { return 0, false }
+func DefaultFilter(item, other Item) (ColType, bool) { return Slide, true }
+func NilFilter(item, other Item) (ColType, bool)     { return 0, false }
 
 func DefaultSimpleFilter(item Item) bool {
 	return true
 }
 
 type Space struct {
-	rects     map[Item]Rect
+	Rects     map[Item]Rect
 	responses map[ColType]Response
 }
 
 func NewSpace() *Space {
 	space := &Space{}
-	space.rects = make(map[Item]Rect)
+	space.Rects = map[Item]Rect{}
 	space.responses = map[ColType]Response{
-		Touch: func(goal Vec2, col Collision, filter Filter) (newGoal Vec2, cols []Collision) {
-			return col.Touch, []Collision{}
+		Touch: func(goal Vec2, col *Collision, filter Filter) (Vec2, []*Collision) {
+			return col.Touch, nil
 		},
-		Cross: func(goal Vec2, col Collision, filter Filter) (newGoal Vec2, cols []Collision) {
+		Cross: func(goal Vec2, col *Collision, filter Filter) (Vec2, []*Collision) {
 			return goal, space.Project(col.Item, col.ItemRect, goal, filter)
 		},
-		Slide: func(goal Vec2, col Collision, filter Filter) (newGoal Vec2, cols []Collision) {
+		PureSlide: func(goal Vec2, col *Collision, filter Filter) (Vec2, []*Collision) {
 			if col.Move.X != 0 || col.Move.Y != 0 {
 				if col.Normal.X != 0 {
 					goal.X = col.Touch.X
@@ -64,86 +71,102 @@ func NewSpace() *Space {
 				}
 			}
 			col.TypeData = goal
+			rect := Rect{col.Touch.X, col.Touch.Y, col.ItemRect.W, col.ItemRect.H, col.ItemRect.Priority, col.ItemRect.Slope}
 
-			return goal, space.Project(col.Item, Rect{col.Touch.X, col.Touch.Y, col.ItemRect.W, col.ItemRect.H}, goal, filter)
+			return goal, space.Project(col.Item, rect, goal, filter)
+		},
+		Slide: func(goal Vec2, col *Collision, filter Filter) (Vec2, []*Collision) {
+			if !col.OtherRect.isSlope() {
+				return space.responses[PureSlide](goal, col, filter)
+			}
+			col.Normal = Vec2{0, 0}
+			if height := col.OtherRect.slopeY(goal.X + col.ItemRect.W/2); goal.Y > height-col.ItemRect.H {
+				goal.Y = height - col.ItemRect.H
+				col.Touch.Y = height - col.ItemRect.H
+				col.Normal = Vec2{0, -1}
+			}
+			col.TypeData = goal
+
+			return goal, nil
 		},
 	}
 
 	return space
 }
 
-func (s *Space) Set(item Item, rect Rect) { s.rects[item] = rect }
-func (s *Space) Remove(item Item)         { delete(s.rects, item) }
-func (s *Space) Move(item Item, targetGoal Vec2, filter Filter) (goal Vec2, cols []Collision) {
+func (s *Space) Set(item Item, rect Rect) { s.Rects[item] = rect }
+func (s *Space) Remove(item Item)         { delete(s.Rects, item) }
+func (s *Space) Move(item Item, targetGoal Vec2, filter Filter) (goal Vec2, cols []*Collision) {
 	goal, cols = s.Check(item, targetGoal, filter)
-	rect := s.rects[item]
-	s.Set(item, Rect{goal.X, goal.Y, rect.W, rect.H})
+	rect := s.Rects[item]
+	s.Set(item, Rect{goal.X, goal.Y, rect.W, rect.H, rect.Priority, rect.Slope})
 
 	return
 }
 
-func (s *Space) Check(item Item, targetGoal Vec2, filter Filter) (goal Vec2, cols []Collision) {
-	goal = targetGoal
+func (s *Space) Check(item Item, goal Vec2, filter Filter) (Vec2, []*Collision) {
 	if filter == nil {
 		filter = DefaultFilter
 	}
 
-	visited := map[Item]bool{}
-	visited[item] = true
-
-	visitedFilter := func(item, other Item) (response ColType, ok bool) {
+	visited := map[Item]bool{item: true}
+	visitedFilter := func(item, other Item) (ColType, bool) {
 		if visited[other] {
-			return
+			return 0, false
 		}
 
 		return filter(item, other)
 	}
 
-	rect := s.rects[item]
+	rect := s.Rects[item]
 	projectedCols := s.Project(item, rect, goal, visitedFilter)
 
+	var cols []*Collision
 	for len(projectedCols) > 0 {
 		col := projectedCols[0]
-		cols = append(cols, col)
 		visited[col.Other] = true
 		goal, projectedCols = s.responses[col.Type](goal, col, visitedFilter)
+		cols = append(cols, col)
 	}
 
-	return
+	return goal, cols
 }
 
-func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter) (cols []Collision) {
+func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter) []*Collision {
 	if filter == nil {
 		filter = DefaultFilter
 	}
 
-	visited := map[Item]bool{}
-	visited[item] = true
-
-	for other, otherRect := range s.rects {
-		if !visited[other] {
-			visited[other] = true
-			if responseName, ok := filter(item, other); ok {
-				if col, ok := detectCollision(rect, otherRect, goal); ok {
-					col.Item = item
-					col.Other = other
-					col.Type = responseName
-					cols = append(cols, col)
-				}
+	var cols []*Collision
+	visited := map[Item]bool{item: true}
+	// TODO: Optimize using cells.
+	for _, other := range sortPriority(s.Rects) {
+		if visited[other] {
+			continue
+		}
+		visited[other] = true
+		if responseName, ok := filter(item, other); ok {
+			otherRect := s.Rects[other]
+			if col, ok := detectCollision(rect, otherRect, goal); ok {
+				col.Item, col.Other = item, other
+				col.Type = responseName
+				cols = append(cols, col)
 			}
 		}
 	}
 
-	return
+	return cols
 }
 
-func (s *Space) Query(rect Rect, filter SimpleFilter) (cols []Collision) {
+func (s *Space) Query(rect Rect, filter SimpleFilter) []*Collision {
 	if filter == nil {
 		filter = DefaultSimpleFilter
 	}
 
-	for other, otherRect := range s.rects {
+	var cols []*Collision
+	for other := range s.Rects {
 		if filter(other) {
+			otherRect := s.Rects[other]
 			if col, ok := detectCollision(rect, otherRect, Vec2{rect.X, rect.Y}); ok {
 				col.Item = other
 				col.Other = other
@@ -152,11 +175,22 @@ func (s *Space) Query(rect Rect, filter SimpleFilter) (cols []Collision) {
 		}
 	}
 
-	return
+	return cols
 }
 
 func Overlaps(r1, r2 Rect) bool {
 	return rectContainsPoint(rectDiff(r1, r2), Vec2{})
+}
+
+func sortPriority(rects map[Item]Rect) []Item {
+	i, keys := 0, make([]Item, len(rects))
+	for k := range rects {
+		keys[i] = k
+		i++
+	}
+	sort.Slice(keys, func(i, j int) bool { return rects[keys[i]].Priority > rects[keys[j]].Priority })
+
+	return keys
 }
 
 // Liang-Barsky algorithm.
@@ -201,12 +235,13 @@ func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (i1, i2 float64, normal Vec
 	return i1, i2, normal, ok
 }
 
-func detectCollision(rect1, rect2 Rect, goal Vec2) (col Collision, ok bool) {
+func detectCollision(rect1, rect2 Rect, goal Vec2) (*Collision, bool) {
+	col := &Collision{}
 	col.Move = Vec2{goal.X - rect1.X, goal.Y - rect1.Y}
 	col.ItemRect, col.OtherRect = rect1, rect2
 	interRect := rectDiff(rect1, rect2)
 
-	if !detectCollisionPhase1(interRect, rect1, &col) {
+	if !detectCollisionPhase1(interRect, rect1, col) {
 		return col, false
 	}
 
@@ -259,7 +294,7 @@ func detectCollisionPhase1(interRect, rect1 Rect, col *Collision) bool {
 
 // Minkowsky Difference between 2 Rects.
 func rectDiff(r1, r2 Rect) Rect {
-	return Rect{r2.X - r1.X - r1.W, r2.Y - r1.Y - r1.H, r1.W + r2.W, r1.H + r2.H}
+	return Rect{r2.X - r1.X - r1.W, r2.Y - r1.Y - r1.H, r1.W + r2.W, r1.H + r2.H, 0, Slope{}}
 }
 
 func rectContainsPoint(r Rect, p Vec2) bool {
@@ -277,4 +312,16 @@ func rectNearestCorner(rect Rect, p Vec2) Vec2 {
 	}
 
 	return Vec2{nearest(p.X, rect.X, rect.X+rect.W), nearest(p.Y, rect.Y, rect.Y+rect.H)}
+}
+
+func (r Rect) isSlope() bool {
+	return r.Slope != Slope{}
+}
+
+func (r Rect) slopeY(x float64) float64 {
+	prog := (x - r.X) / r.W
+	clamp := math.Min(math.Max(prog, 0), 1)
+	lerp := r.Slope.L + clamp*(r.Slope.R-r.Slope.L)
+
+	return r.Y + lerp*r.H
 }

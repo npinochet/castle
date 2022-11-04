@@ -107,7 +107,7 @@ func (p *Player) control(dt float64) bool {
 	return moving
 }
 
-func (p *Player) OnHurt(otherHc *hitbox.Comp, col bump.Collision, damage float64) {
+func (p *Player) OnHurt(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {
 	p.Actor.Hurt(otherHc.Entity.X, damage, nil)
 	p.World.Camera.Shake(0.5, 1)
 }

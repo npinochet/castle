@@ -11,7 +11,7 @@ import (
 
 const defaultITime = 1
 
-type HitFunc func(*Comp, bump.Collision, float64)
+type HitFunc func(*Comp, *bump.Collision, float64)
 
 type Hitbox struct {
 	rect  bump.Rect
@@ -88,7 +88,7 @@ func (c *Comp) HitFromSpriteBox(rect *bump.Rect, damage float64) (blocked bool) 
 
 	type hitInfo struct {
 		hit bool
-		col bump.Collision
+		col *bump.Collision
 	}
 
 	doesHit := map[*Comp]hitInfo{}

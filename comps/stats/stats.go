@@ -20,6 +20,7 @@ const (
 	defaultRecoverRate    = 20
 	defaultRecoverSeconds = 3
 
+	// HUD consts.
 	hudIconsX, hudIconsY     = 7, 23
 	barEndX1, barEndX2, barH = 8, 12, 7
 	barMiddleH               = barH - 2

@@ -64,13 +64,13 @@ func NewActor(
 		ReactForce:      defaultReactForce,
 	}
 	actor.AddComponent(actor.Body, actor.Hitbox, actor.Anim, actor.Stats)
-	actor.Hitbox.HurtFunc = func(otherHc *hitbox.Comp, col bump.Collision, damange float64) {
+	actor.Hitbox.HurtFunc = func(otherHc *hitbox.Comp, col *bump.Collision, damange float64) {
 		if actor.Anim.State == anim.BlockTag {
 			actor.ShieldDown()
 		}
 		actor.Hurt(otherHc.Entity.X, damage, nil)
 	}
-	actor.Hitbox.BlockFunc = func(otherHc *hitbox.Comp, col bump.Collision, damange float64) {
+	actor.Hitbox.BlockFunc = func(otherHc *hitbox.Comp, col *bump.Collision, damange float64) {
 		actor.Block(otherHc.Entity.X, damange, nil)
 	}
 

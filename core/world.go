@@ -3,12 +3,15 @@ package core
 import (
 	"game/libs/bump"
 	"game/libs/camera"
+	"image/color"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 var IDCount uint64 = 100
+
+var test = bump.Rect{2056 - 16*4, 2008 + 16, 32, 16, -1, bump.Slope{1, 0}}
 
 type World struct {
 	Space         *bump.Space
@@ -20,7 +23,10 @@ type World struct {
 }
 
 func NewWorld(width, height float64) *World {
-	return &World{bump.NewSpace(), camera.New(width, height), nil, map[uint64]*Entity{}, nil, false}
+	space := bump.NewSpace()
+	space.Set(nil, test)
+
+	return &World{space, camera.New(width, height), nil, map[uint64]*Entity{}, nil, false}
 }
 
 func (w *World) AddEntity(entity *Entity) *Entity {
@@ -68,6 +74,12 @@ func (w *World) Draw(screen *ebiten.Image) {
 		background, _ := w.Map.backgroundImage.SubImage(w.Camera.Bounds()).(*ebiten.Image)
 		screen.DrawImage(background, nil)
 	}
+	image := ebiten.NewImage(int(test.W), int(test.H))
+	image.Fill(color.RGBA{255, 255, 255, 50})
+	op := &ebiten.DrawImageOptions{}
+	x, y := w.Camera.Position()
+	op.GeoM.Translate(test.X-x, test.Y-y)
+	screen.DrawImage(image, op)
 	for _, e := range w.entities {
 		e.Draw(screen)
 	}
