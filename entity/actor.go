@@ -103,29 +103,26 @@ func (a *Actor) Attack() {
 	a.Anim.SetState(anim.AttackTag)
 
 	once := false
-	onceReaction := false
+	var filtered []*hitbox.Comp
 	a.Anim.OnFrames(func(frame int) {
-		if _, hitbox, _ := a.Anim.GetFrameHitboxes(); hitbox != nil {
+		if hitbox, err := a.Anim.GetFrameHitbox(anim.HitboxSliceName); err == nil {
 			if !once {
 				once = true
 				a.Body.Vx += force
 				a.Stats.AddStamina(-a.StaminaDamage)
 			}
-			if a.Hitbox.HitFromSpriteBox(hitbox, a.Damage) {
-				if !onceReaction {
-					onceReaction = true
-					// TODO: a.Stagger(force) when shield has too much defense?
-					a.Body.Vx -= (force * 2) / float64(frame)
-				}
+			var blocked bool
+			blocked, filtered = a.Hitbox.HitFromHitBox(hitbox, a.Damage, filtered)
+			if blocked {
+				a.Anim.OnFrames(nil)
+				// TODO: a.Stagger(force) when shield has too much defense?
+				a.Body.Vx -= (force * 2) / float64(frame) // TODO: why divide by frame?
 			}
 		}
 	})
 }
 
 func (a *Actor) Stagger(force float64) {
-	if a.Anim.State == anim.StaggerTag {
-		return
-	}
 	a.Anim.SetState(anim.StaggerTag)
 	a.Body.Vx = -force
 }
@@ -139,8 +136,11 @@ func (a *Actor) ShieldUp() {
 	a.blockRecoverRateSave = a.Stats.StaminaRecoverRate
 	a.Body.MaxX /= a.BlockMaxXDiv
 	a.Stats.StaminaRecoverRate /= a.BlockRecoverRateDiv
-	_, _, blockbox := a.Anim.GetFrameHitboxes()
-	a.Hitbox.PushHitbox(blockbox.X, blockbox.Y, blockbox.W, blockbox.H, true)
+	blockbox, err := a.Anim.GetFrameHitbox(anim.BlockSliceName)
+	if err != nil {
+		panic(err)
+	}
+	a.Hitbox.PushHitbox(blockbox, true)
 }
 
 func (a *Actor) ShieldDown() {

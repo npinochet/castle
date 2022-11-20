@@ -21,12 +21,13 @@ func defaultConfig() *AIConfig {
 	return &AIConfig{
 		viewDist:         100,
 		combatDist:       100,
-		backUpDist:       50,
+		backUpDist:       40,
 		reactDist:        20,
 		minAttackStamina: 0.2,
 	}
 }
 
+// TODO: Review states, sometimes the state is empty and falls back to idle
 func (a *Actor) NewDefaultAI(config *AIConfig) *ai.Comp {
 	if config == nil {
 		config = defaultConfig()
@@ -41,7 +42,7 @@ func (a *Actor) NewDefaultAI(config *AIConfig) *ai.Comp {
 		"Idle": {
 			Entry: func() { a.speed = 0 },
 			Next: func() []ai.WeightedState {
-				if targets := a.Hitbox.QueryFront(config.viewDist, 40, a.Anim.FlipX); len(targets) > 0 {
+				if targets := a.Body.QueryFront(config.viewDist, 40, a.Anim.FlipX); len(targets) > 0 {
 					a.AI.Target = targets[0]
 				}
 				if a.AI.Target != nil {
@@ -72,7 +73,7 @@ func (a *Actor) NewDefaultAI(config *AIConfig) *ai.Comp {
 		},
 		"Pace": {
 			Cooldown:  ai.Cooldown{1, 2},
-			Timeout:   ai.Timeout{"Act", 1, 3},
+			Timeout:   ai.Timeout{"Act", 1, 2},
 			Condition: func() bool { return a.AI.InTargetRange(0, config.combatDist) },
 			Entry: func() {
 				div := 2 + rand.Float64()*1

@@ -37,8 +37,11 @@ func NewKnight(x, y, w, h float64, props map[string]string) *core.Entity {
 }
 
 func (k *Knight) Init(entity *core.Entity) {
-	hurtbox, _, _ := k.Anim.GetFrameHitboxes()
-	k.Hitbox.PushHitbox(hurtbox.X, hurtbox.Y, hurtbox.W, hurtbox.H, false)
+	hurtbox, err := k.Anim.GetFrameHitbox(anim.HurtboxSliceName)
+	if err != nil {
+		panic("no hurtbox found")
+	}
+	k.Hitbox.PushHitbox(hurtbox, false)
 }
 
 func (k *Knight) Update(dt float64) {

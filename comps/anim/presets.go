@@ -10,7 +10,7 @@ const (
 
 var DefaultAnimFsm = &Fsm{
 	Transitions: map[string]string{WalkTag: IdleTag, AttackTag: IdleTag, StaggerTag: IdleTag},
-	ExitCallbacks: map[string]func(*Comp){
+	Exit: map[string]func(*Comp){
 		StaggerTag: func(ac *Comp) { ac.Data.PlaySpeed = 1 },
 	},
 }

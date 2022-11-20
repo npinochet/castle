@@ -41,6 +41,11 @@ type Fsm struct {
 func (f *Fsm) update(dt float64) {
 	if f.State == "" {
 		f.State = f.Initial
+		if action := f.Actions[f.State]; action != nil {
+			if action.Entry != nil {
+				action.Entry()
+			}
+		}
 	}
 	if action := f.Actions[f.State]; action != nil && action.Next != nil {
 		if actions := action.Next(); actions != nil {

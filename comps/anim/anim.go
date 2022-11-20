@@ -21,10 +21,10 @@ const (
 type FrameCallback func(frame int)
 
 type Fsm struct {
-	Initial        string
-	Transitions    map[string]string
-	ExitCallbacks  map[string]func(*Comp)
-	EnterCallbacks map[string]func(*Comp)
+	Initial     string
+	Transitions map[string]string
+	Entry       map[string]func(*Comp)
+	Exit        map[string]func(*Comp)
 }
 
 type Comp struct {
@@ -37,7 +37,7 @@ type Comp struct {
 	Data         *aseprite.File
 	Fsm          *Fsm
 	callback     FrameCallback
-	slices       [3]*aseprite.Slice
+	slices       map[string]map[int]bump.Rect
 }
 
 func (c *Comp) Init(entity *core.Entity) {
@@ -51,10 +51,10 @@ func (c *Comp) Init(entity *core.Entity) {
 
 	c.SetState(c.Data.Meta.Animations[0].Name)
 	rect := c.Data.Frames.FrameAtIndex(c.Data.CurrentFrame).SpriteSourceSize
-	c.w, c.h = float64(rect.Width), float64(rect.Height) // TODO: Do we need c.w and c.h?
+	c.w, c.h = float64(rect.Width), float64(rect.Height)
 
-	for i, sliceName := range [3]string{HurtboxSliceName, HitboxSliceName, BlockSliceName} {
-		c.slices[i] = c.Data.Slice(sliceName)
+	if err := c.allocateHitboxSlices(); err != nil {
+		panic(err)
 	}
 }
 
@@ -65,7 +65,7 @@ func (c *Comp) SetState(state string) {
 	c.State = state
 	_ = c.Data.Play(state)
 	c.callback = nil
-	if callback := c.Fsm.EnterCallbacks[c.State]; callback != nil {
+	if callback := c.Fsm.Entry[c.State]; callback != nil {
 		callback(c)
 	}
 }
@@ -73,7 +73,7 @@ func (c *Comp) SetState(state string) {
 func (c *Comp) Update(dt float64) {
 	c.Data.Update(float32(dt))
 	if c.Data.AnimationFinished() {
-		if callback := c.Fsm.ExitCallbacks[c.State]; callback != nil {
+		if callback := c.Fsm.Exit[c.State]; callback != nil {
 			callback(c)
 		}
 		if nextState := c.Fsm.Transitions[c.State]; nextState != "" {
@@ -106,42 +106,51 @@ func (c *Comp) OnFrames(callback FrameCallback) {
 	c.callback = callback
 }
 
-func (c *Comp) GetFrameHitboxes() (hurtbox, hitbox, blockbox *bump.Rect) {
-	hurtbox = c.findCurrenctSlice(c.slices[0])
-	hitbox = c.findCurrenctSlice(c.slices[1])
-	blockbox = c.findCurrenctSlice(c.slices[2])
-
-	return hurtbox, hitbox, blockbox
-}
-
-func (c *Comp) findCurrenctSlice(slice *aseprite.Slice) *bump.Rect {
-	if slice == nil {
-		return nil
+func (c *Comp) GetFrameHitbox(sliceName string) (bump.Rect, error) {
+	keys := c.slices[sliceName]
+	if keys == nil {
+		return bump.Rect{}, fmt.Errorf("slice name %s not found", sliceName)
 	}
-	currentFrame := c.Data.CurrentFrame
-	frame := c.Data.Frames.FrameAtIndex(currentFrame)
+	rect, ok := keys[c.Data.CurrentFrame]
+	if !ok {
+		return bump.Rect{}, fmt.Errorf("no slice in current frame %d", c.Data.CurrentFrame)
+	}
+
+	frame := c.Data.Frames.FrameAtIndex(c.Data.CurrentFrame)
 	ssx, ssy := float64(frame.SpriteSourceSize.X), float64(frame.SpriteSourceSize.Y)
 	sw, sh := float64(frame.SourceSize.Width), float64(frame.SourceSize.Height)
 
-	// TODO: Find a way to get the truly frame slices, aseprite goes nuts on these.
-	for _, key := range slice.Keys {
-		if key.FrameNum != currentFrame {
-			continue
-		}
-		bound := key.Bounds
-		rect := &bump.Rect{
-			X: float64(bound.X) - ssx + c.X, Y: float64(bound.Y) - ssy + c.Y,
-			W: float64(bound.Width), H: float64(bound.Height),
+	if c.FlipX {
+		rect.X += sw - rect.W - (rect.X+ssx)*2
+	}
+	if c.FlipY {
+		rect.Y += sh - rect.W - (rect.Y+ssy)*2
+	}
+	rect.X += c.X
+	rect.Y += c.Y
+
+	return rect, nil
+}
+
+func (c *Comp) allocateHitboxSlices() error {
+	c.slices = map[string]map[int]bump.Rect{}
+
+	for _, sliceName := range []string{HurtboxSliceName, HitboxSliceName, BlockSliceName} {
+		slices := c.Data.Slice(sliceName)
+		if slices == nil {
+			return fmt.Errorf("slice name %s not found", sliceName)
 		}
 
-		if c.FlipX {
-			rect.X += sw - rect.W - float64(bound.X)*2
-		}
-		if c.FlipY {
-			rect.Y += sh - rect.W - float64(bound.Y)*2
-		}
+		c.slices[sliceName] = map[int]bump.Rect{}
+		for _, key := range slices.Keys {
+			sss := c.Data.Frames.FrameAtIndex(key.FrameNum).SpriteSourceSize
 
-		return rect
+			bound := key.Bounds
+			c.slices[sliceName][key.FrameNum] = bump.Rect{
+				X: float64(bound.X) - float64(sss.X), Y: float64(bound.Y) - float64(sss.Y),
+				W: float64(bound.Width), H: float64(bound.Height),
+			}
+		}
 	}
 
 	return nil

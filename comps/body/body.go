@@ -13,24 +13,24 @@ import (
 const (
 	gravity                     = 300
 	defaultMaxX, defaultMaxY    = 60, 200
-	groundFriction, airFriction = 12, 4
+	groundFriction, airFriction = 12, 4 // TODO: Tune this variables. They might be too high.
 	collisionStiffness          = 1
 	frictionEpsilon             = 0.05
 )
 
 type Comp struct {
-	Static, Ground bool
-	Friction       bool
-	space          *bump.Space
-	entX, entY     *float64
-	X, Y, W, H     float64
-	Vx, Vy         float64
-	MaxX, MaxY     float64
-	image          *ebiten.Image
+	Static, Ground  bool
+	Friction        bool
+	space           *bump.Space
+	entity          *core.Entity
+	X, Y, W, H      float64
+	Vx, Vy          float64
+	MaxX, MaxY      float64
+	debugQueryFront bump.Rect
 }
 
 func (c *Comp) Init(entity *core.Entity) {
-	c.entX, c.entY = &entity.X, &entity.Y
+	c.entity = entity
 	if c.MaxX == 0 {
 		c.MaxX = defaultMaxX
 	}
@@ -40,8 +40,6 @@ func (c *Comp) Init(entity *core.Entity) {
 	c.Friction = true
 	c.space = entity.World.Space
 	c.space.Set(c, bump.Rect{X: entity.X + c.X, Y: entity.Y + c.X, W: c.W, H: c.H})
-	c.image = ebiten.NewImage(int(c.W), int(c.H))
-	c.image.Fill(color.RGBA{255, 0, 0, 100})
 }
 
 func (c *Comp) Update(dt float64) {
@@ -51,10 +49,49 @@ func (c *Comp) Update(dt float64) {
 	c.updateMovement(dt)
 }
 
-func (c *Comp) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
-	op := &ebiten.DrawImageOptions{GeoM: enitiyPos}
+func (c *Comp) QueryFront(dist, height float64, lookingRight bool) []*core.Entity {
+	rect := bump.Rect{X: -dist, Y: -height / 2, W: dist, H: height}
+	if lookingRight {
+		rect.X += dist
+	}
+	c.debugQueryFront = rect
+	rect.X += c.entity.X
+	rect.Y += c.entity.Y
+
+	entityFilter := func(item bump.Item) bool {
+		if comp, ok := item.(*Comp); ok {
+			return comp != c
+		}
+
+		return true
+	}
+
+	cols := c.space.Query(rect, entityFilter)
+	var ents []*core.Entity
+	for _, c := range cols {
+		if comp, ok := c.Other.(*Comp); ok {
+			ents = append(ents, comp.entity)
+		}
+	}
+
+	return ents
+}
+
+func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	image := ebiten.NewImage(int(c.W), int(c.H))
+	image.Fill(color.RGBA{255, 0, 0, 100})
+	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(c.X, c.Y)
-	screen.DrawImage(c.image, op)
+	screen.DrawImage(image, op)
+
+	if c.debugQueryFront.W != 0 || c.debugQueryFront.H != 0 {
+		image := ebiten.NewImage(int(c.debugQueryFront.W), int(c.debugQueryFront.H))
+		image.Fill(color.RGBA{255, 255, 0, 100})
+		op := &ebiten.DrawImageOptions{GeoM: entityPos}
+		op.GeoM.Translate(c.debugQueryFront.X, c.debugQueryFront.Y)
+		screen.DrawImage(image, op)
+		c.debugQueryFront = bump.Rect{}
+	}
 }
 
 func (c *Comp) updateMovement(dt float64) {
@@ -71,9 +108,9 @@ func (c *Comp) updateMovement(dt float64) {
 	c.Vy += gravity * dt
 	c.Vy = math.Min(c.MaxY, math.Max(-c.MaxY, c.Vy))
 
-	p := bump.Vec2{X: *c.entX + c.X + c.Vx*dt, Y: *c.entY + c.Y + c.Vy*dt}
+	p := bump.Vec2{X: c.entity.X + c.X + c.Vx*dt, Y: c.entity.Y + c.Y + c.Vy*dt}
 	goal, cols := c.space.Move(c, p, bodyFilter)
-	*c.entX, *c.entY = goal.X-c.X, goal.Y-c.Y
+	c.entity.X, c.entity.Y = goal.X-c.X, goal.Y-c.Y
 
 	c.Ground = false
 	for _, col := range cols {
@@ -105,7 +142,7 @@ func bodyFilter(item, other bump.Item) (bump.ColType, bool) {
 		return bump.Cross, true
 	}
 	if _, ok := other.(*hitbox.Hitbox); ok {
-		return bump.Cross, false
+		return 0, false
 	}
 
 	return bump.Slide, true

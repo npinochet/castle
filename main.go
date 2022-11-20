@@ -81,9 +81,9 @@ func (g *Game) init() {
 	g.world.AddEntity(&player.Entity)
 
 	g.world.Map.LoadBumpObjects(g.world.Space, "collisions")
-	/*g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
+	g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
 		26: entity.NewKnight,
-	})*/
+	})
 	g.world.Debug = false
 }
 

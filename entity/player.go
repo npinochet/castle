@@ -46,8 +46,11 @@ func NewPlayer(x, y float64, props map[string]interface{}) *Player {
 
 func (p *Player) Init(entity *core.Entity) {
 	p.Hitbox.HurtFunc = p.OnHurt
-	hurtbox, _, _ := p.Anim.GetFrameHitboxes()
-	p.Hitbox.PushHitbox(hurtbox.X, hurtbox.Y, hurtbox.W, hurtbox.H, false)
+	hurtbox, err := p.Anim.GetFrameHitbox(anim.HurtboxSliceName)
+	if err != nil {
+		panic(err)
+	}
+	p.Hitbox.PushHitbox(hurtbox, false)
 }
 
 func (p *Player) Update(dt float64) {

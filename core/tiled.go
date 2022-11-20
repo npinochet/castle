@@ -3,11 +3,14 @@ package core
 import (
 	"game/libs/bump"
 	"log"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/lafriks/go-tiled"
 	"github.com/lafriks/go-tiled/render"
 )
+
+const defaultCollisionPriority = -2
 
 type EntityContructor func(x, y, w, h float64, props map[string]string) *Entity
 
@@ -91,8 +94,32 @@ func (m *Map) LoadBumpObjects(space *bump.Space, objectGroupName string) {
 	}
 
 	for _, obj := range objects {
-		// TODO: If it's a slope, change priority to -1.
-		space.Set(obj, bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height, Priority: -2})
+		if obj.Polygons != nil {
+			left, right, up, down := 0.0, 0.0, 0.0, 0.0
+			for _, p := range *obj.Polygons[0].Points {
+				left, right, up, down = math.Min(left, p.X), math.Max(right, p.X), math.Min(up, p.Y), math.Max(down, p.Y)
+			}
+			slope := bump.Slope{L: 1, R: 1}
+			for _, p := range *obj.Polygons[0].Points {
+				if p.Y == up {
+					if p.X == left {
+						slope.L = 0
+					} else {
+						slope.R = 0
+					}
+				}
+			}
+			rect := bump.Rect{
+				X: obj.X + left, Y: obj.Y + up,
+				W: right - left, H: down - up,
+				Priority: defaultCollisionPriority + 1,
+				Slope:    slope,
+			}
+			space.Set(obj, rect)
+
+			continue
+		}
+		space.Set(obj, bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height, Priority: defaultCollisionPriority})
 	}
 }
 

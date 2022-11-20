@@ -162,20 +162,9 @@ func (s *Space) Query(rect Rect, filter SimpleFilter) []*Collision {
 	if filter == nil {
 		filter = DefaultSimpleFilter
 	}
+	projectFilter := func(item, other Item) (ColType, bool) { return 0, filter(other) }
 
-	var cols []*Collision
-	for other := range s.Rects {
-		if filter(other) {
-			otherRect := s.Rects[other]
-			if col, ok := detectCollision(rect, otherRect, Vec2{rect.X, rect.Y}); ok {
-				col.Item = other
-				col.Other = other
-				cols = append(cols, col)
-			}
-		}
-	}
-
-	return cols
+	return s.Project(nil, rect, Vec2{rect.X, rect.Y}, projectFilter)
 }
 
 func Overlaps(r1, r2 Rect) bool {
