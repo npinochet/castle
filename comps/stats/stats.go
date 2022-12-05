@@ -1,7 +1,10 @@
 package stats
 
 import (
+	"fmt"
+	"game/assets"
 	"game/core"
+	"game/utils"
 	"image"
 	"image/color"
 	"math"
@@ -40,7 +43,7 @@ var (
 )
 
 type Comp struct {
-	Hud, Pause                              bool
+	Hud, Pause, NoDebug                     bool
 	MaxHealth, MaxStamina, MaxPoise         float64
 	Health, Stamina, Poise                  float64
 	StaminaRecoverRate, PoiseRecoverSeconds float64
@@ -104,8 +107,13 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
-
+func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	if c.NoDebug {
+		return
+	}
+	op := &ebiten.DrawImageOptions{GeoM: entityPos}
+	op.GeoM.Translate(-5, -16)
+	utils.DrawText(screen, fmt.Sprintf("%0.2f", c.Health), assets.BittyFont, op)
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {

@@ -85,7 +85,7 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
+func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}
 	var x, y, sx, sy, dx, dy float64 = c.X, c.Y, 1, 1, 0, 0
 	if c.FlipX {
@@ -97,7 +97,7 @@ func (c *Comp) Draw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
 	op.GeoM.Scale(sx, sy)
 	op.GeoM.Translate(x, y)
 	op.GeoM.Translate(dx, dy)
-	op.GeoM.Concat(enitiyPos)
+	op.GeoM.Concat(entityPos)
 	sprite, _ := c.Image.SubImage(c.Data.FrameBoundaries().Rectangle()).(*ebiten.Image)
 	screen.DrawImage(sprite, op)
 }

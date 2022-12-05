@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"game/assets"
 	"game/comps/anim"
 	"game/comps/body"
 	"game/comps/hitbox"
@@ -11,7 +12,6 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const (
@@ -40,6 +40,7 @@ func NewPlayer(x, y float64, props map[string]interface{}) *Player {
 	}
 	player.AddComponent(player)
 	player.Stats.Hud = true
+	player.Stats.NoDebug = true
 
 	return player
 }
@@ -61,9 +62,11 @@ func (p *Player) Update(dt float64) {
 	}
 }
 
-func (p *Player) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
+func (p *Player) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	hud := fmt.Sprintf("%0.2f/%0.2f/%0.2f", p.Stats.Health, p.Stats.Stamina, p.Stats.Poise)
-	ebitenutil.DebugPrintAt(screen, hud, 35, 0)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(25, 1)
+	utils.DrawText(screen, hud, assets.BittyFont, op)
 }
 
 func (p *Player) control(dt float64) bool {

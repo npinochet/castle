@@ -16,8 +16,9 @@ require (
 	github.com/jezek/xgb v1.0.1 // indirect
 	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a // indirect
 	golang.org/x/exp/shiny v0.0.0-20220706164943-b4a6d9510983 // indirect
-	golang.org/x/image v0.0.0-20220617043117-41969df76e82 // indirect
+	golang.org/x/image v0.1.0 // indirect
 	golang.org/x/mobile v0.0.0-20220518205345-8578da9835fd // indirect
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e // indirect
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
+	golang.org/x/text v0.4.0 // indirect
 )

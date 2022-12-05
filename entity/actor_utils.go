@@ -17,7 +17,6 @@ type AIConfig struct {
 // nolint: gomnd, nolintlint
 func defaultConfig() *AIConfig {
 	// TODO: Review config attributes and make them more understandable.
-
 	return &AIConfig{
 		viewDist:         100,
 		combatDist:       100,
@@ -27,7 +26,7 @@ func defaultConfig() *AIConfig {
 	}
 }
 
-// TODO: Review states, sometimes the state is empty and falls back to idle
+// TODO: Review states, sometimes the state is empty and falls back to idle.
 func (a *Actor) NewDefaultAI(config *AIConfig) *ai.Comp {
 	if config == nil {
 		config = defaultConfig()

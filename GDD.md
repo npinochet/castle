@@ -38,6 +38,15 @@ After year or centuries of being prisoners on the castle, strange social bonds a
 * A garden/jungle: As the years passed, plants can grow limitless.
 * A Library housing mindless intellectuals who worship books.
 
+### Possible themes
+* Time
+    * The inmortality rite is performed by freeing one's first sin, and manipulate time (freeze it). What you collect is the game (souls) are "time cristals". Which let you level up (?).
+
+### Loose ideas
+* There are humans that managed to free themselfs of the first sin, though a rite, which grant them inmortality, these humans became like gods in the kingdom.
+* The king of the castle is one of these "gods". While his governance some major event happened where the wisdom of becaming inmortal leaked, making everyone in the castle inmortal. That's when an outside god placed a barrier on the castle and let all it's inhabitants prisioned.
+* There was a person who didn't use the wisdom to became inmortal, which let him die and was later became like a saint and prophet for one of the covenants which named him "the first death". This covenant seeks a way to undo the rite somehow and become sinners again.
+
 #### Imposed limitations
 * Must have at most 3 areas, presenting one covenant/group per area.
 * At least 3 enemies types per area. (3x3 = 9 enemies).

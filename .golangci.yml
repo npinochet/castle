@@ -29,6 +29,7 @@ linters-settings:
     ignored-numbers:
       - '2'
       - '4'
+      - '5'
       - '8'
       - '10'
       - '16'

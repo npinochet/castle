@@ -1,8 +1,12 @@
 package ai
 
 import (
+	"fmt"
+	"game/assets"
 	"game/core"
 	"game/utils"
+
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Comp struct {
@@ -22,6 +26,12 @@ func (c *Comp) Init(entity *core.Entity) {
 
 func (c *Comp) Update(dt float64) {
 	c.Fsm.update(dt)
+}
+
+func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	op := &ebiten.DrawImageOptions{GeoM: entityPos}
+	op.GeoM.Translate(-5, -10)
+	utils.DrawText(screen, fmt.Sprintf(`AI:%s`, c.Fsm.State), assets.BittyFont, op)
 }
 
 func (c *Comp) InTargetRange(minDist, maxDist float64) bool {

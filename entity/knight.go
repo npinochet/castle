@@ -1,14 +1,10 @@
 package entity
 
 import (
-	"fmt"
 	"game/comps/anim"
 	"game/comps/body"
 	"game/comps/stats"
 	"game/core"
-
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const knightAnimFile = "assets/knight"
@@ -65,8 +61,4 @@ func (k *Knight) Update(dt float64) {
 	if k.Stats.Health <= 0 {
 		k.World.RemoveEntity(k.ID) // TODO: creates infinite/recursive loop sometimes I think.
 	}
-}
-
-func (k *Knight) DebugDraw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf(`State: %s`, k.AI.Fsm.State), 0, 10)
 }

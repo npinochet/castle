@@ -9,8 +9,8 @@ type Comp struct {
 	X, Y  float64
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, enitiyPos ebiten.GeoM) {
-	op := &ebiten.DrawImageOptions{GeoM: enitiyPos}
+func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(c.X, c.Y)
 	screen.DrawImage(c.Image, op)
 }
