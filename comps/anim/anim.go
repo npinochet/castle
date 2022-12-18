@@ -28,16 +28,17 @@ type Fsm struct {
 }
 
 type Comp struct {
-	FilesName    string
-	X, Y         float64
-	FlipX, FlipY bool
-	w, h         float64
-	State        string
-	Image        *ebiten.Image
-	Data         *aseprite.File
-	Fsm          *Fsm
-	callback     FrameCallback
-	slices       map[string]map[int]bump.Rect
+	FilesName                 string
+	OX, OY                    float64
+	OXFlip, OYFlip            float64
+	FacingRight, FlipX, FlipY bool
+	w, h                      float64
+	State                     string
+	Image                     *ebiten.Image
+	Data                      *aseprite.File
+	Fsm                       *Fsm
+	callback                  FrameCallback
+	slices                    map[string]map[int]bump.Rect
 }
 
 func (c *Comp) Init(entity *core.Entity) {
@@ -54,7 +55,7 @@ func (c *Comp) Init(entity *core.Entity) {
 	c.w, c.h = float64(rect.Width), float64(rect.Height)
 
 	if err := c.allocateHitboxSlices(); err != nil {
-		panic(err)
+		log.Println(err)
 	}
 }
 
@@ -87,12 +88,12 @@ func (c *Comp) Update(dt float64) {
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}
-	var x, y, sx, sy, dx, dy float64 = c.X, c.Y, 1, 1, 0, 0
+	var x, y, sx, sy, dx, dy float64 = c.OX, c.OY, 1, 1, 0, 0
 	if c.FlipX {
-		x, sx, dx = -x, -1, math.Floor(c.w/2)
+		sx, dx = -1, math.Floor(c.w/2)+c.OXFlip
 	}
 	if c.FlipY {
-		y, sy, dy = -y, -1, math.Floor(c.h/2)
+		sy, dy = -1, math.Floor(c.h/2)+c.OYFlip
 	}
 	op.GeoM.Scale(sx, sy)
 	op.GeoM.Translate(x, y)
@@ -126,8 +127,8 @@ func (c *Comp) GetFrameHitbox(sliceName string) (bump.Rect, error) {
 	if c.FlipY {
 		rect.Y += sh - rect.W - (rect.Y+ssy)*2
 	}
-	rect.X += c.X
-	rect.Y += c.Y
+	rect.X += c.OX
+	rect.Y += c.OY
 
 	return rect, nil
 }

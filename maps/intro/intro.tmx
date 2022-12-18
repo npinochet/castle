@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.0" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="8" tileheight="8" infinite="0" nextlayerid="7" nextobjectid="27">
+<map version="1.9" tiledversion="1.9.0" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="8" tileheight="8" infinite="0" nextlayerid="7" nextobjectid="28">
  <editorsettings>
   <chunksize width="8" height="8"/>
  </editorsettings>
@@ -1029,7 +1029,8 @@
  </objectgroup>
  <objectgroup id="4" name="entities">
   <object id="11" gid="26" x="2016" y="2024" width="8" height="8"/>
-  <object id="12" gid="27" x="2064" y="2024" width="8" height="8"/>
+  <object id="12" gid="27" x="1952" y="2048" width="8" height="8"/>
+  <object id="27" gid="28" x="2048" y="2024" width="8" height="8"/>
  </objectgroup>
  <objectgroup color="#fffb00" id="5" name="rooms" visible="0">
   <object id="3" x="1792" y="1992" width="160" height="96"/>

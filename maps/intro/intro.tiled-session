@@ -9,11 +9,11 @@
             "scaleInDock": 1.8745
         },
         "intro.tmx": {
-            "scale": 5.3381,
-            "selectedLayer": 2,
+            "scale": 4.1867,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 2085.1988535246624,
-                "y": 2009.2354957756506
+                "x": 1992.0223565099004,
+                "y": 2014.1161296486493
             }
         },
         "tiles.tsx": {

@@ -7,6 +7,7 @@ import (
 )
 
 type AIConfig struct {
+	canBlock         bool
 	viewDist         float64
 	combatDist       float64
 	backUpDist       float64
@@ -18,6 +19,7 @@ type AIConfig struct {
 func defaultConfig() *AIConfig {
 	// TODO: Review config attributes and make them more understandable.
 	return &AIConfig{
+		canBlock:         false,
 		viewDist:         100,
 		combatDist:       100,
 		backUpDist:       40,
@@ -33,8 +35,12 @@ func (a *Actor) NewDefaultAI(config *AIConfig) *ai.Comp {
 	}
 	maxX := a.Body.MaxX
 	speed := a.speed
-	act := []ai.WeightedState{{"Wait", 2}, {"Pace", 0.5}, {"Attack", 1}, {"RunAttack", 1}, {"Guard", 0.1}}
-	react := []ai.WeightedState{{"Attack", 1}, {"Guard", 0.5}, {"Wait", 0.8}}
+	act := []ai.WeightedState{{"Wait", 2}, {"Pace", 0.5}, {"Attack", 1}, {"RunAttack", 1}}
+	react := []ai.WeightedState{{"Attack", 1}, {"Wait", 0.8}}
+	if config.canBlock {
+		act = append(act, ai.WeightedState{"Guard", 0.1})
+		react = append(react, ai.WeightedState{"Guard", 0.5})
+	}
 
 	actions := map[ai.State]*ai.Action{
 		"Act": {Next: func() []ai.WeightedState { return act }},

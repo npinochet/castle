@@ -1,7 +1,6 @@
 package ai
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 )
@@ -129,7 +128,7 @@ func (f *Fsm) selectState(states []WeightedState) State {
 	}
 
 	if len(selected) == 0 && len(states) > 0 {
-		fmt.Println(f.State, states) // TODO: Prevent this! Dumb cooldowns, maybe behaviour trees really are the way.
+		//fmt.Println(f.State, states) // TODO: Prevent this! Dumb cooldowns, maybe behaviour trees really are the way.
 	}
 
 	return ""

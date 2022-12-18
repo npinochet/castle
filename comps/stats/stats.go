@@ -77,7 +77,11 @@ func (c *Comp) Update(dt float64) {
 	if c.Pause {
 		return
 	}
-	c.Stamina += c.StaminaRecoverRate * dt
+	recoverRate := c.StaminaRecoverRate
+	if c.Stamina < 0 {
+		recoverRate /= 1.5
+	}
+	c.Stamina += recoverRate * dt
 	c.Stamina = math.Min(c.Stamina, c.MaxStamina)
 	c.Poise = math.Min(c.Poise, c.MaxPoise)
 

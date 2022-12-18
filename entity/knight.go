@@ -9,17 +9,14 @@ import (
 
 const knightAnimFile = "assets/knight"
 
-func (k *Knight) IsActive() bool        { return k.Active }
-func (k *Knight) SetActive(active bool) { k.Active = active }
-
 type Knight struct {
 	*Actor
 }
 
 func NewKnight(x, y, w, h float64, props map[string]string) *core.Entity {
 	speed := 100.0
-	anim := &anim.Comp{FilesName: knightAnimFile, X: -2, Y: -3}
-	body := &body.Comp{W: 10, H: 11, MaxX: 35}
+	anim := &anim.Comp{FilesName: knightAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
+	body := &body.Comp{W: playerWidth, H: playerHeight, MaxX: 35}
 
 	knight := &Knight{
 		Actor: NewActor(x, y, body, anim, &stats.Comp{MaxPoise: 25}, 20, 20),

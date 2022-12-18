@@ -19,6 +19,16 @@ After year or centuries of being prisoners on the castle, strange social bonds a
 * Make the world feel alive and believable, not "gamey".
 * Make a small map, quality over quantity.
 
+### Themes
+* Time
+* Dark Fantasy
+
+### Nomenclature
+* Currency: Specks ~~of time~~?
+* Rite of immortality: ???
+* Curse of immortality: ???
+* Item/Rite that can reverse the immortality: ???
+
 ### Possible covenants or social groups
 * Those who give up on life and embrace the suffering, always seeking and hoping to end it all.
 * Strong minded guards who keep being loyal to their king and will for years to come.
@@ -73,7 +83,7 @@ A 2D deliberate hack and slash game focused on animations and stamina management
 ### Objectives
 * To capture the filling of dread that comes from going deeper and deeper into the game without finding a checkpoint
     * Try to replicate the feeling of crossing the bridge in undead parish to the church and pressing on in Dark Souls for the first time.
-    * One aspect to achieve this is raising the game's difficulty (hopefully in terms of skills and not numbers), make sure the player dies a lot.
+    * One aspect to achieve this is raising the game's difficulty (hopefully in terms of skills and not numbers), make sure the player dies a lot (not a primary objective/idea).
         * Caveats: **Don't make health sponge enemies**. Make them hit harder if I must do.
     * Can also punish the player for dying, with lost progress or other mechanics.
 * Have a semi-maze like map, where you have to be aware of your surrounding to navigate it.
@@ -139,13 +149,13 @@ To add dread and difficulty, the player can only save at designated points (like
 * Sound: 0%
 
 ## TODO
-* Think of a fitting currency for the setting.
-* Think of the item that can lift the curse.
-* Think of a story progression.
+* Think of a story progression/objectives.
+    * 
 * Add depth to combat mechanics.
-* Consider input/button weight to player controls.
+* Consider input/button weight to player controls. (what is this??)
+* Re add htibox to knight player.
 
-Level design tips:
+Level design tips that might be useful to keep in mind:
 - search castle layouts.
 - keep it random and unpredictable.
 - New londo ruins can be accessed through the beginning, but has unkillable enemies to prevent new players going through it.

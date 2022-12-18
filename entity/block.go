@@ -13,9 +13,6 @@ import (
 
 const blockSize = 20
 
-func (b *BlockComponent) IsActive() bool        { return b.active }
-func (b *BlockComponent) SetActive(active bool) { b.active = active }
-
 type BlockComponent struct {
 	active bool
 	body   *body.Comp

@@ -15,12 +15,12 @@ import (
 )
 
 const (
-	playerAnimFile            = "assets/knight"
-	playerWidth, playerHeight = 10, 11
+	playerAnimFile                                 = "assets/knight"
+	playerWidth, playerHeight                      = 8, 11
+	playerOffsetX, playerOffsetY, playerOffsetFlip = -4, -3, 5
+	playerSpeed, playerJumpSpeed                   = 350, 110
+	playerDamage                                   = 20
 )
-
-func (p *Player) IsActive() bool        { return p.Active }
-func (p *Player) SetActive(active bool) { p.Active = active }
 
 type Player struct {
 	*Actor
@@ -31,12 +31,12 @@ type Player struct {
 
 func NewPlayer(x, y float64, props map[string]interface{}) *Player {
 	body := &body.Comp{W: playerWidth, H: playerHeight}
-	anim := &anim.Comp{FilesName: playerAnimFile, X: -2, Y: -3}
+	anim := &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
 
 	player := &Player{
-		Actor: NewActor(x, y, body, anim, nil, 20, 20),
+		Actor: NewActor(x, y, body, anim, nil, playerDamage, playerDamage),
 		pad:   utils.NewControlPack(),
-		speed: 350, jumpSpeed: 110,
+		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
 	}
 	player.AddComponent(player)
 	player.Stats.Hud = true

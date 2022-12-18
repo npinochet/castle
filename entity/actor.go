@@ -17,9 +17,6 @@ const (
 	defaultMaxXDiv, defaultMaxXRecoverRateDiv = 1.2, 2
 )
 
-func (a *Actor) IsActive() bool        { return a.Active }
-func (a *Actor) SetActive(active bool) { a.Active = active }
-
 type Actor struct {
 	core.Entity
 	Body                                *body.Comp
@@ -103,7 +100,7 @@ func (a *Actor) Attack() {
 	a.Anim.SetState(anim.AttackTag)
 
 	once := false
-	var filtered []*hitbox.Comp
+	var contacted []*hitbox.Comp
 	a.Anim.OnFrames(func(frame int) {
 		if hitbox, err := a.Anim.GetFrameHitbox(anim.HitboxSliceName); err == nil {
 			if !once {
@@ -112,7 +109,7 @@ func (a *Actor) Attack() {
 				a.Stats.AddStamina(-a.StaminaDamage)
 			}
 			var blocked bool
-			blocked, filtered = a.Hitbox.HitFromHitBox(hitbox, a.Damage, filtered)
+			blocked, contacted = a.Hitbox.HitFromHitBox(hitbox, a.Damage, contacted)
 			if blocked {
 				a.Anim.OnFrames(nil)
 				// TODO: a.Stagger(force) when shield has too much defense?
