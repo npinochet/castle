@@ -22,6 +22,8 @@ const (
 	playerDamage                                   = 20
 )
 
+var player *Player
+
 type Player struct {
 	*Actor
 	pad       utils.ControlPack
@@ -33,14 +35,16 @@ func NewPlayer(x, y float64, props map[string]interface{}) *Player {
 	body := &body.Comp{W: playerWidth, H: playerHeight}
 	anim := &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
 
-	player := &Player{
+	playerActor := &Player{
 		Actor: NewActor(x, y, body, anim, nil, playerDamage, playerDamage),
 		pad:   utils.NewControlPack(),
 		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
 	}
-	player.AddComponent(player)
-	player.Stats.Hud = true
-	player.Stats.NoDebug = true
+	playerActor.AddComponent(player)
+	playerActor.Stats.Hud = true
+	playerActor.Stats.NoDebug = true
+
+	player = playerActor
 
 	return player
 }

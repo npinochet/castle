@@ -14,7 +14,6 @@ import (
 const blockSize = 20
 
 type BlockComponent struct {
-	active bool
 	body   *body.Comp
 	hitbox *hitbox.Comp
 }

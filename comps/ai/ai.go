@@ -12,6 +12,7 @@ import (
 type Comp struct {
 	Fsm            *Fsm
 	Target, entity *core.Entity
+	actions        []WeightedState
 }
 
 func (c *Comp) State() State                    { return c.Fsm.State }
