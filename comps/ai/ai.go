@@ -3,26 +3,41 @@ package ai
 import (
 	"fmt"
 	"game/assets"
+	"game/comps/anim"
+	"game/comps/body"
+	"game/comps/hitbox"
+	"game/comps/stats"
 	"game/core"
 	"game/utils"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+type Actor interface {
+	GetBody() *body.Comp
+	GetHitbox() *hitbox.Comp
+	GetAnim() *anim.Comp
+	GetStats() *stats.Comp
+	GetAI() *Comp
+	SetSpeed(speed, maxSpeed float64)
+}
+
+const CombatState State = "Combat"
+
 type Comp struct {
 	Fsm            *Fsm
+	Actor          Actor
 	Target, entity *core.Entity
-	actions        []WeightedState
 }
 
 func (c *Comp) State() State                    { return c.Fsm.State }
 func (c *Comp) SetState(states []WeightedState) { c.Fsm.setState(states) }
+func (c *Comp) SetCombatOptions(combatOptions []WeightedState) {
+	c.Fsm.Actions[CombatState] = &Action{Next: func() []WeightedState { return combatOptions }}
+}
 
 func (c *Comp) Init(entity *core.Entity) {
 	c.entity = entity
-	if c.Fsm != nil { // TODO: What happens here?
-		c.Fsm.Comp = c
-	}
 }
 
 func (c *Comp) Update(dt float64) {
@@ -47,6 +62,22 @@ func (c *Comp) InTargetRange(minDist, maxDist float64) bool {
 	}
 
 	return in && out
+}
+
+func (c *Comp) InRangeFunc(maxDist float64) func() bool {
+	return func() bool { return c.InTargetRange(0, maxDist) }
+}
+
+func (c *Comp) OutRangeFunc(maxDist float64) func() bool {
+	return func() bool { return !c.InTargetRange(0, maxDist) }
+}
+
+func (c *Comp) EnoughStamina(minStamina float64) func() bool {
+	return func() bool { return c.Actor.GetStats().Stamina >= minStamina }
+}
+
+func (c *Comp) SetSpeedFunc(speed, maxSpeed float64) func() {
+	return func() { c.Actor.SetSpeed(speed, maxSpeed) }
 }
 
 func (c *Comp) distFromTarget() float64 {

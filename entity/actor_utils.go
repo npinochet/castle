@@ -3,7 +3,6 @@ package entity
 import (
 	"game/comps/ai"
 	"game/comps/anim"
-	"math/rand"
 )
 
 type AIConfig struct {
@@ -28,117 +27,54 @@ func defaultConfig() *AIConfig {
 	}
 }
 
-// TODO: Review states, sometimes the state is empty and falls back to idle.
-func (a *Actor) NewDefaultAI(config *AIConfig) *ai.Comp {
+// TODO: Review speed changes, some speed transitions are not working as expected.
+func (a *Actor) SetDefaultAI(config *AIConfig) []ai.WeightedState {
 	if config == nil {
 		config = defaultConfig()
 	}
-	maxX := a.Body.MaxX
-	speed := a.speed
-	act := []ai.WeightedState{{"Wait", 2}, {"Pace", 0.5}, {"Attack", 1}, {"RunAttack", 1}}
-	react := []ai.WeightedState{{"Attack", 1}, {"Wait", 0.8}}
+	speed, maxSpeed := a.speed, a.Body.MaxX
+	options := []ai.WeightedState{{"Pursuit", 1}, {"Pace", 0.5}, {"Wait", 0.16}, {"RunAttack", 0.16}, {"Attack", 0.16}}
+	react := []ai.WeightedState{{"Attack", 1}, {"Pace", 0.8}}
 	if config.canBlock {
-		act = append(act, ai.WeightedState{"Guard", 0.1})
+		options = append(options, ai.WeightedState{"Guard", 0.1})
 		react = append(react, ai.WeightedState{"Guard", 0.5})
 	}
 
-	actions := map[ai.State]*ai.Action{
-		"Act": {Next: func() []ai.WeightedState { return act }},
-		"Idle": {
-			Entry: func() { a.speed = 0 },
-			Next: func() []ai.WeightedState {
-				if targets := a.Body.QueryFront(config.viewDist, 40, a.Anim.FlipX); len(targets) > 0 {
-					a.AI.Target = targets[0]
-				}
-				if a.AI.Target != nil {
-					return []ai.WeightedState{{"Pursuit", 1}, {"Pace", 0}}
-				}
+	fsm := ai.NewFsm("Idle")
+	a.AI = &ai.Comp{Actor: a, Fsm: fsm}
+	a.AddComponent(a.AI)
 
-				return nil
-			},
-		},
-		"Wait": {
-			Cooldown: ai.Cooldown{1, 2},
-			Timeout:  ai.Timeout{"Act", 1, 1.2},
-			Entry:    func() { a.speed = 0 },
-		},
-		"Pursuit": {
-			Condition: func() bool { return !a.AI.InTargetRange(0, config.combatDist) },
-			Entry: func() {
-				a.speed = speed
-				a.Body.MaxX = maxX
-			},
-			Next: func() []ai.WeightedState {
-				if a.AI.InTargetRange(0, config.combatDist) {
-					return []ai.WeightedState{{"Pace", 0}}
-				}
+	a.AI.SetCombatOptions(options)
+	fsm.SetAction("Idle", a.AI.IdleBuilder(config.viewDist, 40, nil).Build())
+	fsm.SetAction("Wait", a.AI.WaitBuilder(1, 1.2).SetCooldown(ai.Cooldown{1, 2}).Build())
+	fsm.SetAction("Pursuit", a.AI.PursuitBuilder(config.combatDist, speed, maxSpeed, []ai.WeightedState{{"Pace", 0}}).Build())
 
-				return nil
-			},
-		},
-		"Pace": {
-			Cooldown:  ai.Cooldown{1, 2},
-			Timeout:   ai.Timeout{"Act", 1, 2},
-			Condition: func() bool { return a.AI.InTargetRange(0, config.combatDist) },
-			Entry: func() {
-				div := 2 + rand.Float64()*1
-				a.Body.MaxX = maxX / div
-				a.speed = speed
-				if a.AI.InTargetRange(0, config.backUpDist) {
-					a.speed *= -1
-				}
-			},
-			Next: func() []ai.WeightedState {
-				if !a.AI.InTargetRange(0, config.combatDist) {
-					return []ai.WeightedState{{"Pursuit", 1}}
-				}
-				if a.AI.InTargetRange(0, config.reactDist) {
-					return react
-				}
+	fsm.SetAction("Pace", a.AI.PaceBuilder(config.backUpDist, config.reactDist, speed, maxSpeed, react).
+		SetCooldown(ai.Cooldown{1, 2}).
+		SetTimeout(ai.Timeout{ai.CombatState, 1, 2}).
+		Build())
 
-				return nil
-			},
-		},
-		"Attack": {
-			Cooldown:  ai.Cooldown{2, 3},
-			Condition: func() bool { return a.Stats.Stamina > config.minAttackStamina },
-			Entry:     func() { a.Attack() },
-			Next: func() []ai.WeightedState {
-				if a.Anim.State != anim.AttackTag {
-					return []ai.WeightedState{{"Pace", 0}}
-				}
+	fsm.SetAction("Attack", a.AI.AnimBuilder(anim.AttackTag, nil).
+		SetCooldown(ai.Cooldown{2, 3}).
+		AddCondition(a.AI.EnoughStamina(config.minAttackStamina)).
+		SetEntry(func() { a.Attack(anim.AttackTag) }).
+		Build())
 
-				return nil
-			},
-		},
-		"RunAttack": {
-			Cooldown: ai.Cooldown{2, 3},
-			Condition: func() bool {
-				return a.Stats.Stamina > config.minAttackStamina && !a.AI.InTargetRange(0, config.reactDist)
-			},
-			Entry: func() {
-				a.speed = speed
-				a.Body.MaxX = maxX
-			},
-			Next: func() []ai.WeightedState {
-				if a.AI.InTargetRange(0, config.reactDist) {
-					return []ai.WeightedState{{"Attack", 0}}
-				}
+	fsm.SetAction("Guard", (&ai.ActionBuilder{}).
+		SetCooldown(ai.Cooldown{3, 0}).
+		SetTimeout(ai.Timeout{"Pace", 1, 2}).
+		SetEntry(func() { a.SetSpeed(-speed, maxSpeed/4); a.ShieldUp() }).
+		SetExit(func() { a.ShieldDown() }).
+		Build())
 
-				return nil
-			},
-		},
-		"Guard": {
-			Cooldown: ai.Cooldown{3, 0},
-			Timeout:  ai.Timeout{"Pace", 1, 2},
-			Entry: func() {
-				a.speed = -speed
-				a.Body.MaxX = maxX / 4
-				a.ShieldUp()
-			},
-			Exit: func() { a.ShieldDown() },
-		},
-	}
+	fsm.SetAction("RunAttack", (&ai.ActionBuilder{}).
+		SetCooldown(ai.Cooldown{2, 3}).
+		SetTimeout(ai.Timeout{"Pace", 1, 2}).
+		AddCondition(a.AI.EnoughStamina(config.minAttackStamina)).
+		AddCondition(a.AI.OutRangeFunc(config.backUpDist)).
+		SetEntry(a.AI.SetSpeedFunc(speed, maxSpeed)).
+		AddReaction(a.AI.InRangeFunc(config.reactDist), []ai.WeightedState{{anim.AttackTag, 0}}).
+		Build())
 
-	return &ai.Comp{Fsm: &ai.Fsm{Initial: "Idle", Actions: actions}}
+	return options
 }

@@ -30,12 +30,21 @@ type Action struct {
 }
 
 type Fsm struct {
-	Comp           *Comp
 	Actions        map[State]*Action
 	State, Initial State
 	timer          float64
 	timeoutTarget  State
 	cooldowns      map[State]float64
+}
+
+func NewFsm(initial State) *Fsm {
+	return &Fsm{Initial: initial, Actions: map[State]*Action{}}
+}
+
+func (f *Fsm) SetAction(state State, action *Action) *Fsm {
+	f.Actions[state] = action
+
+	return f
 }
 
 func (f *Fsm) update(dt float64) {
@@ -55,8 +64,7 @@ func (f *Fsm) update(dt float64) {
 	if f.timeoutTarget != "" {
 		f.timer -= dt
 		if f.timer <= 0 {
-			f.setState([]WeightedState{{f.timeoutTarget, 0}})
-			f.timeoutTarget = ""
+			f.setState([]WeightedState{{f.timeoutTarget, 1}})
 		}
 	}
 	if f.cooldowns == nil {
@@ -82,7 +90,11 @@ func (f *Fsm) setState(states []WeightedState) {
 			action.Exit()
 		}
 	}
-	f.State = f.selectState(states)
+	nextState := f.selectState(states)
+	if nextState == "" {
+		return
+	}
+	f.State = nextState
 	f.timeoutTarget = ""
 	if action := f.Actions[f.State]; action != nil {
 		if action.Timeout.Duration > 0 {
@@ -125,10 +137,6 @@ func (f *Fsm) selectState(states []WeightedState) State {
 		if r -= states[i].Weight; r <= 0 {
 			return states[i].State
 		}
-	}
-
-	if len(selected) == 0 && len(states) > 0 {
-		//fmt.Println(f.State, states) // TODO: Prevent this! Dumb cooldowns, maybe behaviour trees really are the way.
 	}
 
 	return ""

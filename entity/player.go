@@ -40,7 +40,7 @@ func NewPlayer(x, y float64, props map[string]interface{}) *Player {
 		pad:   utils.NewControlPack(),
 		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
 	}
-	playerActor.AddComponent(player)
+	playerActor.AddComponent(playerActor)
 	playerActor.Stats.Hud = true
 	playerActor.Stats.NoDebug = true
 
@@ -60,7 +60,7 @@ func (p *Player) Init(entity *core.Entity) {
 
 func (p *Player) Update(dt float64) {
 	moving := p.control(dt)
-	p.ManageAnim()
+	p.ManageAnim([]string{anim.AttackTag})
 	if p.Anim.State == anim.WalkTag && !moving {
 		p.Anim.SetState(anim.IdleTag)
 	}
@@ -111,7 +111,7 @@ func (p *Player) control(dt float64) bool {
 		p.Body.Vy = -p.jumpSpeed
 	}
 	if p.pad.KeyPressed(utils.KeyAction) {
-		p.Attack()
+		p.Attack(anim.AttackTag)
 	}
 
 	return moving

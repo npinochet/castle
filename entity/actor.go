@@ -8,6 +8,7 @@ import (
 	"game/comps/stats"
 	"game/core"
 	"game/libs/bump"
+	"game/utils"
 )
 
 const (
@@ -30,6 +31,13 @@ type Actor struct {
 	ReactForce, AttackPushForce         float64
 	blockMaxXSave, blockRecoverRateSave float64
 }
+
+func (a *Actor) GetBody() *body.Comp          { return a.Body }
+func (a *Actor) GetHitbox() *hitbox.Comp      { return a.Hitbox }
+func (a *Actor) GetAnim() *anim.Comp          { return a.Anim }
+func (a *Actor) GetStats() *stats.Comp        { return a.Stats }
+func (a *Actor) GetAI() *ai.Comp              { return a.AI }
+func (a *Actor) SetSpeed(speed, maxX float64) { a.speed, a.Body.MaxX = speed, maxX }
 
 func NewActor(
 	x, y float64,
@@ -74,11 +82,11 @@ func NewActor(
 	return actor
 }
 
-func (a *Actor) ManageAnim() {
+func (a *Actor) ManageAnim(attackTags []string) {
 	// TODO: Make more general, maybe add speed in the mix.
 	state := a.Anim.State
 	a.Body.Friction = !(state == anim.WalkTag && a.Body.Vx != 0)
-	a.Stats.Pause = state == anim.AttackTag || state == anim.StaggerTag
+	a.Stats.Pause = utils.Contains(attackTags, state) || state == anim.StaggerTag
 
 	if state == anim.IdleTag || state == anim.WalkTag {
 		nextState := anim.IdleTag
@@ -89,15 +97,15 @@ func (a *Actor) ManageAnim() {
 	}
 }
 
-func (a *Actor) Attack() {
-	if a.Stats.Stamina <= 0 || a.Anim.State == anim.AttackTag {
+func (a *Actor) Attack(attackTag string) {
+	if a.Stats.Stamina <= 0 || a.Anim.State == attackTag {
 		return
 	}
 	force := a.AttackPushForce
 	if a.Anim.FlipX {
 		force *= -1
 	}
-	a.Anim.SetState(anim.AttackTag)
+	a.Anim.SetState(attackTag)
 
 	once := false
 	var contacted []*hitbox.Comp

@@ -22,8 +22,7 @@ func NewKnight(x, y, w, h float64, props map[string]string) *core.Entity {
 		Actor: NewActor(x, y, body, anim, &stats.Comp{MaxPoise: 25}, 20, 20),
 	}
 	knight.speed = speed
-	knight.AI = knight.NewDefaultAI(nil)
-	knight.AddComponent(knight.AI)
+	knight.SetDefaultAI(nil)
 	knight.AddComponent(knight)
 
 	return &knight.Entity
@@ -38,7 +37,7 @@ func (k *Knight) Init(entity *core.Entity) {
 }
 
 func (k *Knight) Update(dt float64) {
-	k.ManageAnim()
+	k.ManageAnim([]string{anim.AttackTag})
 	if k.Anim.State == anim.WalkTag && k.speed == 0 {
 		k.Anim.SetState(anim.IdleTag)
 	}
