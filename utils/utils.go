@@ -2,6 +2,7 @@ package utils
 
 import (
 	"math"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -23,6 +24,9 @@ const (
 	KeyGuard
 )
 
+var buffer = map[ControlKey]bool{}
+var bufferTimers = map[ControlKey]*time.Timer{}
+
 func NewControlPack() ControlPack {
 	return ControlPack{
 		KeyRight:  ebiten.KeyArrowRight,
@@ -40,6 +44,19 @@ func (cp ControlPack) KeyDown(key ControlKey) bool {
 
 func (cp ControlPack) KeyPressed(key ControlKey) bool {
 	return inpututil.IsKeyJustPressed(cp[key])
+}
+
+func (cp ControlPack) KeyPressedBuffered(key ControlKey, timeBuffer time.Duration) bool {
+	pressed := inpututil.IsKeyJustPressed(cp[key])
+	if pressed {
+		buffer[key] = true
+		if bufferTimers[key] != nil {
+			bufferTimers[key].Stop()
+		}
+		bufferTimers[key] = time.AfterFunc(timeBuffer, func() { buffer[key] = false })
+	}
+
+	return pressed || buffer[key]
 }
 
 func (cp ControlPack) KeyReleased(key ControlKey) bool {

@@ -73,6 +73,9 @@ func (c *Comp) PushHitbox(rect bump.Rect, block bool) {
 
 func (c *Comp) PopHitbox() *Hitbox {
 	size := len(c.hurtBoxes) - 1
+	if size < 0 {
+		return nil
+	}
 	box := c.hurtBoxes[size]
 	c.space.Remove(box)
 	c.hurtBoxes = c.hurtBoxes[:size]

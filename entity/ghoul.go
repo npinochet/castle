@@ -12,6 +12,7 @@ const (
 	ghoulAnimFile                               = "assets/ghoul"
 	ghoulWidth, ghoulHeight                     = 9, 13
 	ghoulOffsetX, ghoulOffsetY, ghoulOffsetFlip = -6.5, -4, 14
+	ghoulSpeed                                  = 100
 	ghoulMaxSpeed                               = 20
 	ghoulDamage                                 = 20
 )
@@ -21,34 +22,17 @@ type ghoul struct {
 }
 
 func NewGhoul(x, y, w, h float64, props map[string]string) *core.Entity {
-	speed := 100.0
 	animc := &anim.Comp{FilesName: ghoulAnimFile, OX: ghoulOffsetX, OY: ghoulOffsetY, OXFlip: ghoulOffsetFlip}
 	body := &body.Comp{W: ghoulWidth, H: ghoulHeight, MaxX: ghoulMaxSpeed}
 
 	ghoul := &ghoul{
 		Actor: NewActor(x, y, body, animc, &stats.Comp{MaxPoise: ghoulDamage}, ghoulDamage, ghoulDamage),
 	}
-	ghoul.speed = speed
-	combatOptions := ghoul.SetDefaultAI(nil)
+	ghoul.speed = ghoulSpeed
 	ghoul.AddComponent(ghoul)
-
-	combatOptions = append(combatOptions, ai.WeightedState{"Attack1", 0.125})
-	combatOptions = append(combatOptions, ai.WeightedState{"Attack2", 0.125})
-	// Remove Attack from combatOptions
-	ghoul.AI.SetCombatOptions(combatOptions)
-	ghoul.AI.Fsm.SetAction("Attack", nil)
-	ghoul.AI.Fsm.SetAction("Attack1", ghoul.AI.AnimBuilder("Attack1", nil).
-		SetCooldown(ai.Cooldown{2, 3}).
-		AddCondition(ghoul.AI.EnoughStamina(0.2)).
-		SetEntry(func() { ghoul.Attack("Attack1") }).
-		Build())
-	ghoul.AI.Fsm.SetAction("Attack2", ghoul.AI.AnimBuilder("Attack2", nil).
-		SetCooldown(ai.Cooldown{2, 3}).
-		AddCondition(ghoul.AI.EnoughStamina(0.2)).
-		SetEntry(func() { ghoul.Attack("Attack2") }).
-		Build())
-	ghoul.Anim.Fsm.Transitions["Attack1"] = anim.IdleTag
-	ghoul.Anim.Fsm.Transitions["Attack2"] = anim.IdleTag
+	ghoul.Anim.Fsm.Transitions["AttackShort"] = anim.IdleTag
+	ghoul.Anim.Fsm.Transitions["AttackLong"] = anim.IdleTag
+	ghoul.setupAI()
 
 	return &ghoul.Entity
 }
@@ -62,7 +46,7 @@ func (g *ghoul) Init(entity *core.Entity) {
 }
 
 func (g *ghoul) Update(dt float64) {
-	g.ManageAnim([]string{"Attack1", "Attack2"})
+	g.ManageAnim([]string{"AttackShort", "AttackLong"})
 	if g.Anim.State == anim.WalkTag && g.speed == 0 {
 		g.Anim.SetState(anim.IdleTag)
 	}
@@ -71,7 +55,7 @@ func (g *ghoul) Update(dt float64) {
 			g.Anim.FlipX = g.AI.Target.X > g.X
 		}
 	}
-	if g.Anim.State != "Attack1" && g.Anim.State != anim.StaggerTag {
+	if (g.Anim.State != "AttackShort" && g.Anim.State != "AttackoLong") && g.Anim.State != anim.StaggerTag {
 		if g.Anim.FlipX {
 			g.Body.Vx += g.speed * dt
 		} else {
@@ -80,6 +64,33 @@ func (g *ghoul) Update(dt float64) {
 	}
 
 	if g.Stats.Health <= 0 {
-		g.World.RemoveEntity(g.ID) // TODO: creates infinite/recursive loop sometimes I think.
+		g.Remove()
 	}
+}
+
+func (g *ghoul) setupAI() {
+	aiConfig := DefaultAIConfig()
+	aiConfig.attackDisable = true
+	g.SetDefaultAI(aiConfig, []ai.WeightedState{{"AttackShort", 1}})
+
+	combatOptions := []ai.WeightedState{{"Pursuit", 10}, {"Pace", 0.5}, {"Wait", 0.125}, {"RunAttack", 0.125}, {"AttackLong", 0.125}, {"AttackShort", 0.125}}
+	g.AI.SetCombatOptions(combatOptions)
+	g.AI.Fsm.SetAction("AttackShort", g.AI.AnimBuilder("AttackShort", nil).
+		SetCooldown(ai.Cooldown{2, 3}).
+		AddCondition(g.AI.EnoughStamina(0.2)).
+		SetEntry(func() { g.Attack("AttackShort") }).
+		Build())
+	g.AI.Fsm.SetAction("AttackLong", g.AI.AnimBuilder("AttackLong", nil).
+		SetCooldown(ai.Cooldown{2, 3}).
+		AddCondition(g.AI.EnoughStamina(0.4)).
+		SetEntry(func() { g.Attack("AttackLong") }).
+		Build())
+	g.AI.Fsm.SetAction("RunAttack", (&ai.ActionBuilder{}).
+		SetCooldown(ai.Cooldown{2, 3}).
+		SetTimeout(ai.Timeout{"Pace", 1, 2}).
+		AddCondition(g.AI.EnoughStamina(aiConfig.minAttackStamina)).
+		AddCondition(g.AI.OutRangeFunc(aiConfig.backUpDist)).
+		SetEntry(g.AI.SetSpeedFunc(ghoulSpeed, ghoulMaxSpeed)).
+		AddReaction(g.AI.InRangeFunc(aiConfig.reactDist), []ai.WeightedState{{"AttackLong", 1}, {"AttackShort", 1}}).
+		Build())
 }

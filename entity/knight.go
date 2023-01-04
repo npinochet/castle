@@ -22,7 +22,7 @@ func NewKnight(x, y, w, h float64, props map[string]string) *core.Entity {
 		Actor: NewActor(x, y, body, anim, &stats.Comp{MaxPoise: 25}, 20, 20),
 	}
 	knight.speed = speed
-	knight.SetDefaultAI(nil)
+	knight.SetDefaultAI(nil, nil)
 	knight.AddComponent(knight)
 
 	return &knight.Entity
@@ -55,6 +55,6 @@ func (k *Knight) Update(dt float64) {
 	}
 
 	if k.Stats.Health <= 0 {
-		k.World.RemoveEntity(k.ID) // TODO: creates infinite/recursive loop sometimes I think.
+		k.Remove()
 	}
 }

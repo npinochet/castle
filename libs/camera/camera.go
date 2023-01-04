@@ -29,6 +29,7 @@ type Camera struct {
 	transitionX, transitionY float64
 	stiffness                int
 	transitionDuration       float32
+	betweenRooms             bool
 }
 
 func New(w, h float64) *Camera {
@@ -104,18 +105,25 @@ func (c *Camera) SetRoomBorders(transition bool) {
 		return
 	}
 
-	ex, ey := c.following.Position()
-	x, y := ex+c.fw/2, ey+c.fh/2
-	follow := bump.Rect{X: x, Y: y, W: c.fw, H: c.fh}
+	x, y := c.following.Position()
+	follow := bump.Rect{X: x + c.fw/4, Y: y, W: c.fw / 2, H: c.fh}
 
 	prevRoom := c.borders
-	c.borders = nil
+	roomCount := 0
 	for i, room := range c.rooms {
 		if bump.Overlaps(follow, room) {
-			c.borders = &c.rooms[i]
-
-			break
+			roomCount++
+			if &c.rooms[i] != prevRoom {
+				c.borders = &c.rooms[i]
+			}
 		}
+	}
+	if c.betweenRooms {
+		c.borders = prevRoom
+	}
+	c.betweenRooms = roomCount > 1
+	if roomCount == 0 {
+		c.borders = nil
 	}
 
 	if transition && prevRoom != c.borders && c.borders != nil {

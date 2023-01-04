@@ -81,7 +81,7 @@ func (ab *ActionBuilder) Build() *Action {
 	}
 }
 
-// Presets.
+// Preset Actions.
 
 func (c *Comp) IdleBuilder(viewDist, height float64, nextStates []WeightedState) *ActionBuilder {
 	body, anim := c.Actor.GetBody(), c.Actor.GetAnim()
@@ -119,13 +119,15 @@ func (c *Comp) PaceBuilder(backUpDist, reactDist, speed, maxSpeed float64, react
 	builder := &ActionBuilder{}
 	builder.SetEntry(func() {
 		s, ms := speed, maxSpeed
-		ms = (ms / 2) * (rand.Float64() + 2)
+		ms = (ms / 2) * (1 + rand.Float64())
 		if c.InTargetRange(0, backUpDist) {
 			s *= -1
 		}
 		c.Actor.SetSpeed(s, ms)
 	})
-	builder.AddReaction(c.InRangeFunc(reactDist), react)
+	if len(react) > 0 {
+		builder.AddReaction(c.InRangeFunc(reactDist), react)
+	}
 
 	return builder
 }

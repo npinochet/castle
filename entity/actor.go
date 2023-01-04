@@ -97,8 +97,19 @@ func (a *Actor) ManageAnim(attackTags []string) {
 	}
 }
 
+func (a *Actor) Remove() {
+	if a.Body != nil {
+		a.World.Space.Remove(a.Body)
+	}
+	if a.Hitbox != nil {
+		for a.Hitbox.PopHitbox() != nil {
+		}
+	}
+	a.World.RemoveEntity(a.ID)
+}
+
 func (a *Actor) Attack(attackTag string) {
-	if a.Stats.Stamina <= 0 || a.Anim.State == attackTag {
+	if a.Stats.Stamina <= 0 || a.Anim.State == attackTag || a.Anim.State == anim.StaggerTag {
 		return
 	}
 	force := a.AttackPushForce

@@ -10,6 +10,7 @@ import (
 	"game/libs/bump"
 	"game/utils"
 	"math"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -74,10 +75,8 @@ func (p *Player) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 }
 
 func (p *Player) control(dt float64) bool {
-	if p.Stats.Health <= 0 {
-		return false
-	}
-	if p.Anim.State == anim.AttackTag || p.Anim.State == anim.StaggerTag {
+	actionPressed := p.pad.KeyPressedBuffered(utils.KeyAction, 500*time.Millisecond)
+	if p.Stats.Health <= 0 || p.Anim.State == anim.AttackTag || p.Anim.State == anim.StaggerTag {
 		return false
 	}
 
@@ -110,7 +109,7 @@ func (p *Player) control(dt float64) bool {
 	if p.Body.Ground && p.pad.KeyPressed(utils.KeyUp) {
 		p.Body.Vy = -p.jumpSpeed
 	}
-	if p.pad.KeyPressed(utils.KeyAction) {
+	if actionPressed {
 		p.Attack(anim.AttackTag)
 	}
 

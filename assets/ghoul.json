@@ -194,8 +194,8 @@
   "frameTags": [
    { "name": "Idle", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" },
    { "name": "Walk", "from": 1, "to": 2, "direction": "forward", "color": "#000000ff" },
-   { "name": "Attack1", "from": 3, "to": 8, "direction": "forward", "color": "#000000ff" },
-   { "name": "Attack2", "from": 9, "to": 14, "direction": "forward", "color": "#000000ff" },
+   { "name": "AttackLong", "from": 3, "to": 14, "direction": "forward", "color": "#000000ff" },
+   { "name": "AttackShort", "from": 3, "to": 8, "direction": "forward", "color": "#000000ff" },
    { "name": "Stagger", "from": 15, "to": 15, "direction": "forward", "color": "#000000ff" },
    { "name": "Throw", "from": 16, "to": 22, "direction": "forward", "color": "#000000ff" }
   ],

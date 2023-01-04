@@ -57,7 +57,7 @@ const (
 	screenWidth, screenHeight = 160, 96 // 320, 240.
 
 	playerID   = 25
-	playerSize = 14
+	playerSize = 8
 )
 
 var (
