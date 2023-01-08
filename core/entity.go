@@ -38,7 +38,7 @@ func (e *Entity) InitComponents() {
 	}
 }
 
-func (e *Entity) Update(dt float64) {
+func (e *Entity) UpdateComponents(dt float64) {
 	if !e.Active {
 		return
 	}

@@ -58,7 +58,7 @@ func (w *World) Update(dt float64) {
 		w.Map.Update(dt)
 	}
 	for _, e := range w.entities {
-		e.Update(dt)
+		e.UpdateComponents(dt)
 	}
 }
 

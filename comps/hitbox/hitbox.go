@@ -83,7 +83,6 @@ func (c *Comp) PopHitbox() *Hitbox {
 	return box
 }
 
-// TODO: Test this new function.
 func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) (bool, []*Comp) {
 	c.debugLastHitbox = rect
 	rect.X += c.Entity.X

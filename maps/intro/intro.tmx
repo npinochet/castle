@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.0" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="8" tileheight="8" infinite="0" nextlayerid="7" nextobjectid="83">
+<map version="1.9" tiledversion="1.9.0" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="8" tileheight="8" infinite="0" nextlayerid="7" nextobjectid="84">
  <editorsettings>
   <chunksize width="8" height="8"/>
  </editorsettings>
@@ -1072,14 +1072,19 @@
   <object id="81" x="1936" y="2432" width="8" height="16"/>
  </objectgroup>
  <objectgroup id="4" name="entities">
-  <object id="11" gid="26" x="2016" y="2024" width="8" height="8"/>
-  <object id="12" gid="27" x="1952" y="2048" width="8" height="8"/>
-  <object id="27" gid="28" x="2048" y="2024" width="8" height="8"/>
+  <object id="11" name="Player" gid="26" x="2016" y="2024" width="8" height="8"/>
+  <object id="12" name="Knight" gid="27" x="1952" y="2048" width="8" height="8"/>
+  <object id="27" gid="28" x="2096" y="2016" width="8" height="8">
+   <properties>
+    <property name="rocks" type="int" value="3"/>
+   </properties>
+  </object>
   <object id="33" name="Bonfire" x="2072" y="2328" width="8" height="8"/>
   <object id="38" name="ghoul" x="2008" y="2384" width="8" height="8"/>
   <object id="40" name="ghoul" x="2120" y="2424" width="8" height="8"/>
+  <object id="83" name="Ghoul" gid="28" x="1992" y="2032" width="8" height="8"/>
  </objectgroup>
- <objectgroup color="#fffb00" id="5" name="rooms">
+ <objectgroup color="#fffb00" id="5" name="rooms" visible="0">
   <object id="3" x="1792" y="1992" width="160" height="96"/>
   <object id="13" x="1952" y="1960" width="208" height="128"/>
   <object id="28" x="1784" y="2168" width="160" height="96"/>

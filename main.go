@@ -37,6 +37,7 @@ import (
 - Add a Timeout system for AI states.
 - Clean up AI code, Make a default AI behaviour for actors if none are present. Make it tweekable with other params maybe.
 - Think of movement accion or states the anim component can have.
+- Sometimes the enemy can cut off the stagger animation somehow.
 
 -- Dark Souls Combat Findings
 - When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.

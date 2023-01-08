@@ -9,15 +9,15 @@
             "scaleInDock": 1.8745
         },
         "intro.tmx": {
-            "scale": 2.702,
+            "scale": 2.4718,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 2024.0562546262029,
-                "y": 2073.279052553664
+                "x": 2100.4935674407316,
+                "y": 2047.900315559511
             }
         },
         "tiles.tsx": {
-            "scaleInDock": 1.6197,
+            "scaleInDock": 4.4965,
             "scaleInEditor": 3.4
         }
     },
@@ -26,7 +26,7 @@
         "intro.tmx"
     ],
     "project": "intro.tiled-project",
-    "property.type": "float",
+    "property.type": "int",
     "recentFiles": [
         "intro.tmx",
         "tiles.tsx"

@@ -9,7 +9,7 @@ const (
 )
 
 var DefaultAnimFsm = &Fsm{
-	Transitions: map[string]string{WalkTag: IdleTag, AttackTag: IdleTag, StaggerTag: IdleTag},
+	Transitions: map[string]string{WalkTag: IdleTag, AttackTag: IdleTag, StaggerTag: IdleTag, BlockTag: ""},
 	Exit: map[string]func(*Comp){
 		StaggerTag: func(ac *Comp) { ac.Data.PlaySpeed = 1 },
 	},

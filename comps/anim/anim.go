@@ -2,8 +2,10 @@ package anim
 
 import (
 	"fmt"
+	"game/assets"
 	"game/core"
 	"game/libs/bump"
+	"game/utils"
 	"log"
 	"math"
 
@@ -64,7 +66,9 @@ func (c *Comp) SetState(state string) {
 		return
 	}
 	c.State = state
-	_ = c.Data.Play(state)
+	if err := c.Data.Play(state); err != nil {
+		panic(err)
+	}
 	c.callback = nil
 	if callback := c.Fsm.Entry[c.State]; callback != nil {
 		callback(c)
@@ -77,7 +81,11 @@ func (c *Comp) Update(dt float64) {
 		if callback := c.Fsm.Exit[c.State]; callback != nil {
 			callback(c)
 		}
-		if nextState := c.Fsm.Transitions[c.State]; nextState != "" {
+		nextState, ok := c.Fsm.Transitions[c.State]
+		if !ok {
+			nextState = IdleTag
+		}
+		if nextState != "" {
 			c.SetState(nextState)
 		}
 	}
@@ -101,6 +109,12 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op.GeoM.Concat(entityPos)
 	sprite, _ := c.Image.SubImage(c.Data.FrameBoundaries().Rectangle()).(*ebiten.Image)
 	screen.DrawImage(sprite, op)
+}
+
+func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	op := &ebiten.DrawImageOptions{GeoM: entityPos}
+	op.GeoM.Translate(-5, -22)
+	utils.DrawText(screen, fmt.Sprintf(`ANIM:%s`, c.State), assets.BittyFont, op)
 }
 
 func (c *Comp) OnFrames(callback FrameCallback) {

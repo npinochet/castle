@@ -6,6 +6,7 @@ import (
 	"game/comps/body"
 	"game/comps/stats"
 	"game/core"
+	"strconv"
 )
 
 const (
@@ -15,23 +16,25 @@ const (
 	ghoulSpeed                                  = 100
 	ghoulMaxSpeed                               = 20
 	ghoulDamage                                 = 20
+	ghoulThrowFrame                             = 2
 )
 
 type ghoul struct {
 	*Actor
+	rocks int
 }
 
 func NewGhoul(x, y, w, h float64, props map[string]string) *core.Entity {
 	animc := &anim.Comp{FilesName: ghoulAnimFile, OX: ghoulOffsetX, OY: ghoulOffsetY, OXFlip: ghoulOffsetFlip}
 	body := &body.Comp{W: ghoulWidth, H: ghoulHeight, MaxX: ghoulMaxSpeed}
 
+	rocks, _ := strconv.Atoi(props["rocks"])
 	ghoul := &ghoul{
 		Actor: NewActor(x, y, body, animc, &stats.Comp{MaxPoise: ghoulDamage}, ghoulDamage, ghoulDamage),
+		rocks: rocks,
 	}
 	ghoul.speed = ghoulSpeed
 	ghoul.AddComponent(ghoul)
-	ghoul.Anim.Fsm.Transitions["AttackShort"] = anim.IdleTag
-	ghoul.Anim.Fsm.Transitions["AttackLong"] = anim.IdleTag
 	ghoul.setupAI()
 
 	return &ghoul.Entity
@@ -55,7 +58,7 @@ func (g *ghoul) Update(dt float64) {
 			g.Anim.FlipX = g.AI.Target.X > g.X
 		}
 	}
-	if (g.Anim.State != "AttackShort" && g.Anim.State != "AttackoLong") && g.Anim.State != anim.StaggerTag {
+	if (g.Anim.State != "AttackShort" && g.Anim.State != "AttackLong") && g.Anim.State != anim.StaggerTag {
 		if g.Anim.FlipX {
 			g.Body.Vx += g.speed * dt
 		} else {
@@ -68,12 +71,28 @@ func (g *ghoul) Update(dt float64) {
 	}
 }
 
+func (g *ghoul) ThrowRock() {
+	tag := "Throw"
+	if g.Stats.Stamina <= 0 || g.Anim.State == tag || g.Anim.State == anim.StaggerTag {
+		return
+	}
+	g.Anim.SetState(tag)
+	g.Anim.OnFrames(func(frame int) {
+		if frame == ghoulThrowFrame {
+			g.Stats.AddStamina(-rockDamage)
+			g.World.AddEntity(NewRock(g.X-2, g.Y-4, g.Actor))
+			g.rocks--
+			g.Anim.OnFrames(nil)
+		}
+	})
+}
+
 func (g *ghoul) setupAI() {
 	aiConfig := DefaultAIConfig()
 	aiConfig.attackDisable = true
 	g.SetDefaultAI(aiConfig, []ai.WeightedState{{"AttackShort", 1}})
 
-	combatOptions := []ai.WeightedState{{"Pursuit", 10}, {"Pace", 0.5}, {"Wait", 0.125}, {"RunAttack", 0.125}, {"AttackLong", 0.125}, {"AttackShort", 0.125}}
+	combatOptions := []ai.WeightedState{{"Pursuit", 10}, {"Pace", 0.5}, {"Wait", 0.125}, {"RunAttack", 0.125}, {"AttackLong", 0.125}, {"AttackShort", 0.125}, {"Throw", 0.3}}
 	g.AI.SetCombatOptions(combatOptions)
 	g.AI.Fsm.SetAction("AttackShort", g.AI.AnimBuilder("AttackShort", nil).
 		SetCooldown(ai.Cooldown{2, 3}).
@@ -92,5 +111,12 @@ func (g *ghoul) setupAI() {
 		AddCondition(g.AI.OutRangeFunc(aiConfig.backUpDist)).
 		SetEntry(g.AI.SetSpeedFunc(ghoulSpeed, ghoulMaxSpeed)).
 		AddReaction(g.AI.InRangeFunc(aiConfig.reactDist), []ai.WeightedState{{"AttackLong", 1}, {"AttackShort", 1}}).
+		Build())
+	g.AI.Fsm.SetAction("Throw", g.AI.AnimBuilder("Throw", nil).
+		SetCooldown(ai.Cooldown{2, 3}).
+		AddCondition(g.AI.EnoughStamina(0.2)).
+		AddCondition(func() bool { return g.rocks > 0 }).
+		AddCondition(g.AI.OutRangeFunc(aiConfig.backUpDist)).
+		SetEntry(func() { g.ThrowRock() }).
 		Build())
 }

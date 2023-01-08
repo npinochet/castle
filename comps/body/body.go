@@ -4,6 +4,7 @@ import (
 	"game/comps/hitbox"
 	"game/core"
 	"game/libs/bump"
+	"game/utils"
 	"image/color"
 	"math"
 
@@ -11,7 +12,7 @@ import (
 )
 
 const (
-	gravity                     = 300
+	Gravity                     = 300
 	defaultMaxX, defaultMaxY    = 60, 200
 	groundFriction, airFriction = 12, 4 // TODO: Tune this variables. They might be too high.
 	collisionStiffness          = 1
@@ -26,6 +27,8 @@ type Comp struct {
 	X, Y, W, H      float64
 	Vx, Vy          float64
 	MaxX, MaxY      float64
+	Weight          float64
+	FilterOut       []*Comp
 	debugQueryFront bump.Rect
 }
 
@@ -105,11 +108,11 @@ func (c *Comp) updateMovement(dt float64) {
 			c.Vx = 0
 		}
 	}
-	c.Vy += gravity * dt
+	c.Vy += Gravity * (c.Weight + 1) * dt
 	c.Vy = math.Min(c.MaxY, math.Max(-c.MaxY, c.Vy))
 
 	p := bump.Vec2{X: c.entity.X + c.X + c.Vx*dt, Y: c.entity.Y + c.Y + c.Vy*dt}
-	goal, cols := c.space.Move(c, p, bodyFilter)
+	goal, cols := c.space.Move(c, p, c.bodyFilter())
 	c.entity.X, c.entity.Y = goal.X-c.X, goal.Y-c.Y
 
 	c.Ground = false
@@ -137,13 +140,19 @@ func (c *Comp) applyOverlapForce(col *bump.Collision) {
 	c.Vx += math.Copysign(overlap*collisionStiffness, side) * groundFriction
 }
 
-func bodyFilter(item, other bump.Item) (bump.ColType, bool) {
-	if obc, ok := other.(*Comp); ok && !obc.Static {
-		return bump.Cross, true
-	}
-	if _, ok := other.(*hitbox.Hitbox); ok {
-		return 0, false
-	}
+func (c *Comp) bodyFilter() func(bump.Item, bump.Item) (bump.ColType, bool) {
+	return func(item, other bump.Item) (bump.ColType, bool) {
+		if obc, ok := other.(*Comp); ok && !obc.Static {
+			if utils.Contains(c.FilterOut, obc) {
+				return 0, false
+			}
 
-	return bump.Slide, true
+			return bump.Cross, true
+		}
+		if _, ok := other.(*hitbox.Hitbox); ok {
+			return 0, false
+		}
+
+		return bump.Slide, true
+	}
 }
