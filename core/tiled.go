@@ -1,15 +1,22 @@
 package core
 
 import (
+	"fmt"
 	"game/libs/bump"
 	"log"
 	"math"
+	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/lafriks/go-tiled"
 	"github.com/lafriks/go-tiled/render"
 )
 
+const (
+	HorizontalProp = "HorizontalFlip"
+	VerticalProp   = "VerticalFlip"
+	ViewProp       = "view"
+)
 const defaultCollisionPriority = -2
 
 type EntityContructor func(x, y, w, h float64, props map[string]string) *Entity
@@ -60,9 +67,28 @@ func (m *Map) Update(dt float64) {
 	// TODO: Update animation system.
 }
 
-func (m *Map) FindObjectPosition(objectGroupName string, id uint32) (float64, float64, error) {
+func (m *Map) FindObjectID(id uint32) (*tiled.Object, error) {
+	for _, group := range m.data.ObjectGroups {
+		for _, obj := range group.Objects {
+			if obj.ID == id {
+				obj.Y -= float64(m.data.TileHeight)
+
+				return obj, nil
+			}
+		}
+	}
+
+	return nil, tiled.ErrInvalidObjectPoint
+}
+
+func (m *Map) FindObjectFromTileID(id uint32, objectGroupName string) (*tiled.Object, error) {
 	var objects []*tiled.Object
 	for _, group := range m.data.ObjectGroups {
+		if objectGroupName == "" {
+			objects = append(objects, group.Objects...)
+
+			continue
+		}
 		if objectGroupName == group.Name {
 			objects = group.Objects
 
@@ -76,11 +102,13 @@ func (m *Map) FindObjectPosition(objectGroupName string, id uint32) (float64, fl
 			continue
 		}
 		if tile.ID == id {
-			return obj.X, obj.Y - float64(m.data.TileHeight), nil
+			obj.Y -= float64(m.data.TileHeight)
+
+			return obj, nil
 		}
 	}
 
-	return 0.0, 0.0, tiled.ErrInvalidTileGID
+	return nil, tiled.ErrInvalidTileGID
 }
 
 func (m *Map) LoadBumpObjects(space *bump.Space, objectGroupName string) {
@@ -141,8 +169,17 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 		if construct, ok := entityBindMap[tile.ID]; ok {
 			props := map[string]string{}
 			for _, prop := range obj.Properties {
+				if prop.Type == "object" {
+					id, _ := strconv.Atoi(prop.Value)
+					obj, err := m.FindObjectID(uint32(id))
+					if err != nil {
+						panic("cannot find object with id " + prop.Value)
+					}
+					prop.Value = fmt.Sprintf("%g,%g,%g,%g", obj.X, obj.Y, obj.Width, obj.Height)
+				}
 				props[prop.Name] = prop.Value
 			}
+			props[HorizontalProp], props[VerticalProp] = strconv.FormatBool(tile.HorizontalFlip), strconv.FormatBool(tile.VerticalFlip)
 			world.AddEntity(construct(obj.X, obj.Y, obj.Width, obj.Height, props))
 		}
 	}

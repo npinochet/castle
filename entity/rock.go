@@ -7,6 +7,7 @@ import (
 	"game/core"
 	"game/libs/bump"
 	"math"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -17,6 +18,7 @@ const (
 	rockDamage             = 5
 	rockWeight             = -0.4
 	rockMinVel, rockMaxVel = 50.0, 100.0
+	rockRollingTime        = 200 * time.Millisecond
 )
 
 var (
@@ -56,7 +58,7 @@ func NewRock(x, y float64, owner *Actor) *core.Entity {
 	}
 	rock := &Rock{
 		Entity: core.Entity{X: x, Y: y},
-		render: &render.Comp{Image: rockImage},
+		render: &render.Comp{Image: rockImage, RollingTime: rockRollingTime},
 		body:   body,
 		hitbox: &hitbox.Comp{},
 		owner:  owner,

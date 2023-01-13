@@ -30,17 +30,17 @@ type Fsm struct {
 }
 
 type Comp struct {
-	FilesName                 string
-	OX, OY                    float64
-	OXFlip, OYFlip            float64
-	FacingRight, FlipX, FlipY bool
-	w, h                      float64
-	State                     string
-	Image                     *ebiten.Image
-	Data                      *aseprite.File
-	Fsm                       *Fsm
-	callback                  FrameCallback
-	slices                    map[string]map[int]bump.Rect
+	FilesName      string
+	OX, OY         float64
+	OXFlip, OYFlip float64
+	FlipX, FlipY   bool
+	w, h           float64
+	State          string
+	Image          *ebiten.Image
+	Data           *aseprite.File
+	Fsm            *Fsm
+	callback       FrameCallback
+	slices         map[string]map[int]bump.Rect
 }
 
 func (c *Comp) Init(entity *core.Entity) {
@@ -114,7 +114,7 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -22)
-	utils.DrawText(screen, fmt.Sprintf(`ANIM:%s`, c.State), assets.BittyFont, op)
+	utils.DrawText(screen, fmt.Sprintf(`ANIM:%s`, c.State), assets.TinyFont, op)
 }
 
 func (c *Comp) OnFrames(callback FrameCallback) {

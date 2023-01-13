@@ -47,7 +47,7 @@ func (c *Comp) Update(dt float64) {
 func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -10)
-	utils.DrawText(screen, fmt.Sprintf(`AI:%s`, c.Fsm.State), assets.BittyFont, op)
+	utils.DrawText(screen, fmt.Sprintf(`AI:%s`, c.Fsm.State), assets.TinyFont, op)
 }
 
 func (c *Comp) InTargetRange(minDist, maxDist float64) bool {

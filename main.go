@@ -51,6 +51,7 @@ import (
 	- If the hitbox gets away from the player hurtbox in one frame and then it overlaps again on the next frame, it should hit again.
 - Add teams to actor, the AI should only target player and not other enemies (unless hit by enemy).
 - Maybe replace FSM with behaviour tree (ref: https://github.com/askft/go-behave)
+- Map keys 1,2,3,4 to different components debugDraws.
 */
 
 const (
@@ -75,11 +76,11 @@ func (g *Game) init() {
 	g.world = core.NewWorld(screenWidth, screenHeight)
 	g.world.SetMap(core.NewMap("maps/intro/intro.tmx", "foreground", "background"), "rooms")
 
-	playerX, playerY, err := g.world.Map.FindObjectPosition("entities", playerID)
+	obj, err := g.world.Map.FindObjectFromTileID(playerID, "entities")
 	if err != nil {
 		log.Println("Error finding player entity:", err)
 	}
-	player = entity.NewPlayer(playerX, playerY, nil)
+	player = entity.NewPlayer(obj.X, obj.Y, nil)
 	g.world.Camera.Follow(player, playerSize, playerSize)
 	g.world.AddEntity(&player.Entity)
 
@@ -87,6 +88,7 @@ func (g *Game) init() {
 	g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
 		26: entity.NewKnight,
 		27: entity.NewGhoul,
+		87: entity.NewGram,
 	})
 	g.world.Debug = false
 }
@@ -126,7 +128,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.world.Debug {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(1, 1)
-		utils.DrawText(screen, fmt.Sprintf(`%0.2f`, ebiten.CurrentTPS()), assets.BittyFont, op)
+		utils.DrawText(screen, fmt.Sprintf(`%0.2f`, ebiten.ActualFPS()), assets.TinyFont, op)
 	}
 }
 

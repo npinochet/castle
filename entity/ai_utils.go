@@ -3,10 +3,12 @@ package entity
 import (
 	"game/comps/ai"
 	"game/comps/anim"
+	"game/libs/bump"
 )
 
 type AIConfig struct {
 	pursuitDisable, paceDisable, waitDisable, guardDisable, attackDisable bool
+	viewRect                                                              bump.Rect
 	viewDist                                                              float64
 	combatDist                                                            float64
 	backUpDist                                                            float64
@@ -42,7 +44,7 @@ func (a *Actor) SetDefaultAI(config *AIConfig, react []ai.WeightedState) {
 	a.AddComponent(a.AI)
 
 	a.AI.SetCombatOptions(options)
-	fsm.SetAction("Idle", a.AI.IdleBuilder(config.viewDist, 40, nil).Build())
+	fsm.SetAction("Idle", a.AI.IdleBuilder(config.viewRect, config.viewDist, 40, nil).Build())
 	if !config.waitDisable {
 		fsm.SetAction("Wait", a.AI.WaitBuilder(1, 1.2).SetCooldown(ai.Cooldown{1, 2}).Build())
 	}

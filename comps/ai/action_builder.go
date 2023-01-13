@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"game/libs/bump"
 	"math/rand"
 )
 
@@ -83,17 +84,27 @@ func (ab *ActionBuilder) Build() *Action {
 
 // Preset Actions.
 
-func (c *Comp) IdleBuilder(viewDist, height float64, nextStates []WeightedState) *ActionBuilder {
+func (c *Comp) IdleBuilder(view bump.Rect, viewDist, height float64, nextStates []WeightedState) *ActionBuilder {
 	body, anim := c.Actor.GetBody(), c.Actor.GetAnim()
 	builder := &ActionBuilder{}
 	builder.SetEntry(c.SetSpeedFunc(0, 0))
-	builder.AddReaction(func() bool {
-		if targets := body.QueryFront(viewDist, height, anim.FlipX); len(targets) > 0 {
-			c.Target = targets[0]
-		}
+	if view.W != 0 && view.H != 0 {
+		builder.AddReaction(func() bool {
+			if targets := body.QueryRect(view); len(targets) > 0 {
+				c.Target = targets[0]
+			}
 
-		return c.Target != nil
-	}, nextStates)
+			return c.Target != nil
+		}, nextStates)
+	} else {
+		builder.AddReaction(func() bool {
+			if targets := body.QueryFront(viewDist, height, anim.FlipX); len(targets) > 0 {
+				c.Target = targets[0]
+			}
+
+			return c.Target != nil
+		}, nextStates)
+	}
 
 	return builder
 }

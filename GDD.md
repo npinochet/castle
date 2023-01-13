@@ -32,6 +32,7 @@ After year or centuries of being prisoners on the castle, strange social bonds a
 
 ### Nomenclature
 
+* Without the first sin: Immortal: Restless
 * Currency: Specks ~~of time~~?
 * Rite of immortality: ???
 * Curse of immortality: ???
@@ -66,9 +67,9 @@ After year or centuries of being prisoners on the castle, strange social bonds a
 
 ### Loose ideas
 
-* There are humans that managed to free themselves of the first sin, though a rite, which grant them immortality, these humans became like gods in the kingdom.
-* The king of the castle is one of these "gods". While his governance some major event happened where the wisdom of becoming inmortal leaked, making everyone in the castle inmortal. That's when an outside god placed a barrier on the castle and let all it's inhabitants prisoned.
-* There was a person who didn't use the wisdom to became inmortal, which let him die and was later became like a saint and prophet for one of the covenants which named him "the first death". This covenant seeks a way to undo the rite somehow and become sinners again.
+* There are humans that managed to free themselves of the first sin, though a rite, which grant them immortality, these humans became gods-like in the kingdom.
+* The king of the castle is one of these "gods". While his governance some major event happened where the wisdom of becoming immortal leaked, making everyone in the castle immortal. That's when an outside god placed a barrier on the castle and let all it's inhabitants prisoned.
+* There was a person who didn't use the wisdom to became immortal, which let him die and later became like a saint and prophet for one of the covenants which named him "the first death". This covenant seeks a way to undo the rite somehow and become sinners again.
 
 #### Setting imposed limitations
 

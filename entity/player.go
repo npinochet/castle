@@ -71,7 +71,7 @@ func (p *Player) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	hud := fmt.Sprintf("%0.2f/%0.2f/%0.2f", p.Stats.Health, p.Stats.Stamina, p.Stats.Poise)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(25, 1)
-	utils.DrawText(screen, hud, assets.BittyFont, op)
+	utils.DrawText(screen, hud, assets.TinyFont, op)
 }
 
 func (p *Player) control(dt float64) bool {

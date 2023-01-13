@@ -6,7 +6,9 @@ import (
 	"game/comps/body"
 	"game/comps/stats"
 	"game/core"
+	"game/libs/bump"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -26,6 +28,8 @@ type ghoul struct {
 
 func NewGhoul(x, y, w, h float64, props map[string]string) *core.Entity {
 	animc := &anim.Comp{FilesName: ghoulAnimFile, OX: ghoulOffsetX, OY: ghoulOffsetY, OXFlip: ghoulOffsetFlip}
+	animc.FlipX = props[core.HorizontalProp] == "true"
+
 	body := &body.Comp{W: ghoulWidth, H: ghoulHeight, MaxX: ghoulMaxSpeed}
 
 	rocks, _ := strconv.Atoi(props["rocks"])
@@ -35,7 +39,15 @@ func NewGhoul(x, y, w, h float64, props map[string]string) *core.Entity {
 	}
 	ghoul.speed = ghoulSpeed
 	ghoul.AddComponent(ghoul)
-	ghoul.setupAI()
+
+	var view bump.Rect
+	if viewStrings := strings.Split(props[core.ViewProp], ","); len(viewStrings) > 1 {
+		view.X, _ = strconv.ParseFloat(viewStrings[0], 64)
+		view.Y, _ = strconv.ParseFloat(viewStrings[1], 64)
+		view.W, _ = strconv.ParseFloat(viewStrings[2], 64)
+		view.H, _ = strconv.ParseFloat(viewStrings[3], 64)
+	}
+	ghoul.setupAI(view)
 
 	return &ghoul.Entity
 }
@@ -87,8 +99,9 @@ func (g *ghoul) ThrowRock() {
 	})
 }
 
-func (g *ghoul) setupAI() {
+func (g *ghoul) setupAI(view bump.Rect) {
 	aiConfig := DefaultAIConfig()
+	aiConfig.viewRect = view
 	aiConfig.attackDisable = true
 	g.SetDefaultAI(aiConfig, []ai.WeightedState{{"AttackShort", 1}})
 

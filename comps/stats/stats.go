@@ -117,7 +117,7 @@ func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	}
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -16)
-	utils.DrawText(screen, fmt.Sprintf("%0.2f", c.Health), assets.BittyFont, op)
+	utils.DrawText(screen, fmt.Sprintf("%0.2f", c.Health), assets.TinyFont, op)
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {

@@ -20,16 +20,16 @@ const (
 )
 
 type Comp struct {
-	Static, Ground  bool
-	Friction        bool
-	space           *bump.Space
-	entity          *core.Entity
-	X, Y, W, H      float64
-	Vx, Vy          float64
-	MaxX, MaxY      float64
-	Weight          float64
-	FilterOut       []*Comp
-	debugQueryFront bump.Rect
+	Solid, Unmovable, Ground bool
+	Friction                 bool
+	space                    *bump.Space
+	entity                   *core.Entity
+	X, Y, W, H               float64
+	Vx, Vy                   float64
+	MaxX, MaxY               float64
+	Weight                   float64
+	FilterOut                []*Comp
+	debugQueryRect           bump.Rect
 }
 
 func (c *Comp) Init(entity *core.Entity) {
@@ -46,20 +46,18 @@ func (c *Comp) Init(entity *core.Entity) {
 }
 
 func (c *Comp) Update(dt float64) {
-	if c.Static {
+	if c.Solid {
 		return
 	}
 	c.updateMovement(dt)
 }
 
-func (c *Comp) QueryFront(dist, height float64, lookingRight bool) []*core.Entity {
-	rect := bump.Rect{X: -dist, Y: -height / 2, W: dist, H: height}
-	if lookingRight {
-		rect.X += dist
-	}
-	c.debugQueryFront = rect
-	rect.X += c.entity.X
-	rect.Y += c.entity.Y
+func (c *Comp) Rect() bump.Rect {
+	return bump.Rect{X: c.entity.X + c.X, Y: c.entity.Y + c.Y, W: c.W, H: c.H}
+}
+
+func (c *Comp) QueryRect(rect bump.Rect) []*core.Entity {
+	c.debugQueryRect = rect
 
 	entityFilter := func(item bump.Item) bool {
 		if comp, ok := item.(*Comp); ok {
@@ -80,6 +78,17 @@ func (c *Comp) QueryFront(dist, height float64, lookingRight bool) []*core.Entit
 	return ents
 }
 
+func (c *Comp) QueryFront(dist, height float64, lookingRight bool) []*core.Entity {
+	rect := bump.Rect{X: -dist, Y: -height / 2, W: dist, H: height}
+	if lookingRight {
+		rect.X += dist
+	}
+	rect.X += c.entity.X
+	rect.Y += c.entity.Y
+
+	return c.QueryRect(rect)
+}
+
 func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	image := ebiten.NewImage(int(c.W), int(c.H))
 	image.Fill(color.RGBA{255, 0, 0, 100})
@@ -87,13 +96,14 @@ func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op.GeoM.Translate(c.X, c.Y)
 	screen.DrawImage(image, op)
 
-	if c.debugQueryFront.W != 0 || c.debugQueryFront.H != 0 {
-		image := ebiten.NewImage(int(c.debugQueryFront.W), int(c.debugQueryFront.H))
+	// TODO: This is broken
+	if c.debugQueryRect.W != 0 || c.debugQueryRect.H != 0 {
+		image := ebiten.NewImage(int(c.debugQueryRect.W), int(c.debugQueryRect.H))
 		image.Fill(color.RGBA{255, 255, 0, 100})
 		op := &ebiten.DrawImageOptions{GeoM: entityPos}
-		op.GeoM.Translate(c.debugQueryFront.X, c.debugQueryFront.Y)
+		op.GeoM.Translate(c.debugQueryRect.X, c.debugQueryRect.Y)
 		screen.DrawImage(image, op)
-		c.debugQueryFront = bump.Rect{}
+		c.debugQueryRect = bump.Rect{}
 	}
 }
 
@@ -116,6 +126,9 @@ func (c *Comp) updateMovement(dt float64) {
 	c.entity.X, c.entity.Y = goal.X-c.X, goal.Y-c.Y
 
 	c.Ground = false
+	if c.Unmovable {
+		return
+	}
 	for _, col := range cols {
 		if col.Type == bump.Slide {
 			if col.Normal.Y < 0 {
@@ -142,7 +155,7 @@ func (c *Comp) applyOverlapForce(col *bump.Collision) {
 
 func (c *Comp) bodyFilter() func(bump.Item, bump.Item) (bump.ColType, bool) {
 	return func(item, other bump.Item) (bump.ColType, bool) {
-		if obc, ok := other.(*Comp); ok && !obc.Static {
+		if obc, ok := other.(*Comp); ok && !obc.Solid {
 			if utils.Contains(c.FilterOut, obc) {
 				return 0, false
 			}
