@@ -65,6 +65,7 @@ func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
 	screen.DrawImage(c.drawBackground(), op)
 
 	op.GeoM.Translate(2, 2)
+	// TODO: wrap text if falls out side text box
 	utils.DrawText(screen, c.Text, assets.TinyFont, op)
 }
 

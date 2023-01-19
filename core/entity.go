@@ -9,9 +9,6 @@ type Updater interface{ Update(dt float64) }
 type Drawer interface {
 	Draw(screen *ebiten.Image, entityPos ebiten.GeoM)
 }
-type DebugDrawer interface {
-	DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM)
-}
 
 type Entity struct {
 	ID         uint64
@@ -62,9 +59,6 @@ func (e *Entity) Draw(screen *ebiten.Image) {
 	for _, c := range e.Components {
 		if drawer, ok := c.(Drawer); ok {
 			drawer.Draw(screen, entityPos)
-		}
-		if drawer, ok := c.(DebugDrawer); e.World.Debug && ok {
-			drawer.DebugDraw(screen, entityPos)
 		}
 	}
 }

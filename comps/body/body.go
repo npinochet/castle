@@ -19,6 +19,8 @@ const (
 	frictionEpsilon             = 0.05
 )
 
+var DebugDraw = false
+
 type Comp struct {
 	Solid, Unmovable, Ground bool
 	Friction                 bool
@@ -89,7 +91,10 @@ func (c *Comp) QueryFront(dist, height float64, lookingRight bool) []*core.Entit
 	return c.QueryRect(rect)
 }
 
-func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	if !DebugDraw {
+		return
+	}
 	image := ebiten.NewImage(int(c.W), int(c.H))
 	image.Fill(color.RGBA{255, 0, 0, 100})
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}

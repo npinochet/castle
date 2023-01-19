@@ -4,6 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"game/assets"
+	"game/comps/ai"
+	"game/comps/anim"
+	"game/comps/body"
+	"game/comps/hitbox"
+	"game/comps/stats"
 	"game/core"
 	"game/entity"
 	"game/utils"
@@ -51,7 +56,6 @@ import (
 	- If the hitbox gets away from the player hurtbox in one frame and then it overlaps again on the next frame, it should hit again.
 - Add teams to actor, the AI should only target player and not other enemies (unless hit by enemy).
 - Maybe replace FSM with behaviour tree (ref: https://github.com/askft/go-behave)
-- Map keys 1,2,3,4 to different components debugDraws.
 */
 
 const (
@@ -90,7 +94,6 @@ func (g *Game) init() {
 		27: entity.NewGhoul,
 		87: entity.NewGram,
 	})
-	g.world.Debug = false
 }
 
 func (g *Game) Update() error {
@@ -104,9 +107,7 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return errors.New("Exited")
 	}
-	if inpututil.IsKeyJustPressed(ebiten.Key1) {
-		g.world.Debug = !g.world.Debug
-	}
+	debugControls()
 
 	if player.Stats.Health <= 0 && canRestart {
 		canRestart = false
@@ -125,11 +126,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		return
 	}
 	g.world.Draw(screen)
-	if g.world.Debug {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(1, 1)
-		utils.DrawText(screen, fmt.Sprintf(`%0.2f`, ebiten.ActualFPS()), assets.TinyFont, op)
-	}
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(1, 1)
+	utils.DrawText(screen, fmt.Sprintf(`%0.2f`, ebiten.ActualFPS()), assets.TinyFont, op)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -144,5 +144,23 @@ func main() {
 	game.init()
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func debugControls() {
+	if inpututil.IsKeyJustPressed(ebiten.Key1) {
+		body.DebugDraw = !body.DebugDraw
+	}
+	if inpututil.IsKeyJustPressed(ebiten.Key2) {
+		hitbox.DebugDraw = !hitbox.DebugDraw
+	}
+	if inpututil.IsKeyJustPressed(ebiten.Key3) {
+		ai.DebugDraw = !ai.DebugDraw
+	}
+	if inpututil.IsKeyJustPressed(ebiten.Key4) {
+		stats.DebugDraw = !stats.DebugDraw
+	}
+	if inpututil.IsKeyJustPressed(ebiten.Key5) {
+		anim.DebugDraw = !anim.DebugDraw
 	}
 }

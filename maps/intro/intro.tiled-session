@@ -8,12 +8,26 @@
         "": {
             "scaleInDock": 1.8745
         },
+        "/Users/nico/Desktop/nico/castle/extras/castle-lua/game/maps/desert/desert.tmx": {
+            "scale": 0.8369,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 780.2604851236707,
+                "y": 573.5452264308758
+            }
+        },
+        "/Users/nico/Desktop/nico/castle/extras/castle-lua/game/maps/desert/desert.tmx#entities": {
+            "scaleInDock": 1
+        },
+        "/Users/nico/Desktop/nico/castle/extras/castle-lua/game/maps/desert/desert.tmx#tiles": {
+            "scaleInDock": 1
+        },
         "intro.tmx": {
             "scale": 2.5986,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 2086.5081197567924,
-                "y": 2347.033017778804
+                "x": 2079.966135611483,
+                "y": 2342.0303240206267
             }
         },
         "tiles.tsx": {
@@ -26,10 +40,12 @@
         "intro.tmx"
     ],
     "project": "intro.tiled-project",
-    "property.type": "object",
+    "property.type": "string",
     "recentFiles": [
         "intro.tmx",
+        "/Users/nico/Desktop/nico/castle/extras/castle-lua/game/maps/desert/desert.tmx",
         "tiles.tsx"
     ],
-    "resizeMap.removeObjects": false
+    "resizeMap.removeObjects": false,
+    "textEdit.monospace": true
 }

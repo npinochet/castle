@@ -24,6 +24,8 @@ type Actor interface {
 
 const CombatState State = "Combat"
 
+var DebugDraw = false
+
 type Comp struct {
 	Fsm            *Fsm
 	Actor          Actor
@@ -44,7 +46,10 @@ func (c *Comp) Update(dt float64) {
 	c.Fsm.update(dt)
 }
 
-func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	if !DebugDraw {
+		return
+	}
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -10)
 	utils.DrawText(screen, fmt.Sprintf(`AI:%s`, c.Fsm.State), assets.TinyFont, op)

@@ -45,8 +45,8 @@ func init() {
 func NewRock(x, y float64, owner *Actor) *core.Entity {
 	vx, vy := rockMaxVel, 60.0
 	if target := owner.AI.Target; target != nil {
-		tx, _ := target.Position()
-		vx = calculateVx(x, tx, vy)
+		tx, ty := target.Position()
+		vx = calculateVx(x, y, tx, ty, vy)
 	}
 
 	body := &body.Comp{
@@ -99,11 +99,13 @@ func (r *Rock) Remove() {
 	r.World.RemoveEntity(r.ID)
 }
 
-func calculateVx(x, tx, vy float64) float64 {
+func calculateVx(x, y, tx, ty, vy float64) float64 {
 	widthBuffer := 10.0
 	dx := math.Abs(x - tx - widthBuffer)
+	dy := math.Max(ty-y, 0)
 	a := body.Gravity * (rockWeight + 1)
 	t := vy / a
+	t += dy / vy
 	vx := math.Max(dx/(2*t), rockMinVel)
 	if x > tx {
 		vx *= -1

@@ -16,11 +16,10 @@ type World struct {
 	entities      []*Entity
 	entitiesCache map[uint64]*Entity
 	Map           *Map
-	Debug         bool
 }
 
 func NewWorld(width, height float64) *World {
-	return &World{bump.NewSpace(), camera.New(width, height), nil, map[uint64]*Entity{}, nil, false}
+	return &World{bump.NewSpace(), camera.New(width, height), nil, map[uint64]*Entity{}, nil}
 }
 
 func (w *World) AddEntity(entity *Entity) *Entity {

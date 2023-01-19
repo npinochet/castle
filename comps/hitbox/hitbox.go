@@ -12,6 +12,8 @@ import (
 
 const blockPriority = 1
 
+var DebugDraw = false
+
 type HitFunc func(*Comp, *bump.Collision, float64)
 
 type Hitbox struct {
@@ -40,7 +42,10 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	if !DebugDraw {
+		return
+	}
 	for _, box := range c.hurtBoxes {
 		image := ebiten.NewImage(int(box.rect.W), int(box.rect.H))
 		image.Fill(color.RGBA{0, 0, 255, 100})

@@ -20,6 +20,8 @@ const (
 	BlockSliceName   = "blockbox"
 )
 
+var DebugDraw = false
+
 type FrameCallback func(frame int)
 
 type Fsm struct {
@@ -109,12 +111,9 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op.GeoM.Concat(entityPos)
 	sprite, _ := c.Image.SubImage(c.Data.FrameBoundaries().Rectangle()).(*ebiten.Image)
 	screen.DrawImage(sprite, op)
-}
-
-func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
-	op := &ebiten.DrawImageOptions{GeoM: entityPos}
-	op.GeoM.Translate(-5, -22)
-	utils.DrawText(screen, fmt.Sprintf(`ANIM:%s`, c.State), assets.TinyFont, op)
+	if DebugDraw {
+		c.debugDraw(screen, entityPos)
+	}
 }
 
 func (c *Comp) OnFrames(callback FrameCallback) {
@@ -169,4 +168,10 @@ func (c *Comp) allocateHitboxSlices() error {
 	}
 
 	return nil
+}
+
+func (c *Comp) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	op := &ebiten.DrawImageOptions{GeoM: entityPos}
+	op.GeoM.Translate(-5, -22)
+	utils.DrawText(screen, fmt.Sprintf(`ANIM:%s`, c.State), assets.TinyFont, op)
 }

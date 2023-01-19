@@ -1,8 +1,6 @@
 package entity
 
 import (
-	"fmt"
-	"game/assets"
 	"game/comps/anim"
 	"game/comps/body"
 	"game/comps/hitbox"
@@ -11,8 +9,6 @@ import (
 	"game/utils"
 	"math"
 	"time"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
@@ -65,13 +61,6 @@ func (p *Player) Update(dt float64) {
 	if p.Anim.State == anim.WalkTag && !moving {
 		p.Anim.SetState(anim.IdleTag)
 	}
-}
-
-func (p *Player) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
-	hud := fmt.Sprintf("%0.2f/%0.2f/%0.2f", p.Stats.Health, p.Stats.Stamina, p.Stats.Poise)
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(25, 1)
-	utils.DrawText(screen, hud, assets.TinyFont, op)
 }
 
 func (p *Player) control(dt float64) bool {

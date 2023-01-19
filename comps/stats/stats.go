@@ -29,6 +29,7 @@ const (
 	barMiddleH               = barH - 2
 	middleBarX1, middleBarX2 = 7, 8
 	innerBarH                = 3
+	enemyBarW                = 10
 )
 
 var (
@@ -38,9 +39,12 @@ var (
 	healthColor       = color.RGBA{172, 50, 50, 255}
 	staminaColor      = color.RGBA{55, 148, 110, 255}
 	poiseColor        = color.RGBA{91, 110, 225, 255}
+	borderColor       = color.RGBA{34, 32, 52, 255}
 	emptyColor        = color.RGBA{89, 86, 82, 255}
 	lagColor          = color.RGBA{251, 242, 54, 255}
 )
+
+var DebugDraw = false
 
 type Comp struct {
 	Hud, Pause, NoDebug                     bool
@@ -74,16 +78,17 @@ func (c *Comp) Init(entity *core.Entity) {
 }
 
 func (c *Comp) Update(dt float64) {
-	if c.Pause {
+	if !c.Pause {
+		recoverRate := c.StaminaRecoverRate
+		if c.Stamina < 0 {
+			recoverRate /= 1.5
+		}
+		c.Stamina += recoverRate * dt
+		c.Stamina = math.Min(c.Stamina, c.MaxStamina)
+		c.Poise = math.Min(c.Poise, c.MaxPoise)
+	} else if c.Hud {
 		return
 	}
-	recoverRate := c.StaminaRecoverRate
-	if c.Stamina < 0 {
-		recoverRate /= 1.5
-	}
-	c.Stamina += recoverRate * dt
-	c.Stamina = math.Min(c.Stamina, c.MaxStamina)
-	c.Poise = math.Min(c.Poise, c.MaxPoise)
 
 	if c.healthTween != nil {
 		if lag, done := c.healthTween.Update(float32(dt)); done {
@@ -111,22 +116,25 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) DebugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
-	if c.NoDebug {
-		return
+func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	if DebugDraw {
+		c.debugDraw(screen, entityPos)
 	}
-	op := &ebiten.DrawImageOptions{GeoM: entityPos}
-	op.GeoM.Translate(-5, -16)
-	utils.DrawText(screen, fmt.Sprintf("%0.2f", c.Health), assets.TinyFont, op)
-}
+	if c.Hud {
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(1, 1)
+		screen.DrawImage(c.drawHud(), op)
 
-func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
-	if !c.Hud {
 		return
 	}
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(1, 1)
-	screen.DrawImage(c.drawHud(), op)
+	if c.Health >= c.MaxHealth {
+		return
+	}
+
+	healthBar := c.headBarImage(c.Health, c.MaxHealth, c.healthLag, healthColor)
+	op := &ebiten.DrawImageOptions{GeoM: entityPos}
+	op.GeoM.Translate(-2, -10)
+	screen.DrawImage(healthBar, op)
 }
 
 func (c *Comp) HealthPercent() float64  { return c.Health / c.MaxHealth }
@@ -208,4 +216,37 @@ func (c *Comp) drawSegment(hud *ebiten.Image, y, current, max, lag float64, barC
 
 func (c *Comp) drawCount(hud *ebiten.Image, y float64, count int) {
 	// TODO: implement for counting souls.
+}
+
+func (c *Comp) headBarImage(current, max, lag float64, barColor color.Color) *ebiten.Image {
+	image := ebiten.NewImage(enemyBarW+2, innerBarH)
+	image.Fill(borderColor)
+	fullBar := ebiten.NewImage(enemyBarW, 1)
+	fullBar.Fill(emptyColor)
+
+	if width := int((lag / max) * enemyBarW); width > 0 {
+		bar := ebiten.NewImage(width, 1)
+		bar.Fill(lagColor)
+		fullBar.DrawImage(bar, nil)
+	}
+
+	if width := int((current / max) * enemyBarW); width > 0 {
+		bar := ebiten.NewImage(width, 1)
+		bar.Fill(barColor)
+		fullBar.DrawImage(bar, nil)
+	}
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(1, 1)
+	image.DrawImage(fullBar, op)
+
+	return image
+}
+
+func (c *Comp) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	if c.NoDebug {
+		return
+	}
+	op := &ebiten.DrawImageOptions{GeoM: entityPos}
+	op.GeoM.Translate(-5, -16)
+	utils.DrawText(screen, fmt.Sprintf("%0.2f", c.Health), assets.TinyFont, op)
 }

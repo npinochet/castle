@@ -1072,11 +1072,12 @@
   <object id="81" x="1936" y="2432" width="8" height="16"/>
  </objectgroup>
  <objectgroup id="4" name="entities">
-  <object id="11" name="Player" gid="26" x="2120" y="2240" width="8" height="8"/>
+  <object id="11" name="Player" gid="26" x="2240" y="2448" width="8" height="8"/>
   <object id="12" name="Knight" gid="27" x="1952" y="2048" width="8" height="8"/>
   <object id="27" name="GhoulWithRocks" gid="2147483676" x="2008" y="2392" width="8" height="8">
    <properties>
-    <property name="rocks" type="int" value="3"/>
+    <property name="ai" value="poacher"/>
+    <property name="rocks" type="int" value="2"/>
     <property name="view" type="object" value="88"/>
    </properties>
   </object>

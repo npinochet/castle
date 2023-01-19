@@ -47,7 +47,11 @@ func NewGhoul(x, y, w, h float64, props map[string]string) *core.Entity {
 		view.W, _ = strconv.ParseFloat(viewStrings[2], 64)
 		view.H, _ = strconv.ParseFloat(viewStrings[3], 64)
 	}
-	ghoul.setupAI(view)
+	if props["ai"] == "poacher" {
+		ghoul.setupPoacherAI(view)
+	} else {
+		ghoul.setupDefaultAI(view)
+	}
 
 	return &ghoul.Entity
 }
@@ -99,10 +103,10 @@ func (g *ghoul) ThrowRock() {
 	})
 }
 
-func (g *ghoul) setupAI(view bump.Rect) {
+func (g *ghoul) setupDefaultAI(view bump.Rect) {
 	aiConfig := DefaultAIConfig()
 	aiConfig.viewRect = view
-	aiConfig.attackDisable = true
+	g.speed, g.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
 	g.SetDefaultAI(aiConfig, []ai.WeightedState{{"AttackShort", 1}})
 
 	combatOptions := []ai.WeightedState{{"Pursuit", 10}, {"Pace", 0.5}, {"Wait", 0.125}, {"RunAttack", 0.125}, {"AttackLong", 0.125}, {"AttackShort", 0.125}, {"Throw", 0.3}}
@@ -127,6 +131,35 @@ func (g *ghoul) setupAI(view bump.Rect) {
 		Build())
 	g.AI.Fsm.SetAction("Throw", g.AI.AnimBuilder("Throw", nil).
 		SetCooldown(ai.Cooldown{2, 3}).
+		AddCondition(g.AI.EnoughStamina(0.2)).
+		AddCondition(func() bool { return g.rocks > 0 }).
+		AddCondition(g.AI.OutRangeFunc(aiConfig.backUpDist)).
+		SetEntry(func() { g.ThrowRock() }).
+		Build())
+}
+
+func (g *ghoul) setupPoacherAI(view bump.Rect) {
+	aiConfig := DefaultAIConfig()
+	aiConfig.viewRect = view
+	g.speed, g.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
+	g.SetDefaultAI(aiConfig, []ai.WeightedState{{"AttackShort", 1}})
+
+	combatOptions := []ai.WeightedState{{"Wait", 0}, {"Throw", 1}}
+	g.AI.SetCombatOptions(combatOptions)
+
+	g.AI.Fsm.SetAction("Wait", g.AI.WaitBuilder(2, 0).
+		AddReaction(func() bool {
+			if g.rocks <= 0 {
+				g.setupDefaultAI(view)
+
+				return true
+			}
+
+			return false
+		}, nil).
+		Build())
+	g.AI.Fsm.SetAction("Throw", g.AI.AnimBuilder("Throw", nil).
+		SetCooldown(ai.Cooldown{1, 0}).
 		AddCondition(g.AI.EnoughStamina(0.2)).
 		AddCondition(func() bool { return g.rocks > 0 }).
 		AddCondition(g.AI.OutRangeFunc(aiConfig.backUpDist)).
