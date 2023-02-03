@@ -24,8 +24,8 @@ func NewBlock(x, y float64, props map[string]interface{}) *core.Entity {
 	image := ebiten.NewImage(int(w), int(h))
 	image.Fill(color.White)
 
-	block := &core.Entity{X: x, Y: y}
-	body := &body.Comp{W: 8, H: 8}
+	block := &core.Entity{X: x, Y: y, W: 8, H: 8}
+	body := &body.Comp{}
 	hitbox := &hitbox.Comp{}
 	block.AddComponent(body, hitbox, &render.Comp{Image: image}, &BlockComponent{body: body, hitbox: hitbox})
 
@@ -35,7 +35,7 @@ func NewBlock(x, y float64, props map[string]interface{}) *core.Entity {
 func (b *BlockComponent) Init(entity *core.Entity) {
 	b.hitbox.HurtFunc = b.BlockHurt
 	b.hitbox.BlockFunc = b.BlockBlock
-	b.hitbox.PushHitbox(bump.Rect{X: b.body.X, Y: b.body.X, W: blockSize, H: blockSize}, false)
+	b.hitbox.PushHitbox(bump.Rect{X: entity.X, Y: entity.Y, W: blockSize, H: blockSize}, false)
 }
 
 func (b *BlockComponent) BlockHurt(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {

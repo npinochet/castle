@@ -90,7 +90,7 @@ func (c *Comp) IdleBuilder(view bump.Rect, viewDist, height float64, nextStates 
 	builder.SetEntry(c.SetSpeedFunc(0, 0))
 	if view.W != 0 && view.H != 0 {
 		builder.AddReaction(func() bool {
-			if targets := body.QueryRect(view); len(targets) > 0 {
+			if targets := body.QueryEntites(view); len(targets) > 0 {
 				c.Target = targets[0]
 			}
 

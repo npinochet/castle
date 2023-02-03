@@ -16,12 +16,13 @@ const (
 	heightJitterBuffer        = 8 // Prevent camera from snapping to celling on transition (not sure how it works).
 )
 
-type Positioner interface{ Position() (float64, float64) }
+type Recter interface {
+	Rect() (float64, float64, float64, float64)
+}
 
 type Camera struct {
 	x, y, w, h               float64
-	following                Positioner
-	fw, fh                   float64
+	following                Recter
 	shakeTween               *gween.Tween
 	shakeMagnitude           float64
 	borders                  *bump.Rect
@@ -40,9 +41,8 @@ func New(w, h float64) *Camera {
 func (c *Camera) Position() (float64, float64) { return c.x, c.y }
 func (c *Camera) SetPosition(x, y float64)     { c.x, c.y = x, y }
 func (c *Camera) SetRooms(rooms []bump.Rect)   { c.rooms = rooms }
-func (c *Camera) Follow(e Positioner, w, h float64) {
+func (c *Camera) Follow(e Recter) {
 	c.following = e
-	c.fw, c.fh = w, h
 	c.SetRoomBorders(false)
 }
 
@@ -63,8 +63,8 @@ func (c *Camera) Update(dt float64) {
 		return
 	}
 
-	ex, ey := c.following.Position()
-	x, y := ex+c.fw/2-c.w/2, ey+c.fh/2-c.h/2
+	ex, ey, w, h := c.following.Rect()
+	x, y := ex+w/2-c.w/2, ey+h/2-c.h/2
 	dx, dy := x-c.x, y-c.y
 
 	c.Translate(damper(dt, dx, dy, c.stiffness))
@@ -106,8 +106,8 @@ func (c *Camera) SetRoomBorders(transition bool) {
 		return
 	}
 
-	x, y := c.following.Position()
-	follow := bump.Rect{X: x + c.fw/4, Y: y, W: c.fw / 2, H: c.fh}
+	x, y, w, h := c.following.Rect()
+	follow := bump.Rect{X: x + w/4, Y: y, W: w / 2, H: h}
 
 	prevRoom := c.borders
 	roomCount := 0

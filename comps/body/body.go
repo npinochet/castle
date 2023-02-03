@@ -9,6 +9,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/lafriks/go-tiled"
 )
 
 const (
@@ -22,16 +23,16 @@ const (
 var DebugDraw = false
 
 type Comp struct {
-	Solid, Unmovable, Ground bool
-	Friction                 bool
-	space                    *bump.Space
-	entity                   *core.Entity
-	X, Y, W, H               float64
-	Vx, Vy                   float64
-	MaxX, MaxY               float64
-	Weight                   float64
-	FilterOut                []*Comp
-	debugQueryRect           bump.Rect
+	Solid, Unmovable, Friction        bool
+	Ground                            bool
+	OnLadder, TouchLadder, ClipLadder bool
+	space                             *bump.Space
+	entity                            *core.Entity
+	Vx, Vy                            float64
+	MaxX, MaxY                        float64
+	Weight                            float64
+	FilterOut                         []*Comp
+	debugQueryRect                    bump.Rect
 }
 
 func (c *Comp) Init(entity *core.Entity) {
@@ -44,7 +45,8 @@ func (c *Comp) Init(entity *core.Entity) {
 	}
 	c.Friction = true
 	c.space = entity.World.Space
-	c.space.Set(c, bump.Rect{X: entity.X + c.X, Y: entity.Y + c.X, W: c.W, H: c.H})
+
+	c.space.Set(c, bump.NewRect(c.entity.Rect()))
 }
 
 func (c *Comp) Update(dt float64) {
@@ -54,13 +56,13 @@ func (c *Comp) Update(dt float64) {
 	c.updateMovement(dt)
 }
 
-func (c *Comp) Rect() bump.Rect {
-	return bump.Rect{X: c.entity.X + c.X, Y: c.entity.Y + c.Y, W: c.W, H: c.H}
-}
-
-func (c *Comp) QueryRect(rect bump.Rect) []*core.Entity {
+func (c *Comp) Query(rect bump.Rect, filter func(item bump.Item) bool) []*bump.Collision {
 	c.debugQueryRect = rect
 
+	return c.space.Query(rect, filter)
+}
+
+func (c *Comp) QueryEntites(rect bump.Rect) []*core.Entity {
 	entityFilter := func(item bump.Item) bool {
 		if comp, ok := item.(*Comp); ok {
 			return comp != c
@@ -69,7 +71,7 @@ func (c *Comp) QueryRect(rect bump.Rect) []*core.Entity {
 		return true
 	}
 
-	cols := c.space.Query(rect, entityFilter)
+	cols := c.Query(rect, entityFilter)
 	var ents []*core.Entity
 	for _, c := range cols {
 		if comp, ok := c.Other.(*Comp); ok {
@@ -88,18 +90,16 @@ func (c *Comp) QueryFront(dist, height float64, lookingRight bool) []*core.Entit
 	rect.X += c.entity.X
 	rect.Y += c.entity.Y
 
-	return c.QueryRect(rect)
+	return c.QueryEntites(rect)
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	if !DebugDraw {
 		return
 	}
-	image := ebiten.NewImage(int(c.W), int(c.H))
+	image := ebiten.NewImage(int(c.entity.W), int(c.entity.H))
 	image.Fill(color.RGBA{255, 0, 0, 100})
-	op := &ebiten.DrawImageOptions{GeoM: entityPos}
-	op.GeoM.Translate(c.X, c.Y)
-	screen.DrawImage(image, op)
+	screen.DrawImage(image, &ebiten.DrawImageOptions{GeoM: entityPos})
 
 	// TODO: This is broken
 	if c.debugQueryRect.W != 0 || c.debugQueryRect.H != 0 {
@@ -126,26 +126,32 @@ func (c *Comp) updateMovement(dt float64) {
 	c.Vy += Gravity * (c.Weight + 1) * dt
 	c.Vy = math.Min(c.MaxY, math.Max(-c.MaxY, c.Vy))
 
-	p := bump.Vec2{X: c.entity.X + c.X + c.Vx*dt, Y: c.entity.Y + c.Y + c.Vy*dt}
+	p := bump.Vec2{X: c.entity.X + c.Vx*dt, Y: c.entity.Y + c.Vy*dt}
 	goal, cols := c.space.Move(c, p, c.bodyFilter())
-	c.entity.X, c.entity.Y = goal.X-c.X, goal.Y-c.Y
+	c.entity.X, c.entity.Y = goal.X, goal.Y
 
-	c.Ground = false
 	if c.Unmovable {
 		return
 	}
+	c.Ground = false
+	c.OnLadder = false
+	c.TouchLadder = false
 	for _, col := range cols {
 		if col.Type == bump.Slide {
-			if col.Normal.Y < 0 {
-				c.Ground = true
-				c.Vy = 0
-			}
 			if col.Normal.X != 0 {
 				c.Vx = 0
 			}
+			if col.Normal.Y != 0 {
+				c.Vy = 0
+			}
+			c.Ground = col.Normal.Y < 0
 		}
-		if col.Type == bump.Cross && col.Overlaps {
+		if _, ok := col.Other.(*Comp); ok && col.Type == bump.Cross && col.Overlaps {
 			c.applyOverlapForce(col)
+		}
+		if obj, ok := col.Other.(*tiled.Object); ok && obj.Class == core.LadderClass {
+			c.TouchLadder = true
+			c.OnLadder = col.Overlaps
 		}
 	}
 }
@@ -169,6 +175,15 @@ func (c *Comp) bodyFilter() func(bump.Item, bump.Item) (bump.ColType, bool) {
 		}
 		if _, ok := other.(*hitbox.Hitbox); ok {
 			return 0, false
+		}
+		if obj, ok := other.(*tiled.Object); ok && (obj.Class == core.LadderClass) {
+			// TODO: works somewhat good
+			itemRect, otherRect := c.space.Rects[item], c.space.Rects[other]
+			if !c.ClipLadder && itemRect.Y+itemRect.H <= otherRect.Y {
+				return bump.Slide, true
+			}
+
+			return bump.Cross, true
 		}
 
 		return bump.Slide, true

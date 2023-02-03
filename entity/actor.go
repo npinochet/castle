@@ -40,7 +40,7 @@ func (a *Actor) GetAI() *ai.Comp              { return a.AI }
 func (a *Actor) SetSpeed(speed, maxX float64) { a.speed, a.Body.MaxX = speed, maxX }
 
 func NewActor(
-	x, y float64,
+	x, y, w, h float64,
 	body *body.Comp,
 	animc *anim.Comp,
 	stat *stats.Comp,
@@ -60,7 +60,7 @@ func NewActor(
 	}
 
 	actor := &Actor{
-		Entity: core.Entity{X: x, Y: y},
+		Entity: core.Entity{X: x, Y: y, W: w, H: h},
 		Hitbox: &hitbox.Comp{},
 		Body:   body, Anim: animc, Stats: stat,
 		Damage: damage, StaminaDamage: staminaDamage,
@@ -108,6 +108,25 @@ func (a *Actor) Remove() {
 	a.World.RemoveEntity(a.ID)
 }
 
+func (a *Actor) ResetState() {
+	a.Anim.SetState(anim.IdleTag)
+	a.Body.ClipLadder = false
+	a.Body.Weight = 0
+	a.Anim.Data.PlaySpeed = 1
+}
+
+func (a *Actor) ClimbOn(goingDown bool) {
+	if a.Body.TouchLadder && goingDown {
+		a.Body.ClipLadder = true
+	}
+	if !a.Body.OnLadder || a.Anim.State == anim.ClimbTag {
+		return
+	}
+	a.ResetState()
+	a.Anim.SetState(anim.ClimbTag)
+	a.Body.Weight = -1 // TODO:add weight save?? uuuhhh
+}
+
 func (a *Actor) Attack(attackTag string) {
 	if a.Stats.Stamina <= 0 || a.Anim.State == attackTag || a.Anim.State == anim.StaggerTag {
 		return
@@ -116,11 +135,12 @@ func (a *Actor) Attack(attackTag string) {
 	if a.Anim.FlipX {
 		force *= -1
 	}
+	a.ResetState()
 	a.Anim.SetState(attackTag)
 
 	once := false
 	var contacted []*hitbox.Comp
-	a.Anim.OnFrames(func(frame int) {
+	a.Anim.OnFrames(func(frame int) { // TODO: when climbing and attack, sometimes it skips the first frame
 		if hitbox, err := a.Anim.GetFrameHitbox(anim.HitboxSliceName); err == nil {
 			if !once {
 				once = true
@@ -139,6 +159,7 @@ func (a *Actor) Attack(attackTag string) {
 }
 
 func (a *Actor) Stagger(force float64) {
+	a.ResetState()
 	a.Anim.SetState(anim.StaggerTag)
 	a.Body.Vx = -force
 }
@@ -147,6 +168,7 @@ func (a *Actor) ShieldUp() {
 	if a.Anim.State == anim.BlockTag || a.Anim.State == anim.StaggerTag {
 		return
 	}
+	a.ResetState()
 	a.Anim.SetState(anim.BlockTag)
 	a.blockMaxXSave = a.Body.MaxX
 	a.blockRecoverRateSave = a.Stats.StaminaRecoverRate
@@ -163,6 +185,7 @@ func (a *Actor) ShieldDown() {
 	if a.Anim.State != anim.BlockTag {
 		return
 	}
+	a.ResetState()
 	a.Anim.SetState(anim.IdleTag)
 	a.Body.MaxX = a.blockMaxXSave
 	a.Stats.StaminaRecoverRate = a.blockRecoverRateSave

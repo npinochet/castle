@@ -62,8 +62,7 @@ const (
 	scale                     = 4
 	screenWidth, screenHeight = 160, 96 // 320, 240.
 
-	playerID   = 25
-	playerSize = 8
+	playerID = 25
 )
 
 var (
@@ -85,7 +84,7 @@ func (g *Game) init() {
 		log.Println("Error finding player entity:", err)
 	}
 	player = entity.NewPlayer(obj.X, obj.Y, nil)
-	g.world.Camera.Follow(player, playerSize, playerSize)
+	g.world.Camera.Follow(player)
 	g.world.AddEntity(&player.Entity)
 
 	g.world.Map.LoadBumpObjects(g.world.Space, "collisions")

@@ -16,6 +16,7 @@ const (
 	HorizontalProp = "HorizontalFlip"
 	VerticalProp   = "VerticalFlip"
 	ViewProp       = "view"
+	LadderClass    = "ladder"
 )
 const defaultCollisionPriority = -2
 

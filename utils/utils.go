@@ -12,7 +12,7 @@ import (
 
 const PlayerUID = 100
 
-type ControlPack [6]ebiten.Key
+type ControlPack [7]ebiten.Key
 type ControlKey int
 
 const (
@@ -20,6 +20,7 @@ const (
 	KeyLeft
 	KeyUp
 	KeyDown
+	KeyJump
 	KeyAction
 	KeyGuard
 )
@@ -33,8 +34,9 @@ func NewControlPack() ControlPack {
 		KeyLeft:   ebiten.KeyArrowLeft,
 		KeyUp:     ebiten.KeyArrowUp,
 		KeyDown:   ebiten.KeyArrowDown,
-		KeyAction: ebiten.KeyE,
-		KeyGuard:  ebiten.KeyR,
+		KeyJump:   ebiten.KeyZ,
+		KeyAction: ebiten.KeyX,
+		KeyGuard:  ebiten.KeyC,
 	}
 }
 

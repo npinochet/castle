@@ -22,12 +22,56 @@
         "/Users/nico/Desktop/nico/castle/extras/castle-lua/game/maps/desert/desert.tmx#tiles": {
             "scaleInDock": 1
         },
-        "intro.tmx": {
-            "scale": 2.5986,
-            "selectedLayer": 3,
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/blocks.json": {
+            "scale": 1.7502,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 2079.966135611483,
-                "y": 2342.0303240206267
+                "x": 362.81567820820476,
+                "y": 169.69489201234146
+            }
+        },
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/blocks.json#Colision": {
+            "scaleInDock": 1
+        },
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/blocks.json#Entites": {
+            "scaleInDock": 1
+        },
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/blocks.json#MapEntities": {
+            "scaleInDock": 1
+        },
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/blocks.json#Tiles": {
+            "scaleInDock": 1
+        },
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json": {
+            "scale": 2.7474,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 130.3050156511611,
+                "y": 110.65006915629323
+            }
+        },
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json#Colision": {
+            "scaleInDock": 1
+        },
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json#Entites": {
+            "scaleInDock": 1
+        },
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json#MapEntities": {
+            "scaleInDock": 1
+        },
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json#Tiles": {
+            "scaleInDock": 1
+        },
+        "intro.tmx": {
+            "expandedObjectLayers": [
+                4,
+                3
+            ],
+            "scale": 2.8045,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 1904.7958637903369,
+                "y": 2437.8677126047423
             }
         },
         "tiles.tsx": {
@@ -36,15 +80,18 @@
         }
     },
     "last.imagePath": "/Users/nico/Desktop/nico/castle/maps/intro",
+    "last.objectTemplatePath": "/Users/nico/Desktop/nico/castle/maps/intro",
     "openFiles": [
         "intro.tmx"
     ],
     "project": "intro.tiled-project",
-    "property.type": "string",
+    "property.type": "color",
     "recentFiles": [
         "intro.tmx",
-        "/Users/nico/Desktop/nico/castle/extras/castle-lua/game/maps/desert/desert.tmx",
-        "tiles.tsx"
+        "tiles.tsx",
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json",
+        "/Users/nico/Dropbox/projectos/love/kero/game/maps/blocks.json",
+        "/Users/nico/Desktop/nico/castle/extras/castle-lua/game/maps/desert/desert.tmx"
     ],
     "resizeMap.removeObjects": false,
     "textEdit.monospace": true

@@ -16,10 +16,10 @@ type Knight struct {
 func NewKnight(x, y, w, h float64, props map[string]string) *core.Entity {
 	speed := 100.0
 	anim := &anim.Comp{FilesName: knightAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
-	body := &body.Comp{W: playerWidth, H: playerHeight, MaxX: 35}
+	body := &body.Comp{MaxX: 35}
 
 	knight := &Knight{
-		Actor: NewActor(x, y, body, anim, &stats.Comp{MaxPoise: 25}, 20, 20),
+		Actor: NewActor(x, y, playerWidth, playerHeight, body, anim, &stats.Comp{MaxPoise: 25}, 20, 20),
 	}
 	knight.speed = speed
 	knight.SetDefaultAI(nil, nil)

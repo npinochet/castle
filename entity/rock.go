@@ -50,14 +50,13 @@ func NewRock(x, y float64, owner *Actor) *core.Entity {
 	}
 
 	body := &body.Comp{
-		W: rockSize, H: rockSize,
 		Weight: rockWeight,
 		Vx:     vx, Vy: -vy,
 		MaxX:      rockMaxVel,
 		FilterOut: []*body.Comp{owner.Body},
 	}
 	rock := &Rock{
-		Entity: core.Entity{X: x, Y: y},
+		Entity: core.Entity{X: x, Y: y, W: rockSize, H: rockSize},
 		render: &render.Comp{Image: rockImage, RollingTime: rockRollingTime},
 		body:   body,
 		hitbox: &hitbox.Comp{},
@@ -71,11 +70,11 @@ func NewRock(x, y float64, owner *Actor) *core.Entity {
 func (r *Rock) Init(entity *core.Entity) {
 	r.body.Friction = false
 	r.hitbox.HurtFunc, r.hitbox.BlockFunc = r.RockHurt, r.RockHurt
-	r.hitbox.PushHitbox(bump.Rect{X: r.body.X, Y: r.body.X, W: rockSize, H: rockSize}, false)
+	r.hitbox.PushHitbox(bump.Rect{X: r.X, Y: r.X, W: rockSize, H: rockSize}, false)
 }
 
 func (r *Rock) Update(dt float64) {
-	hb := bump.Rect{X: r.body.X, Y: r.body.Y, H: rockSize, W: rockSize}
+	hb := bump.Rect{X: r.X, Y: r.Y, H: rockSize, W: rockSize}
 	_, contacted := r.hitbox.HitFromHitBox(hb, rockDamage, []*hitbox.Comp{r.owner.Hitbox})
 	if len(contacted) > 1 || r.body.Ground {
 		r.Remove()

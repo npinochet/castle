@@ -224,13 +224,14 @@ func (c *Comp) headBarImage(current, max, lag float64, barColor color.Color) *eb
 	fullBar := ebiten.NewImage(enemyBarW, 1)
 	fullBar.Fill(emptyColor)
 
-	if width := int((lag / max) * enemyBarW); width > 0 {
+	round := 0.5
+	if width := int((lag/max)*enemyBarW + round); width > 0 {
 		bar := ebiten.NewImage(width, 1)
 		bar.Fill(lagColor)
 		fullBar.DrawImage(bar, nil)
 	}
 
-	if width := int((current / max) * enemyBarW); width > 0 {
+	if width := int((current/max)*enemyBarW + round); width > 0 {
 		bar := ebiten.NewImage(width, 1)
 		bar.Fill(barColor)
 		fullBar.DrawImage(bar, nil)

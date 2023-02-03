@@ -23,19 +23,19 @@ func NewGram(x, y, w, h float64, props map[string]string) *core.Entity {
 	animc := &anim.Comp{FilesName: gramAnimFile, OX: gramOffsetX, OY: gramOffsetY, OXFlip: gramOffsetFlip}
 	animc.FlipX = props[core.HorizontalProp] == "true"
 
-	body := &body.Comp{W: gramWidth, H: gramHeight, Unmovable: true}
+	body := &body.Comp{Unmovable: true}
 	textbox := &textbox.Comp{
-		Text: "Hewwo, I gram nice to mit yu, i have no idea wat i doing here, lol im so random, rawr",
+		Text: "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr",
 		Body: body,
 		Area: func() bump.Rect {
-			rect := body.Rect()
+			rect := bump.NewRect(x, y, gramWidth, gramHeight)
 			rect.X -= 10
 			rect.W += 20
 
 			return rect
 		},
 	}
-	gram := &gram{Actor: NewActor(x, y, body, animc, nil, gramDamage, gramDamage)}
+	gram := &gram{Actor: NewActor(x, y, gramWidth, gramHeight, body, animc, nil, gramDamage, gramDamage)}
 	gram.AddComponent(textbox, gram)
 
 	return &gram.Entity

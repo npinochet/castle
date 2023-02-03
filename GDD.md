@@ -37,6 +37,7 @@ After year or centuries of being prisoners on the castle, strange social bonds a
 * Rite of immortality: ???
 * Curse of immortality: ???
 * Item/Rite that can reverse the immortality: ???
+* All knowing god who bringed the rite: The dreamer
 
 ### Possible covenants or social groups
 
@@ -53,6 +54,7 @@ After year or centuries of being prisoners on the castle, strange social bonds a
 * Graveyard.
 * Throne room (This is just a room, can't be an area really).
 * Garden.
+* Kitchen.
 
 ### Possible area themes
 
@@ -68,8 +70,8 @@ After year or centuries of being prisoners on the castle, strange social bonds a
 ### Loose ideas
 
 * There are humans that managed to free themselves of the first sin, though a rite, which grant them immortality, these humans became gods-like in the kingdom.
-* The king of the castle is one of these "gods". While his governance some major event happened where the wisdom of becoming immortal leaked, making everyone in the castle immortal. That's when an outside god placed a barrier on the castle and let all it's inhabitants prisoned.
-* There was a person who didn't use the wisdom to became immortal, which let him die and later became like a saint and prophet for one of the covenants which named him "the first death". This covenant seeks a way to undo the rite somehow and become sinners again.
+* The king (Arawn) of the castle is one of these "gods". In his governance some major event happened where the wisdom of becoming immortal leaked, making everyone in the castle immortal. That's when an outside god placed a barrier on the castle and let all it's inhabitants prisoned.
+* There was a person who didn't use the wisdom to became immortal, which let him die and later became like a saint and prophet for one of the covenants which named him "the first death". This covenant seeks a way to undo the rite somehow and become sinners again. Maybe as a plot twist, this prophet did become immortal and he just faked his dead and appears in the game?
 
 #### Setting imposed limitations
 
@@ -184,9 +186,22 @@ To add dread and difficulty, the player can only save at designated points (like
 ## TODO
 
 * Think of a story progression/objectives.
+  * This can be left for later.
 * Add depth to combat mechanics.
-* Consider input/button weight to player controls. (what is this??)
-* Re add hitbox to knight player.
+  * dash? Backoff?
+  * Hold attack to do a heavy attack.
+* Consider input/button weight to player controls. (what is this??) (really what is this? is this a masahiro thing?)
+* Healing mechanic and limited use.
+* Bonfires/Gravestones.
+  * Every save point (gravestone) has an engraving which gives a little lore to the area.
+* Stairs.
+* First area themes.
+  * A dungeon reporposed as a cult area with followers who believe that beheading and cracking of the skull is the new death. Where you can't know if one gets to live still or really die.
+  * Lead by the final boss who's a greedy leader with.
+    * Named Lakim (greed in black speech), he was 
+* Art.
+* Have an enemy which is made from diferent bodyparts stiched together, like frankenstein's monster.
+  
 
 Level design tips that might be useful to keep in mind:
 
@@ -217,3 +232,11 @@ Stages:
 
 * Level Design:
   * Test when possible
+
+Level progression:
+* Start, tutorial.
+* Descend through dungeon.
+* Encounter mass of body enemies.
+* Encounter the source of the enemies, a big pile of body parts.
+* Descend further through the dungeon.
+

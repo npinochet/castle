@@ -14,11 +14,12 @@ type Entity struct {
 	ID         uint64
 	World      *World
 	Active     bool
-	X, Y       float64
+	X, Y, W, H float64
 	Components []Component
 }
 
-func (e *Entity) Position() (float64, float64) { return e.X, e.Y }
+func (e *Entity) Position() (float64, float64)               { return e.X, e.Y }
+func (e *Entity) Rect() (float64, float64, float64, float64) { return e.X, e.Y, e.W, e.H }
 
 func (e *Entity) AddComponent(components ...Component) Component {
 	e.Components = append(e.Components, components...)

@@ -29,11 +29,11 @@ type Player struct {
 }
 
 func NewPlayer(x, y float64, props map[string]interface{}) *Player {
-	body := &body.Comp{W: playerWidth, H: playerHeight}
+	body := &body.Comp{}
 	anim := &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
 
 	playerActor := &Player{
-		Actor: NewActor(x, y, body, anim, nil, playerDamage, playerDamage),
+		Actor: NewActor(x, y, playerWidth, playerHeight, body, anim, nil, playerDamage, playerDamage),
 		pad:   utils.NewControlPack(),
 		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
 	}
@@ -63,18 +63,14 @@ func (p *Player) Update(dt float64) {
 	}
 }
 
-func (p *Player) control(dt float64) bool {
+func (p *Player) control(dt float64) bool { // TODO: refactor this
 	actionPressed := p.pad.KeyPressedBuffered(utils.KeyAction, 500*time.Millisecond)
 	if p.Stats.Health <= 0 || p.Anim.State == anim.AttackTag || p.Anim.State == anim.StaggerTag {
 		return false
 	}
 
-	if p.pad.KeyDown(utils.KeyGuard) {
-		p.ShieldUp()
-	}
-	if p.pad.KeyReleased(utils.KeyGuard) {
-		p.ShieldDown()
-	}
+	p.controlClimbing(dt)
+	p.controlBlocking()
 
 	moving, flip := false, p.Anim.FlipX
 	if p.pad.KeyDown(utils.KeyLeft) {
@@ -90,19 +86,47 @@ func (p *Player) control(dt float64) bool {
 		moving, flip = true, false
 	}
 
-	if p.Anim.State == anim.BlockTag {
-		return moving
-	}
-
-	p.Anim.FlipX = flip
-	if p.Body.Ground && p.pad.KeyPressed(utils.KeyUp) {
-		p.Body.Vy = -p.jumpSpeed
-	}
-	if actionPressed {
-		p.Attack(anim.AttackTag)
+	if p.Anim.State != anim.BlockTag {
+		if actionPressed {
+			p.Attack(anim.AttackTag)
+		}
+		p.Anim.FlipX = flip
+		if (p.Body.Ground || p.Anim.State == anim.ClimbTag) && p.pad.KeyPressed(utils.KeyJump) {
+			p.Body.Vy = -p.jumpSpeed
+			p.ResetState()
+		}
 	}
 
 	return moving
+}
+
+func (p *Player) controlClimbing(dt float64) {
+	if (p.pad.KeyDown(utils.KeyUp) || p.pad.KeyDown(utils.KeyDown)) && p.Body.TouchLadder {
+		p.ClimbOn(p.pad.KeyDown(utils.KeyDown))
+	}
+	if p.Anim.State != anim.ClimbTag {
+		return
+	}
+	if !p.Body.OnLadder {
+		p.ResetState()
+	}
+	p.Body.Vy = 0
+	speed := p.speed * 5
+	if p.pad.KeyDown(utils.KeyUp) {
+		p.Body.Vy -= speed * dt
+	}
+	if p.pad.KeyDown(utils.KeyDown) {
+		p.Body.Vy += speed * dt
+	}
+}
+
+func (p *Player) controlBlocking() {
+	if p.pad.KeyDown(utils.KeyGuard) {
+		p.ShieldUp()
+	}
+	if p.pad.KeyReleased(utils.KeyGuard) {
+		p.ShieldDown()
+	}
 }
 
 func (p *Player) OnHurt(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {

@@ -30,11 +30,11 @@ func NewGhoul(x, y, w, h float64, props map[string]string) *core.Entity {
 	animc := &anim.Comp{FilesName: ghoulAnimFile, OX: ghoulOffsetX, OY: ghoulOffsetY, OXFlip: ghoulOffsetFlip}
 	animc.FlipX = props[core.HorizontalProp] == "true"
 
-	body := &body.Comp{W: ghoulWidth, H: ghoulHeight, MaxX: ghoulMaxSpeed}
+	body := &body.Comp{MaxX: ghoulMaxSpeed}
 
 	rocks, _ := strconv.Atoi(props["rocks"])
 	ghoul := &ghoul{
-		Actor: NewActor(x, y, body, animc, &stats.Comp{MaxPoise: ghoulDamage}, ghoulDamage, ghoulDamage),
+		Actor: NewActor(x, y, ghoulWidth, ghoulHeight, body, animc, &stats.Comp{MaxPoise: ghoulDamage}, ghoulDamage, ghoulDamage),
 		rocks: rocks,
 	}
 	ghoul.speed = ghoulSpeed

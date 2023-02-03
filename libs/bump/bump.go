@@ -40,6 +40,7 @@ const (
 	Slide
 )
 
+func NewRect(x, y, w, h float64) Rect                { return Rect{X: x, Y: y, W: w, H: h} }
 func DefaultFilter(item, other Item) (ColType, bool) { return Slide, true }
 func NilFilter(item, other Item) (ColType, bool)     { return 0, false }
 
@@ -76,7 +77,7 @@ func NewSpace() *Space {
 			return goal, space.Project(col.Item, rect, goal, filter)
 		},
 		Slide: func(goal Vec2, col *Collision, filter Filter) (Vec2, []*Collision) {
-			if !col.OtherRect.isSlope() {
+			if !col.OtherRect.IsSlope() {
 				return space.responses[PureSlide](goal, col, filter)
 			}
 			col.Normal = Vec2{0, 0}
@@ -303,7 +304,7 @@ func rectNearestCorner(rect Rect, p Vec2) Vec2 {
 	return Vec2{nearest(p.X, rect.X, rect.X+rect.W), nearest(p.Y, rect.Y, rect.Y+rect.H)}
 }
 
-func (r Rect) isSlope() bool {
+func (r Rect) IsSlope() bool {
 	return r.Slope != Slope{}
 }
 

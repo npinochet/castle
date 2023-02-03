@@ -17,7 +17,9 @@ import (
 const (
 	boxX, defaultBoxY            = 6.0, 30.0
 	boxMarginY, boxMinY, boxMaxY = 5, 25, 96 - boxH - boxMarginY
-	boxW, boxH                   = 160 - boxX*2, 15.0
+	boxInnerW                    = 160
+	boxW, boxH                   = boxInnerW - boxX*2, 15.0
+	lineSize                     = (boxW - 4) / 4
 )
 
 var (
@@ -29,16 +31,21 @@ type Comp struct {
 	Text   string
 	Body   *body.Comp
 	Area   func() bump.Rect
+	entity *core.Entity
 	active bool
 	camera *camera.Camera
 }
 
 func (c *Comp) Init(entity *core.Entity) {
+	c.entity = entity
 	c.camera = entity.World.Camera
+	for i := 1; len(c.Text) > i*lineSize; i++ {
+		c.Text = c.Text[:i*lineSize] + "\n" + c.Text[i*lineSize+1:]
+	}
 }
 
 func (c *Comp) Update(dt float64) {
-	c.active = len(c.Body.QueryRect(c.Area())) > 0
+	c.active = len(c.Body.QueryEntites(c.Area())) > 0
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
@@ -50,13 +57,13 @@ func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
 	boxY := defaultBoxY
 	if c.Body != nil {
 		cx, cy := c.camera.Position()
-		rect := c.Body.Rect()
-		boxY = rect.Y - cy - boxH - boxMarginY
+		x, y, w, _ := c.entity.Rect()
+		boxY = y - cy - boxH - boxMarginY
 
 		iop := &ebiten.DrawImageOptions{}
-		w, _ := indicatorImage.Size()
-		px, py := rect.X+rect.W/2-float64(w)/2, boxH
-		ix := math.Max(math.Min(px-cx, boxW+boxX-float64(w)), boxX)
+		iw, _ := indicatorImage.Size()
+		px, py := x+w/2-float64(iw)/2, boxH
+		ix := math.Max(math.Min(px-cx, boxW+boxX-float64(iw)), boxX)
 		iop.GeoM.Translate(ix, boxY+py)
 		screen.DrawImage(indicatorImage, iop)
 	}
