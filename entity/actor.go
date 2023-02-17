@@ -14,7 +14,6 @@ import (
 const (
 	defaultAttackPushForce                    = 100
 	defaultReactForce                         = 200
-	deafultDamage, defaultStaminaDamage       = 40, 20
 	defaultMaxXDiv, defaultMaxXRecoverRateDiv = 1.2, 2
 )
 
@@ -26,7 +25,6 @@ type Actor struct {
 	Stats                               *stats.Comp
 	AI                                  *ai.Comp
 	speed                               float64
-	Damage, StaminaDamage               float64
 	BlockMaxXDiv, BlockRecoverRateDiv   float64
 	ReactForce, AttackPushForce         float64
 	blockMaxXSave, blockRecoverRateSave float64
@@ -44,7 +42,6 @@ func NewActor(
 	body *body.Comp,
 	animc *anim.Comp,
 	stat *stats.Comp,
-	damage, staminaDamage float64,
 ) *Actor {
 	if stat == nil {
 		stat = &stats.Comp{}
@@ -52,24 +49,17 @@ func NewActor(
 	if animc.Fsm == nil {
 		animc.Fsm = anim.DefaultFsm()
 	}
-	if damage == 0 {
-		damage = deafultDamage
-	}
-	if staminaDamage == 0 {
-		staminaDamage = defaultStaminaDamage
-	}
 
 	actor := &Actor{
 		Entity: core.Entity{X: x, Y: y, W: w, H: h},
 		Hitbox: &hitbox.Comp{},
 		Body:   body, Anim: animc, Stats: stat,
-		Damage: damage, StaminaDamage: staminaDamage,
 		BlockMaxXDiv: defaultMaxXDiv, BlockRecoverRateDiv: defaultMaxXRecoverRateDiv,
 		AttackPushForce: defaultAttackPushForce,
 		ReactForce:      defaultReactForce,
 	}
 	actor.AddComponent(actor.Body, actor.Hitbox, actor.Anim, actor.Stats)
-	actor.Hitbox.HurtFunc = func(otherHc *hitbox.Comp, col *bump.Collision, damange float64) {
+	actor.Hitbox.HurtFunc = func(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {
 		if actor.Anim.State == anim.BlockTag {
 			actor.ShieldDown()
 		}
@@ -127,11 +117,12 @@ func (a *Actor) ClimbOn(goingDown bool) {
 	a.Body.Weight = -1 // TODO:add weight save?? uuuhhh
 }
 
-func (a *Actor) Attack(attackTag string) {
+func (a *Actor) Attack(attackTag string, damage, staminaDamage float64) {
 	if a.Stats.Stamina <= 0 || a.Anim.State == attackTag || a.Anim.State == anim.StaggerTag {
 		return
 	}
-	force := a.AttackPushForce
+	// TODO: This force flip works for player, not for enemies, standarize default flip
+	force := -a.AttackPushForce
 	if a.Anim.FlipX {
 		force *= -1
 	}
@@ -140,20 +131,23 @@ func (a *Actor) Attack(attackTag string) {
 
 	once := false
 	var contacted []*hitbox.Comp
-	a.Anim.OnFrames(func(frame int) { // TODO: when climbing and attack, sometimes it skips the first frame
+	a.Anim.OnFrames(func(frame int) {
 		if hitbox, err := a.Anim.GetFrameHitbox(anim.HitboxSliceName); err == nil {
 			if !once {
 				once = true
-				a.Body.Vx += force
-				a.Stats.AddStamina(-a.StaminaDamage)
+				a.Body.Vx += force // TODO: The direction is wrong
+				a.Stats.AddStamina(-staminaDamage)
 			}
 			var blocked bool
-			blocked, contacted = a.Hitbox.HitFromHitBox(hitbox, a.Damage, contacted)
+			blocked, contacted = a.Hitbox.HitFromHitBox(hitbox, damage, contacted)
 			if blocked {
-				a.Anim.OnFrames(nil)
+				// a.Anim.OnFrames(nil) // TODO: This negates skeleman long attack, can't be blocked multiple times. This can be solved maybe with next TODO
 				// TODO: a.Stagger(force) when shield has too much defense?
 				a.Body.Vx -= (force * 2) / float64(frame) // TODO: why divide by frame?
 			}
+		} else {
+			// TODO: Hitbox does not work with skeleman combo attack, this fixes it, it feels really hacky
+			contacted = nil
 		}
 	})
 }

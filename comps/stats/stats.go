@@ -58,19 +58,28 @@ type Comp struct {
 
 func (c *Comp) Init(entity *core.Entity) {
 	if c.MaxHealth == 0 {
-		c.MaxHealth, c.Health = defaultHealth, defaultHealth
+		c.MaxHealth = defaultHealth
 	}
 	if c.MaxStamina == 0 {
-		c.MaxStamina, c.Stamina = defaultStamina, defaultStamina
+		c.MaxStamina = defaultStamina
 	}
 	if c.MaxPoise == 0 {
-		c.MaxPoise, c.Poise = defaultPoise, defaultPoise
+		c.MaxPoise = defaultPoise
 	}
 	if c.StaminaRecoverRate == 0 {
 		c.StaminaRecoverRate = defaultRecoverRate
 	}
 	if c.PoiseRecoverSeconds == 0 {
 		c.PoiseRecoverSeconds = defaultRecoverSeconds
+	}
+	if c.Health < c.MaxHealth {
+		c.Health = c.MaxHealth
+	}
+	if c.Stamina < c.MaxStamina {
+		c.Stamina = c.MaxStamina
+	}
+	if c.Poise < c.MaxPoise {
+		c.Poise = c.MaxPoise
 	}
 	c.healthLag = c.Health
 	c.staminaLag = c.Stamina
@@ -249,5 +258,5 @@ func (c *Comp) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	}
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -16)
-	utils.DrawText(screen, fmt.Sprintf("%0.2f", c.Health), assets.TinyFont, op)
+	utils.DrawText(screen, fmt.Sprintf("%0.2f/%0.2f/%0.2f", c.Health, c.Stamina, c.Poise), assets.TinyFont, op)
 }

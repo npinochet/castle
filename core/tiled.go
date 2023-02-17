@@ -181,7 +181,7 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 				props[prop.Name] = prop.Value
 			}
 			props[HorizontalProp], props[VerticalProp] = strconv.FormatBool(tile.HorizontalFlip), strconv.FormatBool(tile.VerticalFlip)
-			world.AddEntity(construct(obj.X, obj.Y, obj.Width, obj.Height, props))
+			world.AddEntity(construct(obj.X, obj.Y-obj.Height, obj.Width, obj.Height, props))
 		}
 	}
 }

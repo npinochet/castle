@@ -12,7 +12,6 @@ const (
 	gramAnimFile                             = "assets/gram"
 	gramWidth, gramHeight                    = 10, 12
 	gramOffsetX, gramOffsetY, gramOffsetFlip = -1, -2, 0
-	gramDamage                               = 20
 )
 
 type gram struct {
@@ -24,19 +23,16 @@ func NewGram(x, y, w, h float64, props map[string]string) *core.Entity {
 	animc.FlipX = props[core.HorizontalProp] == "true"
 
 	body := &body.Comp{Unmovable: true}
+	gram := &gram{Actor: NewActor(x, y, gramWidth, gramHeight, body, animc, nil)}
 	textbox := &textbox.Comp{
 		Text: "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr",
 		Body: body,
 		Area: func() bump.Rect {
-			rect := bump.NewRect(x, y, gramWidth, gramHeight)
-			rect.X -= 10
-			rect.W += 20
-
-			return rect
+			return bump.NewRect(gram.X-10, gram.Y, gramWidth+20, gramHeight)
 		},
 	}
-	gram := &gram{Actor: NewActor(x, y, gramWidth, gramHeight, body, animc, nil, gramDamage, gramDamage)}
 	gram.AddComponent(textbox, gram)
+	gram.Stats.MaxPoise, gram.Stats.Poise = 100, 100
 
 	return &gram.Entity
 }

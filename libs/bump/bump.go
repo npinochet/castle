@@ -121,6 +121,7 @@ func (s *Space) Check(item Item, goal Vec2, filter Filter) (Vec2, []*Collision) 
 
 	rect := s.Rects[item]
 	projectedCols := s.Project(item, rect, goal, visitedFilter)
+	sort.Slice(projectedCols, func(i, j int) bool { return projectedCols[i].Normal.Y != 0 })
 
 	var cols []*Collision
 	for len(projectedCols) > 0 {
@@ -236,17 +237,21 @@ func detectCollision(rect1, rect2 Rect, goal Vec2) (*Collision, bool) {
 	}
 
 	if !col.Overlaps {
+		col.Touch = Vec2{rect1.X + col.Move.X*col.Intersection, rect1.Y + col.Move.Y*col.Intersection}
+
 		return col, true
 	}
 
 	if (col.Move == Vec2{}) {
 		p := rectNearestCorner(interRect, Vec2{})
+		col.Normal = Vec2{math.Copysign(1, p.X), math.Copysign(1, p.Y)}
 		if math.Abs(p.X) < math.Abs(p.Y) {
 			p.Y = 0
+			col.Normal.Y = 0
 		} else {
 			p.X = 0
+			col.Normal.X = 0
 		}
-		col.Normal = Vec2{math.Copysign(1, p.X), math.Copysign(1, p.Y)}
 		col.Touch = Vec2{rect1.X + p.X, rect1.Y + p.Y}
 	} else {
 		i1, _, normal, found := lineSegmentIntersection(interRect, Vec2{}, col.Move)

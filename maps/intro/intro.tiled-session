@@ -64,18 +64,18 @@
         },
         "intro.tmx": {
             "expandedObjectLayers": [
-                4,
-                3
+                3,
+                4
             ],
-            "scale": 2.8045,
+            "scale": 1.3351,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 1904.7958637903369,
-                "y": 2437.8677126047423
+                "x": 2019.3243951763916,
+                "y": 2106.2092727136546
             }
         },
         "tiles.tsx": {
-            "scaleInDock": 3.522,
+            "scaleInDock": 2.0856,
             "scaleInEditor": 3.4
         }
     },

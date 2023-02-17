@@ -144,7 +144,7 @@ func (c *Comp) updateMovement(dt float64) {
 			if col.Normal.Y != 0 {
 				c.Vy = 0
 			}
-			c.Ground = col.Normal.Y < 0
+			c.Ground = c.Ground || col.Normal.Y < 0
 		}
 		if _, ok := col.Other.(*Comp); ok && col.Type == bump.Cross && col.Overlaps {
 			c.applyOverlapForce(col)

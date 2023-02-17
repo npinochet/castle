@@ -91,6 +91,8 @@ func (g *Game) init() {
 	g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
 		26: entity.NewKnight,
 		27: entity.NewGhoul,
+		28: entity.NewSkeleman,
+		29: entity.NewCrawler,
 		87: entity.NewGram,
 	})
 }
@@ -127,7 +129,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.world.Draw(screen)
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(1, 1)
+	op.GeoM.Translate(screenWidth-16, 1)
 	utils.DrawText(screen, fmt.Sprintf(`%0.2f`, ebiten.ActualFPS()), assets.TinyFont, op)
 }
 

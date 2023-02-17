@@ -14,12 +14,12 @@ import (
 const (
 	playerAnimFile                                 = "assets/knight"
 	playerWidth, playerHeight                      = 8, 11
-	playerOffsetX, playerOffsetY, playerOffsetFlip = -4, -3, 5
+	playerOffsetX, playerOffsetY, playerOffsetFlip = -10, -3, 17
 	playerSpeed, playerJumpSpeed                   = 350, 110
 	playerDamage                                   = 20
 )
 
-var player *Player
+var PlayerRef *Player
 
 type Player struct {
 	*Actor
@@ -33,7 +33,7 @@ func NewPlayer(x, y float64, props map[string]interface{}) *Player {
 	anim := &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
 
 	playerActor := &Player{
-		Actor: NewActor(x, y, playerWidth, playerHeight, body, anim, nil, playerDamage, playerDamage),
+		Actor: NewActor(x, y, playerWidth, playerHeight, body, anim, nil),
 		pad:   utils.NewControlPack(),
 		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
 	}
@@ -41,9 +41,9 @@ func NewPlayer(x, y float64, props map[string]interface{}) *Player {
 	playerActor.Stats.Hud = true
 	playerActor.Stats.NoDebug = true
 
-	player = playerActor
+	PlayerRef = playerActor
 
-	return player
+	return PlayerRef
 }
 
 func (p *Player) Init(entity *core.Entity) {
@@ -77,18 +77,18 @@ func (p *Player) control(dt float64) bool { // TODO: refactor this
 		if math.Abs(p.Body.Vx) <= p.Body.MaxX {
 			p.Body.Vx -= p.speed * dt
 		}
-		moving, flip = true, true
+		moving, flip = true, false
 	}
 	if p.pad.KeyDown(utils.KeyRight) {
 		if math.Abs(p.Body.Vx) <= p.Body.MaxX {
 			p.Body.Vx += p.speed * dt
 		}
-		moving, flip = true, false
+		moving, flip = true, true
 	}
 
 	if p.Anim.State != anim.BlockTag {
 		if actionPressed {
-			p.Attack(anim.AttackTag)
+			p.Attack(anim.AttackTag, playerDamage, playerDamage)
 		}
 		p.Anim.FlipX = flip
 		if (p.Body.Ground || p.Anim.State == anim.ClimbTag) && p.pad.KeyPressed(utils.KeyJump) {

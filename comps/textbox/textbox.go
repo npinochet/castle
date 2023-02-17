@@ -9,6 +9,7 @@ import (
 	"game/utils"
 	"image/color"
 	"math"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -39,8 +40,15 @@ type Comp struct {
 func (c *Comp) Init(entity *core.Entity) {
 	c.entity = entity
 	c.camera = entity.World.Camera
-	for i := 1; len(c.Text) > i*lineSize; i++ {
-		c.Text = c.Text[:i*lineSize] + "\n" + c.Text[i*lineSize+1:]
+	words := strings.Split(c.Text, " ")
+	c.Text = ""
+	i := 1
+	for _, word := range words {
+		if len(c.Text+word)+1 > (i*lineSize)-(i-1) {
+			c.Text += "\n"
+			i++
+		}
+		c.Text += " " + word
 	}
 }
 

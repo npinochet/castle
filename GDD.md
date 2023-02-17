@@ -173,6 +173,35 @@ To add dread and difficulty, the player can only save at designated points (like
 * How to make it so more than 2 enemies can fight you?
   * Being 2D means you can be only attacked from the left or right.
 
+## Enemies
+
+### Firs area
+
+#### Crawler
+
+The first enemy, an insignificant, slow and weak obstacle, they can occasionally attack.
+A good introduction for combat.
+Lore:
+There are poor lost souls that are too tired and spent from living.
+
+#### Ghoul
+
+These are well-rounded enemies that can throw rocks from higher places. They have a 2 attack combo that can trick you, but they have weak poise.
+Lore:
+IDK
+
+#### Skeleman
+
+These ones are the first real challenge a player will face. They have mid poise and can spin their swords to make a wall of hitboxes. They will force you to use the shield.
+Lore:
+IDK
+
+#### Abomination
+
+These are health walls (not too much). But can jump and fall on you. They hit hard but are slow and well telegraphed.
+Lore:
+They come from the mass of bodies under the dungeon. Where people believe that pulping and mutilation oneself can lead to a state of death. These are the ones that decide to leave the mass.
+
 ## Estimated progress
 
 * Game engine: 20%
@@ -194,15 +223,14 @@ To add dread and difficulty, the player can only save at designated points (like
 * Healing mechanic and limited use.
 * Bonfires/Gravestones.
   * Every save point (gravestone) has an engraving which gives a little lore to the area.
-* Stairs.
 * First area themes.
-  * A dungeon reporposed as a cult area with followers who believe that beheading and cracking of the skull is the new death. Where you can't know if one gets to live still or really die.
+  * A dungeon repurposed as a cult area with followers who believe that beheading and cracking of the skull is the new death. Where you can't know if one gets to live still or really die.
   * Lead by the final boss who's a greedy leader with.
-    * Named Lakim (greed in black speech), he was 
+    * Named Lakim (greed in black speech), he was
 * Art.
 * Have an enemy which is made from diferent bodyparts stiched together, like frankenstein's monster.
+* Have an enemy which is are aristocrats with deer of some other animal heads. A type fo grafted enemy.
   
-
 Level design tips that might be useful to keep in mind:
 
 * search castle layouts.
@@ -211,32 +239,39 @@ Level design tips that might be useful to keep in mind:
 * you can still tackle difficult areas early to get cool items.
 * difficulty curves, no more than 2-3 bosses that needs to be killed in any order.
 
-Stages:
+TODO list:
 
 * Gameplay:
   * Tweak enemy behavior:
-    * Make a way to query if an entity/actor is in front of you
-    * Rename config vars, use something more descriptive
-    * Starts IDLE until something comes up his viewport (an aabb box) and anything that touches it becomes his target.
-    * Is it is too far, the enemy runs until combat distance.
-    * On combat distance, the enemy speed reduces and wait's patiently pacing around.
     * If player comes closer maybe the shield is raise? or the enemy attacks (can be tweak with aggressive parameter?)
-  * Finish skeleton animations?
-  * Implement skeleton enemy
+  * Heal system
   * Make simple test map with multiple enemies, see how they behave
+    * Make teams for AI
   * Think about adding roll/dodge for gameplay experimentation
-
-    Future:
-    * Ladders
-    * Bonfire
+* Future:
+  * Improve AI implementation, it it's too complex and relies too much on copy and paste
+  * Bonfire
+  * Use Tiled automapping for backgrounds and floor tiles
+    * And maybe, if it's not to difficult, aut mapping for collision objects
+  * Polish combat juice, stop time when take damage (or send damage), kill animations, etc...
+  * Add pathfinding for enemies
 
 * Level Design:
   * Test when possible
 
 Level progression:
+
 * Start, tutorial.
+* Find first bonfire. Maybe an NPC?
 * Descend through dungeon.
+* Find chest with tougher enemy?
 * Encounter mass of body enemies.
 * Encounter the source of the enemies, a big pile of body parts.
 * Descend further through the dungeon.
 
+Level design steps [How to Design Great Metroidvania Levels | Game Design](https://www.youtube.com/watch?v=bAHXYfP38CA):
+* Draft the map ()
+* Develop the timeline
+* Develop the abilities
+* Map out each room
+* Test, Review, Adapt
