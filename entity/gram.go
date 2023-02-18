@@ -23,7 +23,7 @@ func NewGram(x, y, w, h float64, props map[string]string) *core.Entity {
 	animc.FlipX = props[core.HorizontalProp] == "true"
 
 	body := &body.Comp{Unmovable: true}
-	gram := &gram{Actor: NewActor(x, y, gramWidth, gramHeight, body, animc, nil)}
+	gram := &gram{Actor: NewActor(x, y, gramWidth, gramHeight, body, animc, nil, nil)}
 	textbox := &textbox.Comp{
 		Text: "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr",
 		Body: body,

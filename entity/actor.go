@@ -24,7 +24,8 @@ type Actor struct {
 	Anim                                *anim.Comp
 	Stats                               *stats.Comp
 	AI                                  *ai.Comp
-	speed                               float64
+	AttackTags                          []string
+	Speed                               float64
 	BlockMaxXDiv, BlockRecoverRateDiv   float64
 	ReactForce, AttackPushForce         float64
 	blockMaxXSave, blockRecoverRateSave float64
@@ -35,13 +36,14 @@ func (a *Actor) GetHitbox() *hitbox.Comp      { return a.Hitbox }
 func (a *Actor) GetAnim() *anim.Comp          { return a.Anim }
 func (a *Actor) GetStats() *stats.Comp        { return a.Stats }
 func (a *Actor) GetAI() *ai.Comp              { return a.AI }
-func (a *Actor) SetSpeed(speed, maxX float64) { a.speed, a.Body.MaxX = speed, maxX }
+func (a *Actor) SetSpeed(speed, maxX float64) { a.Speed, a.Body.MaxX = speed, maxX }
 
 func NewActor(
 	x, y, w, h float64,
 	body *body.Comp,
 	animc *anim.Comp,
 	stat *stats.Comp,
+	attackTags []string,
 ) *Actor {
 	if stat == nil {
 		stat = &stats.Comp{}
@@ -57,6 +59,7 @@ func NewActor(
 		BlockMaxXDiv: defaultMaxXDiv, BlockRecoverRateDiv: defaultMaxXRecoverRateDiv,
 		AttackPushForce: defaultAttackPushForce,
 		ReactForce:      defaultReactForce,
+		AttackTags:      attackTags,
 	}
 	actor.AddComponent(actor.Body, actor.Hitbox, actor.Anim, actor.Stats)
 	actor.Hitbox.HurtFunc = func(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {
@@ -72,11 +75,11 @@ func NewActor(
 	return actor
 }
 
-func (a *Actor) ManageAnim(attackTags []string) {
-	// TODO: Make more general, maybe add speed in the mix.
+func (a *Actor) ManageAnim() {
+	// TODO: Make more general, maybe add speed in the mix
 	state := a.Anim.State
 	a.Body.Friction = !(state == anim.WalkTag && a.Body.Vx != 0)
-	a.Stats.Pause = utils.Contains(attackTags, state) || state == anim.StaggerTag
+	a.Stats.Pause = a.pausedState()
 
 	if state == anim.IdleTag || state == anim.WalkTag {
 		nextState := anim.IdleTag
@@ -87,47 +90,46 @@ func (a *Actor) ManageAnim(attackTags []string) {
 	}
 }
 
-func (a *Actor) Remove() {
-	if a.Body != nil {
-		a.World.Space.Remove(a.Body)
-	}
-	if a.Hitbox != nil {
-		for a.Hitbox.PopHitbox() != nil {
+func (a *Actor) SimpleUpdate(dt float64) {
+	a.ManageAnim()
+	if target := a.AI.Target; target != nil {
+		if a.Anim.State == anim.WalkTag || a.Anim.State == anim.IdleTag {
+			a.Anim.FlipX = target.X > a.X
 		}
 	}
-	a.World.RemoveEntity(a.ID)
+
+	if !a.pausedState() {
+		if a.Anim.FlipX {
+			a.Body.Vx += a.Speed * dt
+		} else {
+			a.Body.Vx -= a.Speed * dt
+		}
+	}
+
+	if a.Stats.Health <= 0 {
+		a.Remove()
+	}
 }
 
-func (a *Actor) ResetState() {
-	a.Anim.SetState(anim.IdleTag)
-	a.Body.ClipLadder = false
-	a.Body.Weight = 0
-	a.Anim.Data.PlaySpeed = 1
+func (a *Actor) pausedState() bool {
+	return utils.Contains(append(a.AttackTags, anim.StaggerTag, anim.ConsumeTag), a.Anim.State)
 }
 
-func (a *Actor) ClimbOn(goingDown bool) {
-	if a.Body.TouchLadder && goingDown {
-		a.Body.ClipLadder = true
-	}
-	if !a.Body.OnLadder || a.Anim.State == anim.ClimbTag {
-		return
-	}
-	a.ResetState()
-	a.Anim.SetState(anim.ClimbTag)
-	a.Body.Weight = -1 // TODO:add weight save?? uuuhhh
+func (a *Actor) ResetState(state string) {
+	a.ClimbOff()
+	a.ShieldDown()
+	a.Anim.SetState(state)
 }
 
 func (a *Actor) Attack(attackTag string, damage, staminaDamage float64) {
-	if a.Stats.Stamina <= 0 || a.Anim.State == attackTag || a.Anim.State == anim.StaggerTag {
+	if a.pausedState() || a.Stats.Stamina <= 0 {
 		return
 	}
-	// TODO: This force flip works for player, not for enemies, standarize default flip
 	force := -a.AttackPushForce
 	if a.Anim.FlipX {
 		force *= -1
 	}
-	a.ResetState()
-	a.Anim.SetState(attackTag)
+	a.ResetState(attackTag)
 
 	once := false
 	var contacted []*hitbox.Comp
@@ -135,7 +137,7 @@ func (a *Actor) Attack(attackTag string, damage, staminaDamage float64) {
 		if hitbox, err := a.Anim.GetFrameHitbox(anim.HitboxSliceName); err == nil {
 			if !once {
 				once = true
-				a.Body.Vx += force // TODO: The direction is wrong
+				a.Body.Vx += force
 				a.Stats.AddStamina(-staminaDamage)
 			}
 			var blocked bool
@@ -152,18 +154,51 @@ func (a *Actor) Attack(attackTag string, damage, staminaDamage float64) {
 	})
 }
 
+func (a *Actor) ClimbOn(goingDown bool) {
+	if a.pausedState() {
+		return
+	}
+	a.Body.ClipLadder = a.Body.ClipLadder || goingDown
+	if !a.Body.OnLadder || a.Anim.State == anim.ClimbTag {
+		return
+	}
+	a.ResetState(anim.ClimbTag)
+	a.Body.Weight = -1 // TODO:add weight save?? uuuhhh
+}
+
+func (a *Actor) ClimbOff() {
+	if a.Anim.State != anim.ClimbTag {
+		return
+	}
+	a.Body.ClipLadder = false
+	a.Body.Weight = 0
+	a.Anim.Data.PlaySpeed = 1
+	a.Anim.SetState(anim.IdleTag)
+}
+
+func (a *Actor) Heal(effectFrame int, amount float64) {
+	if a.pausedState() {
+		return
+	}
+	a.ResetState(anim.ConsumeTag)
+	a.Anim.OnFrames(func(frame int) {
+		if frame == effectFrame {
+			a.Anim.OnFrames(nil)
+			a.Stats.AddHealth(amount)
+		}
+	})
+}
+
 func (a *Actor) Stagger(force float64) {
-	a.ResetState()
-	a.Anim.SetState(anim.StaggerTag)
+	a.ResetState(anim.StaggerTag)
 	a.Body.Vx = -force
 }
 
 func (a *Actor) ShieldUp() {
-	if a.Anim.State == anim.BlockTag || a.Anim.State == anim.StaggerTag {
+	if a.pausedState() || a.Anim.State == anim.BlockTag {
 		return
 	}
-	a.ResetState()
-	a.Anim.SetState(anim.BlockTag)
+	a.ResetState(anim.BlockTag)
 	a.blockMaxXSave = a.Body.MaxX
 	a.blockRecoverRateSave = a.Stats.StaminaRecoverRate
 	a.Body.MaxX /= a.BlockMaxXDiv
@@ -179,7 +214,6 @@ func (a *Actor) ShieldDown() {
 	if a.Anim.State != anim.BlockTag {
 		return
 	}
-	a.ResetState()
 	a.Anim.SetState(anim.IdleTag)
 	a.Body.MaxX = a.blockMaxXSave
 	a.Stats.StaminaRecoverRate = a.blockRecoverRateSave
@@ -187,12 +221,6 @@ func (a *Actor) ShieldDown() {
 }
 
 func (a *Actor) Hurt(otherX float64, damage float64, poiseBreak func(force, damage float64)) {
-	if poiseBreak == nil {
-		poiseBreak = func(force, damage float64) {
-			force *= damage / a.Stats.MaxHealth
-			a.Stagger(force)
-		}
-	}
 	a.Stats.AddPoise(-damage)
 	a.Stats.AddHealth(-damage)
 
@@ -202,9 +230,19 @@ func (a *Actor) Hurt(otherX float64, damage float64, poiseBreak func(force, dama
 	}
 
 	if a.Stats.Poise <= 0 {
+		if poiseBreak == nil {
+			poiseBreak = func(force, damage float64) {
+				force *= damage / a.Stats.MaxHealth
+				a.Stagger(force)
+			}
+		}
 		poiseBreak(a.ReactForce, damage)
 	} else {
-		a.Body.Vx -= force
+		if a.Anim.State == anim.ConsumeTag {
+			a.Stagger(force)
+		} else {
+			a.Body.Vx -= force
+		}
 	}
 }
 
@@ -230,4 +268,15 @@ func (a *Actor) Block(otherX float64, damage float64, blockBreak func(force, dam
 	} else {
 		a.Body.Vx -= force
 	}
+}
+
+func (a *Actor) Remove() {
+	if a.Body != nil {
+		a.World.Space.Remove(a.Body)
+	}
+	if a.Hitbox != nil {
+		for a.Hitbox.PopHitbox() != nil {
+		}
+	}
+	a.World.RemoveEntity(a.ID)
 }

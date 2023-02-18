@@ -71,6 +71,7 @@ func (c *Comp) SetState(state string) {
 	if err := c.Data.Play(state); err != nil {
 		panic(err)
 	}
+	// c.Data.AnimationInfo.frameCounter = 0 // TODO: This needs to happen. opened a PR: https://github.com/damienfamed75/aseprite/pull/4
 	c.callback = nil
 	if callback := c.Fsm.Entry[c.State]; callback != nil {
 		callback(c)

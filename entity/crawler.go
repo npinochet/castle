@@ -31,9 +31,9 @@ func NewCrawler(x, y, w, h float64, props map[string]string) *core.Entity {
 	body := &body.Comp{MaxX: crawlerMaxSpeed}
 
 	crawler := &crawler{
-		Actor: NewActor(x, y, crawlerWidth, crawlerHeight, body, animc, &stats.Comp{MaxPoise: crawlerDamage}),
+		Actor: NewActor(x, y, crawlerWidth, crawlerHeight, body, animc, &stats.Comp{MaxPoise: crawlerDamage}, []string{"Attack"}),
 	}
-	crawler.speed = crawlerSpeed
+	crawler.Speed = crawlerSpeed
 	crawler.AddComponent(crawler)
 
 	var view bump.Rect
@@ -45,49 +45,29 @@ func NewCrawler(x, y, w, h float64, props map[string]string) *core.Entity {
 	}
 
 	crawler.setupAI(view)
-	crawler.speed = 0
 
 	return &crawler.Entity
 }
 
-func (g *crawler) Init(entity *core.Entity) {
-	hurtbox, err := g.Anim.GetFrameHitbox(anim.HurtboxSliceName)
+func (c *crawler) Init(entity *core.Entity) {
+	hurtbox, err := c.Anim.GetFrameHitbox(anim.HurtboxSliceName)
 	if err != nil {
 		panic("no hurtbox found")
 	}
-	g.Hitbox.PushHitbox(hurtbox, false)
+	c.Hitbox.PushHitbox(hurtbox, false)
 }
 
-func (g *crawler) Update(dt float64) {
-	g.ManageAnim([]string{"Attack"})
-	if g.Anim.State == anim.WalkTag && g.speed == 0 {
-		g.Anim.SetState(anim.IdleTag)
-	}
-	if g.AI.Target != nil {
-		if g.Anim.State == anim.WalkTag || g.Anim.State == anim.IdleTag {
-			g.Anim.FlipX = g.AI.Target.X > g.X
-		}
-	}
-	if g.Anim.State != "Attack" && g.Anim.State != anim.StaggerTag {
-		if g.Anim.FlipX {
-			g.Body.Vx += g.speed * dt
-		} else {
-			g.Body.Vx -= g.speed * dt
-		}
-	}
-
-	if g.Stats.Health <= 0 {
-		g.Remove()
-	}
+func (c *crawler) Update(dt float64) {
+	c.SimpleUpdate(dt)
 }
 
-func (g *crawler) setupAI(view bump.Rect) {
+func (c *crawler) setupAI(view bump.Rect) {
 	aiConfig := DefaultAIConfig()
 	aiConfig.viewRect = view
 	aiConfig.PaceReact = []ai.WeightedState{{"Attack", 1}}
 	aiConfig.Attacks = []Attack{{"Attack", crawlerDamage, 20}}
 	aiConfig.CombatOptions = []ai.WeightedState{{"Pursuit", 100}, {"Pace", 2}, {"Wait", 1}, {"RunAttack", 1}, {"Attack", 1}}
 
-	g.speed, g.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
-	g.SetDefaultAI(aiConfig)
+	c.Speed, c.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
+	c.SetDefaultAI(aiConfig)
 }

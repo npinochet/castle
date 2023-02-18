@@ -15,14 +15,14 @@ type Knight struct {
 
 func NewKnight(x, y, w, h float64, props map[string]string) *core.Entity {
 	speed := 100.0
-	anim := &anim.Comp{FilesName: knightAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
-	anim.FlipX = props[core.HorizontalProp] == "true"
+	animc := &anim.Comp{FilesName: knightAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
+	animc.FlipX = props[core.HorizontalProp] == "true"
 	body := &body.Comp{MaxX: 35}
 
 	knight := &Knight{
-		Actor: NewActor(x, y, playerWidth, playerHeight, body, anim, &stats.Comp{MaxPoise: 25}),
+		Actor: NewActor(x, y, playerWidth, playerHeight, body, animc, &stats.Comp{MaxPoise: 25}, []string{anim.AttackTag}),
 	}
-	knight.speed = speed
+	knight.Speed = speed
 	knight.SetDefaultAI(nil)
 	knight.AddComponent(knight)
 
@@ -38,24 +38,5 @@ func (k *Knight) Init(entity *core.Entity) {
 }
 
 func (k *Knight) Update(dt float64) {
-	k.ManageAnim([]string{anim.AttackTag})
-	if k.Anim.State == anim.WalkTag && k.speed == 0 {
-		k.Anim.SetState(anim.IdleTag)
-	}
-	if k.AI.Target != nil {
-		if k.Anim.State == anim.WalkTag || k.Anim.State == anim.IdleTag {
-			k.Anim.FlipX = k.AI.Target.X < k.X
-		}
-	}
-	if k.Anim.State != anim.AttackTag && k.Anim.State != anim.StaggerTag {
-		if k.Anim.FlipX {
-			k.Body.Vx -= k.speed * dt
-		} else {
-			k.Body.Vx += k.speed * dt
-		}
-	}
-
-	if k.Stats.Health <= 0 {
-		k.Remove()
-	}
+	k.SimpleUpdate(dt)
 }

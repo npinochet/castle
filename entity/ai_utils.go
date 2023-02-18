@@ -51,7 +51,7 @@ func (a *Actor) SetDefaultAI(config *AIConfig) {
 	if config == nil {
 		config = DefaultAIConfig()
 	}
-	speed, maxSpeed := a.speed, a.Body.MaxX
+	speed, maxSpeed := a.Speed, a.Body.MaxX
 
 	if a.AI == nil {
 		a.AI = &ai.Comp{Actor: a}

@@ -17,6 +17,9 @@ const (
 	playerOffsetX, playerOffsetY, playerOffsetFlip = -10, -3, 17
 	playerSpeed, playerJumpSpeed                   = 350, 110
 	playerDamage                                   = 20
+	playerHealFrame                                = 3
+
+	keyBufferDuration = 500 * time.Millisecond
 )
 
 var PlayerRef *Player
@@ -30,10 +33,10 @@ type Player struct {
 
 func NewPlayer(x, y float64, props map[string]interface{}) *Player {
 	body := &body.Comp{}
-	anim := &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
+	animc := &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
 
 	playerActor := &Player{
-		Actor: NewActor(x, y, playerWidth, playerHeight, body, anim, nil),
+		Actor: NewActor(x, y, playerWidth, playerHeight, body, animc, nil, []string{anim.AttackTag}),
 		pad:   utils.NewControlPack(),
 		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
 	}
@@ -56,67 +59,68 @@ func (p *Player) Init(entity *core.Entity) {
 }
 
 func (p *Player) Update(dt float64) {
-	moving := p.control(dt)
-	p.ManageAnim([]string{anim.AttackTag})
-	if p.Anim.State == anim.WalkTag && !moving {
+	p.control(dt)
+	p.ManageAnim()
+	if moving := p.pad.KeyDown(utils.KeyLeft) || p.pad.KeyDown(utils.KeyRight); p.Anim.State == anim.WalkTag && !moving {
 		p.Anim.SetState(anim.IdleTag)
 	}
 }
 
-func (p *Player) control(dt float64) bool { // TODO: refactor this
-	actionPressed := p.pad.KeyPressedBuffered(utils.KeyAction, 500*time.Millisecond)
-	if p.Stats.Health <= 0 || p.Anim.State == anim.AttackTag || p.Anim.State == anim.StaggerTag {
-		return false
+func (p *Player) control(dt float64) { // TODO: refactor this
+	actionPressed := p.pad.KeyPressedBuffered(utils.KeyAction, keyBufferDuration)
+	healPressed := p.pad.KeyPressedBuffered(utils.KeyHeal, keyBufferDuration)
+	if p.pausedState() {
+		return
 	}
-
-	p.controlClimbing(dt)
+	if actionPressed {
+		p.Attack(anim.AttackTag, playerDamage, playerDamage)
+	}
+	if healPressed {
+		p.Heal(playerHealFrame, 20) // TODO:set correct frame
+	}
 	p.controlBlocking()
+	p.controlClimbing(dt)
 
-	moving, flip := false, p.Anim.FlipX
+	flip := p.Anim.FlipX
 	if p.pad.KeyDown(utils.KeyLeft) {
 		if math.Abs(p.Body.Vx) <= p.Body.MaxX {
 			p.Body.Vx -= p.speed * dt
 		}
-		moving, flip = true, false
+		flip = false
 	}
 	if p.pad.KeyDown(utils.KeyRight) {
 		if math.Abs(p.Body.Vx) <= p.Body.MaxX {
 			p.Body.Vx += p.speed * dt
 		}
-		moving, flip = true, true
+		flip = true
 	}
 
 	if p.Anim.State != anim.BlockTag {
-		if actionPressed {
-			p.Attack(anim.AttackTag, playerDamage, playerDamage)
-		}
 		p.Anim.FlipX = flip
-		if (p.Body.Ground || p.Anim.State == anim.ClimbTag) && p.pad.KeyPressed(utils.KeyJump) {
-			p.Body.Vy = -p.jumpSpeed
-			p.ResetState()
-		}
 	}
-
-	return moving
+	if p.pad.KeyPressed(utils.KeyJump) && (p.Anim.State == anim.ClimbTag || p.Body.Ground) && p.Anim.State != anim.BlockTag {
+		p.ClimbOff()
+		p.Body.Vy = -p.jumpSpeed
+	}
 }
 
 func (p *Player) controlClimbing(dt float64) {
-	if (p.pad.KeyDown(utils.KeyUp) || p.pad.KeyDown(utils.KeyDown)) && p.Body.TouchLadder {
+	if p.pad.KeyDown(utils.KeyUp) || p.pad.KeyDown(utils.KeyDown) {
 		p.ClimbOn(p.pad.KeyDown(utils.KeyDown))
 	}
 	if p.Anim.State != anim.ClimbTag {
 		return
 	}
 	if !p.Body.OnLadder {
-		p.ResetState()
+		p.ClimbOff()
 	}
 	p.Body.Vy = 0
-	speed := p.speed * 5
+	speed := p.speed * 5 * dt
 	if p.pad.KeyDown(utils.KeyUp) {
-		p.Body.Vy -= speed * dt
+		p.Body.Vy = -speed
 	}
 	if p.pad.KeyDown(utils.KeyDown) {
-		p.Body.Vy += speed * dt
+		p.Body.Vy = speed
 	}
 }
 

@@ -74,8 +74,7 @@ func (r *Rock) Init(entity *core.Entity) {
 }
 
 func (r *Rock) Update(dt float64) {
-	hb := bump.Rect{X: r.X, Y: r.Y, H: rockSize, W: rockSize}
-	_, contacted := r.hitbox.HitFromHitBox(hb, rockDamage, []*hitbox.Comp{r.owner.Hitbox})
+	_, contacted := r.hitbox.HitFromHitBox(bump.Rect{H: rockSize, W: rockSize}, rockDamage, []*hitbox.Comp{r.owner.Hitbox})
 	if len(contacted) > 1 || r.body.Ground {
 		r.Remove()
 	}

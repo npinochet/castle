@@ -18,6 +18,7 @@ const (
 	skelemanSpeed                                        = 100
 	skelemanMaxSpeed                                     = 20
 	skelemanDamage                                       = 20
+	skelemanPoise                                        = 30
 )
 
 type skeleman struct {
@@ -31,9 +32,9 @@ func NewSkeleman(x, y, w, h float64, props map[string]string) *core.Entity {
 	body := &body.Comp{MaxX: skelemanMaxSpeed}
 
 	skeleman := &skeleman{
-		Actor: NewActor(x, y, skelemanWidth, skelemanHeight, body, animc, &stats.Comp{MaxPoise: skelemanDamage}),
+		Actor: NewActor(x, y, skelemanWidth, skelemanHeight, body, animc, &stats.Comp{MaxPoise: skelemanPoise}, []string{"AttackShort", "AttackLong"}),
 	}
-	skeleman.speed = skelemanSpeed
+	skeleman.Speed = skelemanSpeed
 	skeleman.AddComponent(skeleman)
 
 	var view bump.Rect
@@ -58,26 +59,7 @@ func (g *skeleman) Init(entity *core.Entity) {
 }
 
 func (g *skeleman) Update(dt float64) {
-	g.ManageAnim([]string{"AttackShort", "AttackLong"})
-	if g.Anim.State == anim.WalkTag && g.speed == 0 {
-		g.Anim.SetState(anim.IdleTag)
-	}
-	if g.AI.Target != nil {
-		if g.Anim.State == anim.WalkTag || g.Anim.State == anim.IdleTag {
-			g.Anim.FlipX = g.AI.Target.X > g.X
-		}
-	}
-	if (g.Anim.State != "AttackShort" && g.Anim.State != "AttackLong") && g.Anim.State != anim.StaggerTag {
-		if g.Anim.FlipX {
-			g.Body.Vx += g.speed * dt
-		} else {
-			g.Body.Vx -= g.speed * dt
-		}
-	}
-
-	if g.Stats.Health <= 0 {
-		g.Remove()
-	}
+	g.SimpleUpdate(dt)
 }
 
 func (g *skeleman) setupAI(view bump.Rect) {
@@ -87,6 +69,6 @@ func (g *skeleman) setupAI(view bump.Rect) {
 	aiConfig.Attacks = []Attack{{"AttackShort", skelemanDamage, 20}, {"AttackLong", skelemanDamage / 2, 40}}
 	aiConfig.CombatOptions = []ai.WeightedState{{"Pursuit", 100}, {"Pace", 2}, {"Wait", 1}, {"RunAttack", 1}, {"AttackLong", 1}, {"AttackShort", 1}}
 
-	g.speed, g.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
+	g.Speed, g.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
 	g.SetDefaultAI(aiConfig)
 }

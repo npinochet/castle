@@ -12,7 +12,7 @@ import (
 
 const PlayerUID = 100
 
-type ControlPack [7]ebiten.Key
+type ControlPack [8]ebiten.Key
 type ControlKey int
 
 const (
@@ -23,6 +23,7 @@ const (
 	KeyJump
 	KeyAction
 	KeyGuard
+	KeyHeal
 )
 
 var buffer = map[ControlKey]bool{}
@@ -37,6 +38,7 @@ func NewControlPack() ControlPack {
 		KeyJump:   ebiten.KeyZ,
 		KeyAction: ebiten.KeyX,
 		KeyGuard:  ebiten.KeyC,
+		KeyHeal:   ebiten.KeyV,
 	}
 }
 

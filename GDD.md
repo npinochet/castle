@@ -244,7 +244,6 @@ TODO list:
 * Gameplay:
   * Tweak enemy behavior:
     * If player comes closer maybe the shield is raise? or the enemy attacks (can be tweak with aggressive parameter?)
-  * Heal system
   * Make simple test map with multiple enemies, see how they behave
     * Make teams for AI
   * Think about adding roll/dodge for gameplay experimentation
@@ -270,6 +269,7 @@ Level progression:
 * Descend further through the dungeon.
 
 Level design steps [How to Design Great Metroidvania Levels | Game Design](https://www.youtube.com/watch?v=bAHXYfP38CA):
+
 * Draft the map ()
 * Develop the timeline
 * Develop the abilities

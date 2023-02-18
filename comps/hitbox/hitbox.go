@@ -115,7 +115,7 @@ func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) 
 				doesHit[other.comp] = hitInfo{true, col}
 			}
 		} else if _, ok := col.Other.(*tiled.Object); ok {
-			blocked = true // TODO: Should not stagger when hitting slope.
+			blocked = true // TODO: Should not stagger when hitting slope
 		}
 	}
 
@@ -144,7 +144,7 @@ func (c *Comp) hitFilter() bump.SimpleFilter {
 				return false
 			}
 		}
-		// TODO: If a slope is hit, maybe it shouldn't return true.
+		// TODO: If a slope is hit, maybe it shouldn't return true
 		return true
 	}
 }

@@ -23,16 +23,16 @@ const (
 var DebugDraw = false
 
 type Comp struct {
-	Solid, Unmovable, Friction        bool
-	Ground                            bool
-	OnLadder, TouchLadder, ClipLadder bool
-	space                             *bump.Space
-	entity                            *core.Entity
-	Vx, Vy                            float64
-	MaxX, MaxY                        float64
-	Weight                            float64
-	FilterOut                         []*Comp
-	debugQueryRect                    bump.Rect
+	Solid, Unmovable, Friction bool
+	Ground                     bool
+	OnLadder, ClipLadder       bool
+	space                      *bump.Space
+	entity                     *core.Entity
+	Vx, Vy                     float64
+	MaxX, MaxY                 float64
+	Weight                     float64
+	FilterOut                  []*Comp
+	debugQueryRect             bump.Rect
 }
 
 func (c *Comp) Init(entity *core.Entity) {
@@ -135,7 +135,6 @@ func (c *Comp) updateMovement(dt float64) {
 	}
 	c.Ground = false
 	c.OnLadder = false
-	c.TouchLadder = false
 	for _, col := range cols {
 		if col.Type == bump.Slide {
 			if col.Normal.X != 0 {
@@ -150,7 +149,6 @@ func (c *Comp) updateMovement(dt float64) {
 			c.applyOverlapForce(col)
 		}
 		if obj, ok := col.Other.(*tiled.Object); ok && obj.Class == core.LadderClass {
-			c.TouchLadder = true
 			c.OnLadder = col.Overlaps
 		}
 	}
