@@ -14,10 +14,18 @@ import (
 
 const (
 	Gravity                     = 300
-	defaultMaxX, defaultMaxY    = 60, 200
-	groundFriction, airFriction = 12, 4 // TODO: Tune this variables. They might be too high.
+	defaultMaxX, defaultMaxY    = 20, 200
+	groundFriction, airFriction = 12, 2 // TODO: Tune this variables. They might be too high.
 	collisionStiffness          = 1
 	frictionEpsilon             = 0.05
+)
+
+type Team int
+
+const (
+	NoneTeam Team = iota
+	PlayerTeam
+	EnemyTeam
 )
 
 var DebugDraw = false
@@ -26,6 +34,8 @@ type Comp struct {
 	Solid, Unmovable, Friction bool
 	Ground                     bool
 	OnLadder, ClipLadder       bool
+	Team                       Team
+	MaxXMultiplier             float64
 	space                      *bump.Space
 	entity                     *core.Entity
 	Vx, Vy                     float64
@@ -42,6 +52,9 @@ func (c *Comp) Init(entity *core.Entity) {
 	}
 	if c.MaxY == 0 {
 		c.MaxY = defaultMaxY
+	}
+	if c.Team == NoneTeam {
+		c.Team = EnemyTeam
 	}
 	c.Friction = true
 	c.space = entity.World.Space
@@ -62,13 +75,13 @@ func (c *Comp) Query(rect bump.Rect, filter func(item bump.Item) bool) []*bump.C
 	return c.space.Query(rect, filter)
 }
 
-func (c *Comp) QueryEntites(rect bump.Rect) []*core.Entity {
+func (c *Comp) QueryEntites(rect bump.Rect, ignoreOwnTeam bool) []*core.Entity {
 	entityFilter := func(item bump.Item) bool {
 		if comp, ok := item.(*Comp); ok {
-			return comp != c
+			return comp != c && (!ignoreOwnTeam || comp.Team != c.Team)
 		}
 
-		return true
+		return false
 	}
 
 	cols := c.Query(rect, entityFilter)
@@ -82,7 +95,7 @@ func (c *Comp) QueryEntites(rect bump.Rect) []*core.Entity {
 	return ents
 }
 
-func (c *Comp) QueryFront(dist, height float64, lookingRight bool) []*core.Entity {
+func (c *Comp) QueryFront(dist, height float64, lookingRight bool, ignoreOwnTeam bool) []*core.Entity {
 	rect := bump.Rect{X: -dist, Y: -height / 2, W: dist, H: height}
 	if lookingRight {
 		rect.X += dist
@@ -90,7 +103,7 @@ func (c *Comp) QueryFront(dist, height float64, lookingRight bool) []*core.Entit
 	rect.X += c.entity.X
 	rect.Y += c.entity.Y
 
-	return c.QueryEntites(rect)
+	return c.QueryEntites(rect, ignoreOwnTeam)
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
@@ -101,11 +114,11 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	image.Fill(color.RGBA{255, 0, 0, 100})
 	screen.DrawImage(image, &ebiten.DrawImageOptions{GeoM: entityPos})
 
-	// TODO: This is broken
 	if c.debugQueryRect.W != 0 || c.debugQueryRect.H != 0 {
 		image := ebiten.NewImage(int(c.debugQueryRect.W), int(c.debugQueryRect.H))
 		image.Fill(color.RGBA{255, 255, 0, 100})
 		op := &ebiten.DrawImageOptions{GeoM: entityPos}
+		op.GeoM.Translate(-c.entity.X, -c.entity.Y)
 		op.GeoM.Translate(c.debugQueryRect.X, c.debugQueryRect.Y)
 		screen.DrawImage(image, op)
 		c.debugQueryRect = bump.Rect{}
@@ -113,7 +126,7 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 }
 
 func (c *Comp) updateMovement(dt float64) {
-	if c.Friction || math.Abs(c.Vx) > c.MaxX {
+	if c.Friction || math.Abs(c.Vx) > c.MaxX*(c.MaxXMultiplier+1) {
 		var fric float64 = groundFriction
 		if !c.Ground {
 			fric = airFriction
@@ -175,7 +188,6 @@ func (c *Comp) bodyFilter() func(bump.Item, bump.Item) (bump.ColType, bool) {
 			return 0, false
 		}
 		if obj, ok := other.(*tiled.Object); ok && (obj.Class == core.LadderClass) {
-			// TODO: works somewhat good
 			itemRect, otherRect := c.space.Rects[item], c.space.Rects[other]
 			if !c.ClipLadder && itemRect.Y+itemRect.H <= otherRect.Y {
 				return bump.Slide, true

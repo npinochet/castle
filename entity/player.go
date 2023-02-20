@@ -9,13 +9,16 @@ import (
 	"game/utils"
 	"math"
 	"time"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
 	playerAnimFile                                 = "assets/knight"
 	playerWidth, playerHeight                      = 8, 11
 	playerOffsetX, playerOffsetY, playerOffsetFlip = -10, -3, 17
-	playerSpeed, playerJumpSpeed                   = 350, 110
+	playerMaxX, playerSpeed, playerJumpSpeed       = 60, 350, 110
 	playerDamage                                   = 20
 	playerHealFrame                                = 3
 
@@ -32,11 +35,10 @@ type Player struct {
 }
 
 func NewPlayer(x, y float64, props map[string]interface{}) *Player {
-	body := &body.Comp{}
 	animc := &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
-
+	bodyc := &body.Comp{MaxX: playerMaxX, Team: body.PlayerTeam}
 	playerActor := &Player{
-		Actor: NewActor(x, y, playerWidth, playerHeight, body, animc, nil, []string{anim.AttackTag}),
+		Actor: NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag}, animc, bodyc, nil),
 		pad:   utils.NewControlPack(),
 		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
 	}
@@ -69,7 +71,7 @@ func (p *Player) Update(dt float64) {
 func (p *Player) control(dt float64) { // TODO: refactor this
 	actionPressed := p.pad.KeyPressedBuffered(utils.KeyAction, keyBufferDuration)
 	healPressed := p.pad.KeyPressedBuffered(utils.KeyHeal, keyBufferDuration)
-	if p.pausedState() {
+	if p.pausedState() && p.Anim.State != anim.ConsumeTag {
 		return
 	}
 	if actionPressed {
@@ -98,10 +100,19 @@ func (p *Player) control(dt float64) { // TODO: refactor this
 	if p.Anim.State != anim.BlockTag {
 		p.Anim.FlipX = flip
 	}
-	if p.pad.KeyPressed(utils.KeyJump) && (p.Anim.State == anim.ClimbTag || p.Body.Ground) && p.Anim.State != anim.BlockTag {
+	if p.pad.KeyPressed(utils.KeyJump) && p.canJump() {
 		p.ClimbOff()
 		p.Body.Vy = -p.jumpSpeed
 	}
+
+	// TODO: Debug, remove later
+	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+		p.Stats.Heal = p.Stats.MaxHeal
+	}
+}
+
+func (p *Player) canJump() bool {
+	return (p.Anim.State == anim.ClimbTag || p.Body.Ground) && p.Anim.State != anim.BlockTag && p.Anim.State != anim.ConsumeTag
 }
 
 func (p *Player) controlClimbing(dt float64) {
@@ -134,6 +145,6 @@ func (p *Player) controlBlocking() {
 }
 
 func (p *Player) OnHurt(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {
-	p.Actor.Hurt(otherHc.Entity.X, damage, nil)
+	p.Actor.Hurt(otherHc.Entity, damage, nil)
 	p.World.Camera.Shake(0.5, 1)
 }

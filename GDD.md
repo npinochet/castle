@@ -245,15 +245,17 @@ TODO list:
   * Tweak enemy behavior:
     * If player comes closer maybe the shield is raise? or the enemy attacks (can be tweak with aggressive parameter?)
   * Make simple test map with multiple enemies, see how they behave
-    * Make teams for AI
   * Think about adding roll/dodge for gameplay experimentation
 * Future:
   * Improve AI implementation, it it's too complex and relies too much on copy and paste
   * Bonfire
-  * Use Tiled automapping for backgrounds and floor tiles
+  * Use Tiled auto-mapping for backgrounds and floor tiles
     * And maybe, if it's not to difficult, aut mapping for collision objects
   * Polish combat juice, stop time when take damage (or send damage), kill animations, etc...
-  * Add pathfinding for enemies
+    * [Stop for Big Moments! [Design Specifics]](https://www.youtube.com/watch?v=OdVkEOzdCPw)
+  * Add path-finding for enemies
+  * Implement specks for defeating enemies
+  * Think of a mechanic to encourage player push forwards the next bonfire with loads of XP, instead of backtracking to previous bonfire and cash in.
 
 * Level Design:
   * Test when possible

@@ -43,6 +43,7 @@ import (
 - Clean up AI code, Make a default AI behaviour for actors if none are present. Make it tweekable with other params maybe.
 - Think of movement accion or states the anim component can have.
 - Sometimes the enemy can cut off the stagger animation somehow.
+- Can not jump when going down slope, body.Ground is mostly false, this can be solved with coyote time.
 
 -- Dark Souls Combat Findings
 - When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.

@@ -35,7 +35,7 @@ func DefaultAIConfig() *AIConfig {
 	return &AIConfig{
 		viewDist:   100,
 		combatDist: 100,
-		backUpDist: 40,
+		backUpDist: 35,
 		reactDist:  20,
 
 		PaceReact:      []ai.WeightedState{{"Attack", 2}, {"Guard", 1}},
@@ -46,7 +46,8 @@ func DefaultAIConfig() *AIConfig {
 	}
 }
 
-// TODO: Review speed changes, some speed transitions are not working as expected.
+// TODO: Review speed changes, some speed transitions are not working as expected
+// TODO: Sometimes Idle state resets and a new target is selected from nowhere
 func (a *Actor) SetDefaultAI(config *AIConfig) {
 	if config == nil {
 		config = DefaultAIConfig()
@@ -76,6 +77,7 @@ func (a *Actor) SetDefaultAI(config *AIConfig) {
 		Build())
 
 	for _, attack := range config.Attacks {
+		attack := attack
 		fsm.SetAction(ai.State(attack.AnimTag), a.AI.AnimBuilder(attack.AnimTag, nil).
 			SetCooldown(ai.Cooldown{1.5, 2.5}).
 			AddCondition(a.AI.EnoughStamina(attack.StaminaDamage)).
@@ -83,22 +85,22 @@ func (a *Actor) SetDefaultAI(config *AIConfig) {
 			Build())
 	}
 
-	var runAttackStates []ai.WeightedState
 	maxStamina := 0.0
 	runAttackReact := config.RunAttackReact
 	if len(runAttackReact) == 0 {
 		runAttackReact = config.Attacks
 	}
-	for _, attack := range runAttackReact {
+	runAttackStates := make([]ai.WeightedState, len(runAttackReact))
+	for i, attack := range runAttackReact {
 		if attack.StaminaDamage > maxStamina {
 			maxStamina = attack.StaminaDamage
 		}
-		runAttackStates = append(runAttackStates, ai.WeightedState{ai.State(attack.AnimTag), 1})
+		runAttackStates[i] = ai.WeightedState{ai.State(attack.AnimTag), 1}
 	}
 
 	fsm.SetAction("RunAttack", (&ai.ActionBuilder{}).
 		SetCooldown(ai.Cooldown{2, 3}).
-		SetTimeout(ai.Timeout{"Pace", 1, 2}).
+		SetTimeout(ai.Timeout{"Pace", 3, 0}).
 		AddCondition(a.AI.EnoughStamina(maxStamina)).
 		AddCondition(a.AI.OutRangeFunc(config.backUpDist)).
 		SetEntry(a.AI.SetSpeedFunc(speed, maxSpeed)).

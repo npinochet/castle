@@ -20,16 +20,18 @@ const (
 	defaultHealth         = 100
 	defaultStamina        = 80
 	defaultPoise          = 30
+	defaultHeal           = 3
 	defaultRecoverRate    = 20
 	defaultRecoverSeconds = 3
 
 	// HUD consts.
-	hudIconsX, hudIconsY     = 7, 23
+	hudIconsX                = 7
 	barEndX1, barEndX2, barH = 8, 12, 7
 	barMiddleH               = barH - 2
 	middleBarX1, middleBarX2 = 7, 8
 	innerBarH                = 3
 	enemyBarW                = 10
+	maxTextWidth             = 50
 )
 
 var (
@@ -48,8 +50,10 @@ var DebugDraw = false
 
 type Comp struct {
 	Hud, Pause, NoDebug                     bool
-	MaxHealth, MaxStamina, MaxPoise         float64
-	Health, Stamina, Poise                  float64
+	MaxHealth, Health                       float64
+	MaxStamina, Stamina                     float64
+	MaxPoise, Poise                         float64
+	MaxHeal, Heal                           int
 	StaminaRecoverRate, PoiseRecoverSeconds float64
 	healthTween, staminaTween, poiseTween   *gween.Tween
 	healthLag, staminaLag, poiseLag         float64
@@ -66,11 +70,8 @@ func (c *Comp) Init(entity *core.Entity) {
 	if c.MaxPoise == 0 {
 		c.MaxPoise = defaultPoise
 	}
-	if c.StaminaRecoverRate == 0 {
-		c.StaminaRecoverRate = defaultRecoverRate
-	}
-	if c.PoiseRecoverSeconds == 0 {
-		c.PoiseRecoverSeconds = defaultRecoverSeconds
+	if c.MaxHeal == 0 {
+		c.MaxHeal = defaultHeal
 	}
 	if c.Health < c.MaxHealth {
 		c.Health = c.MaxHealth
@@ -80,6 +81,15 @@ func (c *Comp) Init(entity *core.Entity) {
 	}
 	if c.Poise < c.MaxPoise {
 		c.Poise = c.MaxPoise
+	}
+	if c.Heal < c.MaxHeal {
+		c.Heal = c.MaxHeal
+	}
+	if c.StaminaRecoverRate == 0 {
+		c.StaminaRecoverRate = defaultRecoverRate
+	}
+	if c.PoiseRecoverSeconds == 0 {
+		c.PoiseRecoverSeconds = defaultRecoverSeconds
 	}
 	c.healthLag = c.Health
 	c.staminaLag = c.Stamina
@@ -179,18 +189,24 @@ func (c *Comp) AddPoise(amount float64) {
 		})
 	}
 }
+func (c *Comp) AddHeal(amount int) {
+	if c.Heal += amount; c.Heal > c.MaxHeal {
+		c.Heal = c.MaxHeal
+	}
+}
 
 func (c *Comp) drawHud() *ebiten.Image {
 	_, h := hudImage.Size()
 	w, _ := ebiten.WindowSize()
 	hud := ebiten.NewImage(w, h)
-	icons, _ := hudImage.SubImage(image.Rect(0, 0, hudIconsX, hudIconsY)).(*ebiten.Image)
+	icons, _ := hudImage.SubImage(image.Rect(0, 0, hudIconsX, h)).(*ebiten.Image)
 	hud.DrawImage(icons, nil)
 
 	c.drawSegment(hud, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
 	c.drawSegment(hud, 1, c.Stamina, c.MaxStamina, c.staminaLag, staminaColor)
 	c.drawSegment(hud, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
-	c.drawCount(hud, 3, 12) //nolint: gomnd
+	c.drawCount(hud, 3, 128, 0)
+	c.drawCount(hud, 4, c.Heal, 2)
 
 	return hud
 }
@@ -223,8 +239,19 @@ func (c *Comp) drawSegment(hud *ebiten.Image, y, current, max, lag float64, barC
 	hud.DrawImage(barEndImage, op)
 }
 
-func (c *Comp) drawCount(hud *ebiten.Image, y float64, count int) {
-	// TODO: implement for counting souls.
+func (c *Comp) drawCount(hud *ebiten.Image, y float64, count int, offset float64) {
+	fullBar := ebiten.NewImage(maxTextWidth, barH+2)
+	fullBar.Fill(borderColor)
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(0, 2)
+	w, _ := utils.DrawText(fullBar, fmt.Sprint(count), assets.TinyFont, op)
+	fullBar, _ = fullBar.SubImage(image.Rect(0, 0, w+2, barH+2)).(*ebiten.Image)
+
+	op.GeoM.Reset()
+	op.GeoM.Translate(0, -2)
+	op.GeoM.Translate(hudIconsX, barMiddleH*y+2+offset)
+	hud.DrawImage(fullBar, op)
 }
 
 func (c *Comp) headBarImage(current, max, lag float64, barColor color.Color) *ebiten.Image {

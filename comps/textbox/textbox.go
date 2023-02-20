@@ -53,7 +53,7 @@ func (c *Comp) Init(entity *core.Entity) {
 }
 
 func (c *Comp) Update(dt float64) {
-	c.active = len(c.Body.QueryEntites(c.Area())) > 0
+	c.active = len(c.Body.QueryEntites(c.Area(), true)) > 0
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {

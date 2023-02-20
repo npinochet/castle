@@ -18,12 +18,12 @@ type gram struct {
 	*Actor
 }
 
-func NewGram(x, y, w, h float64, props map[string]string) *core.Entity {
+func NewGram(x, y, w, h float64, props *core.Property) *core.Entity {
 	animc := &anim.Comp{FilesName: gramAnimFile, OX: gramOffsetX, OY: gramOffsetY, OXFlip: gramOffsetFlip}
-	animc.FlipX = props[core.HorizontalProp] == "true"
+	animc.FlipX = props.FlipX
 
 	body := &body.Comp{Unmovable: true}
-	gram := &gram{Actor: NewActor(x, y, gramWidth, gramHeight, body, animc, nil, nil)}
+	gram := &gram{Actor: NewActor(x, y, gramWidth, gramHeight, nil, animc, body, nil)}
 	textbox := &textbox.Comp{
 		Text: "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr",
 		Body: body,

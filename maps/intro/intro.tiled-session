@@ -1,5 +1,10 @@
 {
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
     "activeFile": "intro.tmx",
+    "automapping.whileDrawing": true,
     "expandedProjectPaths": [
         "."
     ],
@@ -62,37 +67,69 @@
         "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json#Tiles": {
             "scaleInDock": 1
         },
+        "://automap-tiles.tsx": {
+            "scaleInDock": 1
+        },
+        ":/automap-tiles.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
         "intro.tmx": {
             "expandedObjectLayers": [
-                3,
                 4
             ],
-            "scale": 1.3351,
-            "selectedLayer": 2,
+            "scale": 1.24,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 2019.3243951763916,
-                "y": 2106.2092727136546
+                "x": 1795.967741935484,
+                "y": 2799.193548387097
             }
         },
         "tiles.tsx": {
             "scaleInDock": 2.0856,
             "scaleInEditor": 3.4
+        },
+        "tiles_rules.tmx": {
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 3.24,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 90.12345679012347,
+                "y": 72.83950617283949
+            }
+        },
+        "tiles_rules.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 3.0926
         }
     },
     "last.imagePath": "/Users/nico/Desktop/nico/castle/maps/intro",
     "last.objectTemplatePath": "/Users/nico/Desktop/nico/castle/maps/intro",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 8,
+    "map.tileWidth": 8,
     "openFiles": [
         "intro.tmx"
     ],
     "project": "intro.tiled-project",
     "property.type": "color",
     "recentFiles": [
+        "tiles_rules.tmx",
         "intro.tmx",
+        "tiles_rules.tsx",
+        ":/automap-tiles.tsx",
         "tiles.tsx",
         "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json",
         "/Users/nico/Dropbox/projectos/love/kero/game/maps/blocks.json",
         "/Users/nico/Desktop/nico/castle/extras/castle-lua/game/maps/desert/desert.tmx"
     ],
     "resizeMap.removeObjects": false,
-    "textEdit.monospace": true
+    "textEdit.monospace": true,
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 8,
+        "width": 8
+    }
 }

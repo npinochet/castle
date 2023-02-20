@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"game/libs/bump"
 	"log"
 	"math"
@@ -13,14 +12,20 @@ import (
 )
 
 const (
-	HorizontalProp = "HorizontalFlip"
-	VerticalProp   = "VerticalFlip"
-	ViewProp       = "view"
-	LadderClass    = "ladder"
+	aiPropName   = "ai"
+	viewPropName = "view"
+	LadderClass  = "ladder"
 )
 const defaultCollisionPriority = -2
 
-type EntityContructor func(x, y, w, h float64, props map[string]string) *Entity
+type Property struct {
+	FlipX, FlipY bool
+	Custom       map[string]string
+	View         *tiled.Object
+	AI           string
+}
+
+type EntityContructor func(x, y, w, h float64, props *Property) *Entity
 
 type Map struct {
 	data                             *tiled.Map
@@ -68,12 +73,10 @@ func (m *Map) Update(dt float64) {
 	// TODO: Update animation system.
 }
 
-func (m *Map) FindObjectID(id uint32) (*tiled.Object, error) {
+func (m *Map) FindObjectID(id int) (*tiled.Object, error) {
 	for _, group := range m.data.ObjectGroups {
 		for _, obj := range group.Objects {
-			if obj.ID == id {
-				obj.Y -= float64(m.data.TileHeight)
-
+			if obj.ID == uint32(id) {
 				return obj, nil
 			}
 		}
@@ -103,8 +106,6 @@ func (m *Map) FindObjectFromTileID(id uint32, objectGroupName string) (*tiled.Ob
 			continue
 		}
 		if tile.ID == id {
-			obj.Y -= float64(m.data.TileHeight)
-
 			return obj, nil
 		}
 	}
@@ -168,19 +169,26 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 			continue
 		}
 		if construct, ok := entityBindMap[tile.ID]; ok {
-			props := map[string]string{}
+			props := &Property{
+				FlipX:  tile.HorizontalFlip,
+				FlipY:  tile.VerticalFlip,
+				Custom: map[string]string{},
+			}
 			for _, prop := range obj.Properties {
-				if prop.Type == "object" {
+				switch prop.Name {
+				case viewPropName:
 					id, _ := strconv.Atoi(prop.Value)
-					obj, err := m.FindObjectID(uint32(id))
+					obj, err := m.FindObjectID(id)
 					if err != nil {
 						panic("cannot find object with id " + prop.Value)
 					}
-					prop.Value = fmt.Sprintf("%g,%g,%g,%g", obj.X, obj.Y, obj.Width, obj.Height)
+					props.View = obj
+				case aiPropName:
+					props.AI = prop.Value
+				default:
+					props.Custom[prop.Name] = prop.Value
 				}
-				props[prop.Name] = prop.Value
 			}
-			props[HorizontalProp], props[VerticalProp] = strconv.FormatBool(tile.HorizontalFlip), strconv.FormatBool(tile.VerticalFlip)
 			world.AddEntity(construct(obj.X, obj.Y-obj.Height, obj.Width, obj.Height, props))
 		}
 	}

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.9" tiledversion="1.9.0" name="tiles" tilewidth="8" tileheight="8" tilecount="3844" columns="62">
+<tileset version="1.9" tiledversion="1.9.0" name="tiles" tilewidth="8" tileheight="8" tilecount="3844" columns="62" objectalignment="topleft">
  <image source="tiles.png" width="500" height="500"/>
  <tile id="377">
   <animation>

@@ -19,16 +19,16 @@ const (
 
 type Actor struct {
 	core.Entity
-	Body                                *body.Comp
-	Hitbox                              *hitbox.Comp
-	Anim                                *anim.Comp
-	Stats                               *stats.Comp
-	AI                                  *ai.Comp
-	AttackTags                          []string
-	Speed                               float64
-	BlockMaxXDiv, BlockRecoverRateDiv   float64
-	ReactForce, AttackPushForce         float64
-	blockMaxXSave, blockRecoverRateSave float64
+	Body                              *body.Comp
+	Hitbox                            *hitbox.Comp
+	Anim                              *anim.Comp
+	Stats                             *stats.Comp
+	AI                                *ai.Comp
+	AttackTags                        []string
+	Speed                             float64
+	BlockMaxXDiv, BlockRecoverRateDiv float64
+	ReactForce, AttackPushForce       float64
+	blockRecoverRateSave              float64
 }
 
 func (a *Actor) GetBody() *body.Comp          { return a.Body }
@@ -38,13 +38,10 @@ func (a *Actor) GetStats() *stats.Comp        { return a.Stats }
 func (a *Actor) GetAI() *ai.Comp              { return a.AI }
 func (a *Actor) SetSpeed(speed, maxX float64) { a.Speed, a.Body.MaxX = speed, maxX }
 
-func NewActor(
-	x, y, w, h float64,
-	body *body.Comp,
-	animc *anim.Comp,
-	stat *stats.Comp,
-	attackTags []string,
-) *Actor {
+func NewActor(x, y, w, h float64, attackTags []string, animc *anim.Comp, bodyc *body.Comp, stat *stats.Comp) *Actor {
+	if bodyc == nil {
+		bodyc = &body.Comp{}
+	}
 	if stat == nil {
 		stat = &stats.Comp{}
 	}
@@ -55,7 +52,7 @@ func NewActor(
 	actor := &Actor{
 		Entity: core.Entity{X: x, Y: y, W: w, H: h},
 		Hitbox: &hitbox.Comp{},
-		Body:   body, Anim: animc, Stats: stat,
+		Body:   bodyc, Anim: animc, Stats: stat,
 		BlockMaxXDiv: defaultMaxXDiv, BlockRecoverRateDiv: defaultMaxXRecoverRateDiv,
 		AttackPushForce: defaultAttackPushForce,
 		ReactForce:      defaultReactForce,
@@ -66,10 +63,10 @@ func NewActor(
 		if actor.Anim.State == anim.BlockTag {
 			actor.ShieldDown()
 		}
-		actor.Hurt(otherHc.Entity.X, damage, nil)
+		actor.Hurt(otherHc.Entity, damage, nil)
 	}
 	actor.Hitbox.BlockFunc = func(otherHc *hitbox.Comp, col *bump.Collision, damange float64) {
-		actor.Block(otherHc.Entity.X, damange, nil)
+		actor.Block(otherHc.Entity, damange, nil)
 	}
 
 	return actor
@@ -118,6 +115,7 @@ func (a *Actor) pausedState() bool {
 func (a *Actor) ResetState(state string) {
 	a.ClimbOff()
 	a.ShieldDown()
+	a.Body.MaxXMultiplier = 0
 	a.Anim.SetState(state)
 }
 
@@ -177,13 +175,15 @@ func (a *Actor) ClimbOff() {
 }
 
 func (a *Actor) Heal(effectFrame int, amount float64) {
-	if a.pausedState() {
+	if a.pausedState() || a.Stats.Heal <= 0 {
 		return
 	}
 	a.ResetState(anim.ConsumeTag)
+	a.Body.MaxXMultiplier = (1 / a.BlockMaxXDiv) - 1
 	a.Anim.OnFrames(func(frame int) {
 		if frame == effectFrame {
 			a.Anim.OnFrames(nil)
+			a.Stats.AddHeal(-1)
 			a.Stats.AddHealth(amount)
 		}
 	})
@@ -199,9 +199,8 @@ func (a *Actor) ShieldUp() {
 		return
 	}
 	a.ResetState(anim.BlockTag)
-	a.blockMaxXSave = a.Body.MaxX
+	a.Body.MaxXMultiplier = (1 / a.BlockMaxXDiv) - 1
 	a.blockRecoverRateSave = a.Stats.StaminaRecoverRate
-	a.Body.MaxX /= a.BlockMaxXDiv
 	a.Stats.StaminaRecoverRate /= a.BlockRecoverRateDiv
 	blockbox, err := a.Anim.GetFrameHitbox(anim.BlockSliceName)
 	if err != nil {
@@ -215,17 +214,17 @@ func (a *Actor) ShieldDown() {
 		return
 	}
 	a.Anim.SetState(anim.IdleTag)
-	a.Body.MaxX = a.blockMaxXSave
+	a.Body.MaxXMultiplier = 0
 	a.Stats.StaminaRecoverRate = a.blockRecoverRateSave
 	a.Hitbox.PopHitbox()
 }
 
-func (a *Actor) Hurt(otherX float64, damage float64, poiseBreak func(force, damage float64)) {
+func (a *Actor) Hurt(other *core.Entity, damage float64, poiseBreak func(force, damage float64)) {
 	a.Stats.AddPoise(-damage)
 	a.Stats.AddHealth(-damage)
 
 	force := a.ReactForce / 2
-	if a.X > otherX {
+	if a.X > other.X {
 		force *= -1
 	}
 
@@ -244,9 +243,13 @@ func (a *Actor) Hurt(otherX float64, damage float64, poiseBreak func(force, dama
 			a.Body.Vx -= force
 		}
 	}
+
+	if a.AI != nil && a.AI.Target == nil {
+		a.AI.Target = other
+	}
 }
 
-func (a *Actor) Block(otherX float64, damage float64, blockBreak func(force, damage float64)) {
+func (a *Actor) Block(other *core.Entity, damage float64, blockBreak func(force, damage float64)) {
 	if blockBreak == nil {
 		blockBreak = func(force, damage float64) {
 			a.ShieldDown()
@@ -259,7 +262,7 @@ func (a *Actor) Block(otherX float64, damage float64, blockBreak func(force, dam
 	a.Stats.AddStamina(-damage)
 
 	force := a.ReactForce / 4
-	if a.X > otherX {
+	if a.X > other.X {
 		force *= -1
 	}
 

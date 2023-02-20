@@ -2,7 +2,6 @@ package entity
 
 import (
 	"game/comps/anim"
-	"game/comps/body"
 	"game/comps/stats"
 	"game/core"
 )
@@ -13,14 +12,13 @@ type Knight struct {
 	*Actor
 }
 
-func NewKnight(x, y, w, h float64, props map[string]string) *core.Entity {
+func NewKnight(x, y, w, h float64, props *core.Property) *core.Entity {
 	speed := 100.0
 	animc := &anim.Comp{FilesName: knightAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
-	animc.FlipX = props[core.HorizontalProp] == "true"
-	body := &body.Comp{MaxX: 35}
+	animc.FlipX = props.FlipX
 
 	knight := &Knight{
-		Actor: NewActor(x, y, playerWidth, playerHeight, body, animc, &stats.Comp{MaxPoise: 25}, []string{anim.AttackTag}),
+		Actor: NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag}, animc, nil, &stats.Comp{MaxPoise: 25}),
 	}
 	knight.Speed = speed
 	knight.SetDefaultAI(nil)

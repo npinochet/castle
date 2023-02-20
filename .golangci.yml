@@ -44,3 +44,6 @@ linters-settings:
     line-length: 140
   cyclop:
     max-complexity: 12
+  govet:
+    disable:
+      - composites
