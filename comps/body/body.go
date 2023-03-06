@@ -1,6 +1,8 @@
 package body
 
 import (
+	"fmt"
+	"game/assets"
 	"game/comps/hitbox"
 	"game/core"
 	"game/libs/bump"
@@ -36,12 +38,13 @@ type Comp struct {
 	OnLadder, ClipLadder       bool
 	Team                       Team
 	MaxXMultiplier             float64
-	space                      *bump.Space
-	entity                     *core.Entity
 	Vx, Vy                     float64
 	MaxX, MaxY                 float64
 	Weight                     float64
 	FilterOut                  []*Comp
+	space                      *bump.Space
+	entity                     *core.Entity
+	prevVx                     float64
 	debugQueryRect             bump.Rect
 }
 
@@ -66,7 +69,9 @@ func (c *Comp) Update(dt float64) {
 	if c.Solid {
 		return
 	}
+	c.Friction = !c.Ground || math.Abs(c.prevVx)-math.Abs(c.Vx) >= 0
 	c.updateMovement(dt)
+	c.prevVx = c.Vx
 }
 
 func (c *Comp) Query(rect bump.Rect, filter func(item bump.Item) bool) []*bump.Collision {
@@ -113,6 +118,10 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	image := ebiten.NewImage(int(c.entity.W), int(c.entity.H))
 	image.Fill(color.RGBA{255, 0, 0, 100})
 	screen.DrawImage(image, &ebiten.DrawImageOptions{GeoM: entityPos})
+
+	op := &ebiten.DrawImageOptions{GeoM: entityPos}
+	op.GeoM.Translate(-5, -22)
+	utils.DrawText(screen, fmt.Sprintf(`FRIC:%v`, c.Friction), assets.TinyFont, op)
 
 	if c.debugQueryRect.W != 0 || c.debugQueryRect.H != 0 {
 		image := ebiten.NewImage(int(c.debugQueryRect.W), int(c.debugQueryRect.H))

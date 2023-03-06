@@ -6,13 +6,14 @@ import (
 	"game/comps/stats"
 	"game/core"
 	"game/libs/bump"
+	"time"
 )
 
 const (
 	skelemanAnimFile                                     = "assets/skeleman"
 	skelemanWidth, skelemanHeight                        = 8, 12
 	skelemanOffsetX, skelemanOffsetY, skelemanOffsetFlip = -12, -5, 20
-	skelemanSpeed                                        = 100
+	skelemanSpeed, skelemanMaxSpeed                      = 100, 35
 	skelemanDamage                                       = 20
 	skelemanPoise                                        = 30
 )
@@ -54,11 +55,30 @@ func (g *skeleman) Update(dt float64) {
 	g.SimpleUpdate(dt)
 }
 
+func (g *skeleman) AttackJump(damage, stamina float64) {
+	g.Speed, g.Body.MaxX = skelemanSpeed, skelemanMaxSpeed*2
+	go func() {
+		time.Sleep(1 * time.Millisecond)
+		g.Attack("AttackShort", damage, stamina)
+	}()
+	g.Body.Vy = -g.Speed
+	if g.Anim.FlipX {
+		g.Body.Vx += skelemanMaxSpeed * 2
+	} else {
+		g.Body.Vx -= skelemanMaxSpeed * 2
+	}
+}
+
 func (g *skeleman) setupAI(view bump.Rect) {
 	aiConfig := DefaultAIConfig()
 	aiConfig.viewRect = view
 	aiConfig.PaceReact = []ai.WeightedState{{"AttackShort", 1}, {"Wait", 0}}
-	aiConfig.Attacks = []Attack{{"AttackShort", skelemanDamage, 20}, {"AttackLong", skelemanDamage / 2, 40}}
+	jumpAttack := Attack{"AttackJump", skelemanDamage, 30}
+	aiConfig.Attacks = []Attack{
+		{"AttackShort", skelemanDamage, 20},
+		{"AttackLong", skelemanDamage / 2, 40},
+		jumpAttack,
+	}
 	aiConfig.CombatOptions = []ai.WeightedState{
 		{"Pursuit", 100},
 		{"Pace", 2},
@@ -66,8 +86,16 @@ func (g *skeleman) setupAI(view bump.Rect) {
 		{"RunAttack", 1},
 		{"AttackLong", 1},
 		{"AttackShort", 1},
+		{"AttackJump", 1},
 	}
 
-	g.Speed, g.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
+	g.Speed, g.Body.MaxX = skelemanSpeed, skelemanMaxSpeed
 	g.SetDefaultAI(aiConfig)
+
+	g.AI.Fsm.SetAction(ai.State("AttackJump"), g.AI.AnimBuilder("AttackShort", nil).
+		SetCooldown(ai.Cooldown{1.5, 2.5}).
+		AddCondition(g.AI.EnoughStamina(jumpAttack.StaminaDamage)).
+		SetEntry(func() { g.AttackJump(jumpAttack.Damage, jumpAttack.StaminaDamage) }).
+		SetExit(func() { g.Body.MaxX = skelemanMaxSpeed }).
+		Build())
 }

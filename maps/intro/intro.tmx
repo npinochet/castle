@@ -1139,7 +1139,7 @@
   </object>
  </objectgroup>
  <objectgroup color="#4fa63b" id="4" name="entities">
-  <object id="11" name="Player" gid="26" x="2192" y="2440" width="8" height="8"/>
+  <object id="11" name="Player" gid="26" x="2040" y="2232" width="8" height="8"/>
   <object id="12" name="Knight" gid="27" x="1952" y="2040" width="8" height="8"/>
   <object id="27" name="GhoulWithRocks" gid="2147483676" x="2008" y="2384" width="8" height="8">
    <properties>
@@ -1158,7 +1158,7 @@
   </object>
   <object id="91" name="Gramr" gid="88" x="2144" y="2328" width="8" height="8"/>
   <object id="178" name="Skeleman" gid="29" x="2120" y="2232" width="8" height="8"/>
-  <object id="179" name="Crawler" gid="30" x="2040" y="2232" width="8" height="8"/>
+  <object id="179" name="Crawler" gid="30" x="1920" y="2232" width="8" height="8"/>
   <object id="181" name="Ghoul" gid="2147483676" x="1856" y="2392" width="8" height="8">
    <properties>
     <property name="rocks" type="int" value="1"/>

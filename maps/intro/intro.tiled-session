@@ -67,9 +67,6 @@
         "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json#Tiles": {
             "scaleInDock": 1
         },
-        "://automap-tiles.tsx": {
-            "scaleInDock": 1
-        },
         ":/automap-tiles.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 1
@@ -78,16 +75,16 @@
             "expandedObjectLayers": [
                 4
             ],
-            "scale": 1.24,
-            "selectedLayer": 0,
+            "scale": 2.3736,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 1795.967741935484,
-                "y": 2799.193548387097
+                "x": 1967.4755645433097,
+                "y": 2281.5554432086283
             }
         },
         "tiles.tsx": {
-            "scaleInDock": 2.0856,
-            "scaleInEditor": 3.4
+            "scaleInDock": 2.498,
+            "scaleInEditor": 3.37
         },
         "tiles_rules.tmx": {
             "expandedObjectLayers": [
@@ -116,11 +113,11 @@
     "project": "intro.tiled-project",
     "property.type": "color",
     "recentFiles": [
-        "tiles_rules.tmx",
         "intro.tmx",
+        "tiles.tsx",
+        "tiles_rules.tmx",
         "tiles_rules.tsx",
         ":/automap-tiles.tsx",
-        "tiles.tsx",
         "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json",
         "/Users/nico/Dropbox/projectos/love/kero/game/maps/blocks.json",
         "/Users/nico/Desktop/nico/castle/extras/castle-lua/game/maps/desert/desert.tmx"

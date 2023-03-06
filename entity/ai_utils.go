@@ -61,12 +61,12 @@ func (a *Actor) SetDefaultAI(config *AIConfig) {
 	fsm := ai.NewFsm("Idle")
 
 	fsm.SetAction("Idle", a.AI.IdleBuilder(config.viewRect, config.viewDist, defaultViewHeight, nil).Build())
-	fsm.SetAction("Wait", a.AI.WaitBuilder(1, 1.2).SetCooldown(ai.Cooldown{1, 2}).Build())
+	fsm.SetAction("Wait", a.AI.WaitBuilder(0.5, 1).SetCooldown(ai.Cooldown{1, 2}).Build())
 
 	fsm.SetAction("Pursuit", a.AI.PursuitBuilder(config.combatDist, speed, maxSpeed, []ai.WeightedState{{"Pace", 0}}).Build())
 
 	fsm.SetAction("Pace", a.AI.PaceBuilder(config.backUpDist, config.reactDist, speed, maxSpeed, config.PaceReact).
-		SetTimeout(ai.Timeout{ai.CombatState, 2, 3}).
+		SetTimeout(ai.Timeout{ai.CombatState, 1, 1.5}).
 		Build())
 
 	fsm.SetAction("Guard", (&ai.ActionBuilder{}).
@@ -102,7 +102,6 @@ func (a *Actor) SetDefaultAI(config *AIConfig) {
 		SetCooldown(ai.Cooldown{2, 3}).
 		SetTimeout(ai.Timeout{"Pace", 3, 0}).
 		AddCondition(a.AI.EnoughStamina(maxStamina)).
-		AddCondition(a.AI.OutRangeFunc(config.backUpDist)).
 		SetEntry(a.AI.SetSpeedFunc(speed, maxSpeed)).
 		AddReaction(a.AI.InRangeFunc(config.reactDist), runAttackStates).
 		Build())

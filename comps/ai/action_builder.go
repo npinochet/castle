@@ -133,6 +133,7 @@ func (c *Comp) PaceBuilder(backUpDist, reactDist, speed, maxSpeed float64, react
 		ms = (ms / 2) * (1 + rand.Float64())
 		if c.InTargetRange(0, backUpDist) {
 			s *= -1
+			ms /= 2
 		}
 		c.Actor.SetSpeed(s, ms)
 	})

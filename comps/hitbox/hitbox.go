@@ -25,6 +25,7 @@ type Hitbox struct {
 type Comp struct {
 	Entity              *core.Entity
 	HurtFunc, BlockFunc HitFunc
+	ParryBlock          bool
 	space               *bump.Space
 	hurtBoxes           []*Hitbox
 	debugLastHitbox     bump.Rect

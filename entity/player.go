@@ -19,7 +19,7 @@ const (
 	playerWidth, playerHeight                      = 8, 11
 	playerOffsetX, playerOffsetY, playerOffsetFlip = -10, -3, 17
 	playerMaxX, playerSpeed, playerJumpSpeed       = 60, 350, 110
-	playerDamage                                   = 20
+	playerDamage, playerHeal                       = 20, 20
 	playerHealFrame                                = 3
 
 	keyBufferDuration = 500 * time.Millisecond
@@ -37,16 +37,16 @@ type Player struct {
 func NewPlayer(x, y float64, props map[string]interface{}) *Player {
 	animc := &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
 	bodyc := &body.Comp{MaxX: playerMaxX, Team: body.PlayerTeam}
-	playerActor := &Player{
+	player := &Player{
 		Actor: NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag}, animc, bodyc, nil),
 		pad:   utils.NewControlPack(),
 		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
 	}
-	playerActor.AddComponent(playerActor)
-	playerActor.Stats.Hud = true
-	playerActor.Stats.NoDebug = true
-
-	PlayerRef = playerActor
+	player.AddComponent(player)
+	player.Stats.Hud = true
+	player.Stats.NoDebug = true
+	player.Stats.MaxStamina, player.Stats.Stamina = 65, 65
+	PlayerRef = player
 
 	return PlayerRef
 }
@@ -78,7 +78,7 @@ func (p *Player) control(dt float64) { // TODO: refactor this
 		p.Attack(anim.AttackTag, playerDamage, playerDamage)
 	}
 	if healPressed {
-		p.Heal(playerHealFrame, 20) // TODO:set correct frame
+		p.Heal(playerHealFrame, playerHeal)
 	}
 	p.controlBlocking()
 	p.controlClimbing(dt)
@@ -97,7 +97,7 @@ func (p *Player) control(dt float64) { // TODO: refactor this
 		flip = true
 	}
 
-	if p.Anim.State != anim.BlockTag {
+	if p.Anim.State != anim.BlockTag && p.Anim.State != anim.ParryBlockTag {
 		p.Anim.FlipX = flip
 	}
 	if p.pad.KeyPressed(utils.KeyJump) && p.canJump() {
@@ -112,7 +112,10 @@ func (p *Player) control(dt float64) { // TODO: refactor this
 }
 
 func (p *Player) canJump() bool {
-	return (p.Anim.State == anim.ClimbTag || p.Body.Ground) && p.Anim.State != anim.BlockTag && p.Anim.State != anim.ConsumeTag
+	return (p.Anim.State == anim.ClimbTag || p.Body.Ground) &&
+		p.Anim.State != anim.BlockTag &&
+		p.Anim.State != anim.ParryBlockTag &&
+		p.Anim.State != anim.ConsumeTag
 }
 
 func (p *Player) controlClimbing(dt float64) {

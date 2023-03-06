@@ -14,9 +14,9 @@ const (
 	ghoulAnimFile                               = "assets/ghoul"
 	ghoulWidth, ghoulHeight                     = 9, 13
 	ghoulOffsetX, ghoulOffsetY, ghoulOffsetFlip = -6.5, -4, 14
-	ghoulSpeed                                  = 100
-	ghoulMaxSpeed                               = 20
-	ghoulDamage                                 = 20
+	ghoulSpeed, ghoulMaxSpeed                   = 100, 30
+	ghoulHealth                                 = 70
+	ghoulDamage                                 = 18
 	ghoulThrowFrame                             = 2
 )
 
@@ -34,7 +34,7 @@ func NewGhoul(x, y, w, h float64, props *core.Property) *core.Entity {
 	rocks, _ := strconv.Atoi(props.Custom["rocks"])
 	attackTags := []string{"AttackShort", "AttackLong"}
 	ghoul := &ghoul{
-		Actor: NewActor(x, y, ghoulWidth, ghoulHeight, attackTags, animc, body, &stats.Comp{MaxPoise: ghoulDamage + 1}),
+		Actor: NewActor(x, y, ghoulWidth, ghoulHeight, attackTags, animc, body, &stats.Comp{MaxHealth: ghoulHealth, MaxPoise: ghoulDamage}),
 		rocks: rocks,
 	}
 	ghoul.Speed = ghoulSpeed

@@ -54,10 +54,12 @@ type Comp struct {
 	MaxStamina, Stamina                     float64
 	MaxPoise, Poise                         float64
 	MaxHeal, Heal                           int
+	Exp                                     int
 	StaminaRecoverRate, PoiseRecoverSeconds float64
 	healthTween, staminaTween, poiseTween   *gween.Tween
 	healthLag, staminaLag, poiseLag         float64
 	poiseTimer                              *time.Timer
+	StaminaRecoverRateMultiplier            float64
 }
 
 func (c *Comp) Init(entity *core.Entity) {
@@ -97,18 +99,6 @@ func (c *Comp) Init(entity *core.Entity) {
 }
 
 func (c *Comp) Update(dt float64) {
-	if !c.Pause {
-		recoverRate := c.StaminaRecoverRate
-		if c.Stamina < 0 {
-			recoverRate /= 1.5
-		}
-		c.Stamina += recoverRate * dt
-		c.Stamina = math.Min(c.Stamina, c.MaxStamina)
-		c.Poise = math.Min(c.Poise, c.MaxPoise)
-	} else if c.Hud {
-		return
-	}
-
 	if c.healthTween != nil {
 		if lag, done := c.healthTween.Update(float32(dt)); done {
 			c.healthTween = nil
@@ -117,6 +107,15 @@ func (c *Comp) Update(dt float64) {
 			c.healthLag = float64(lag)
 		}
 	}
+
+	if !c.Pause {
+		c.Stamina += c.StaminaRecoverRate * (c.StaminaRecoverRateMultiplier + 1) * dt
+		c.Stamina = math.Min(c.Stamina, c.MaxStamina)
+		c.Poise = math.Min(c.Poise, c.MaxPoise)
+	} else if c.Hud {
+		return
+	}
+
 	if c.staminaTween != nil {
 		if lag, done := c.staminaTween.Update(float32(dt)); done {
 			c.staminaTween = nil
@@ -166,7 +165,8 @@ func (c *Comp) AddHealth(amount float64) {
 	c.healthTween = gween.New(float32(c.healthLag), float32(c.Health), 1, ease.Linear)
 }
 func (c *Comp) AddStamina(amount float64) {
-	c.staminaLag = math.Max(c.Stamina, c.staminaLag)
+	c.staminaLag = c.Stamina
+	//c.staminaLag = math.Max(c.Stamina, c.staminaLag)
 	c.Stamina = math.Min(c.Stamina+amount, c.MaxStamina)
 	c.staminaTween = gween.New(float32(c.staminaLag), float32(c.Stamina), 1, ease.Linear)
 }
@@ -194,6 +194,9 @@ func (c *Comp) AddHeal(amount int) {
 		c.Heal = c.MaxHeal
 	}
 }
+func (c *Comp) AddExp(amount int) {
+	c.Exp += amount
+}
 
 func (c *Comp) drawHud() *ebiten.Image {
 	_, h := hudImage.Size()
@@ -205,7 +208,7 @@ func (c *Comp) drawHud() *ebiten.Image {
 	c.drawSegment(hud, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
 	c.drawSegment(hud, 1, c.Stamina, c.MaxStamina, c.staminaLag, staminaColor)
 	c.drawSegment(hud, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
-	c.drawCount(hud, 3, 128, 0)
+	c.drawCount(hud, 3, 128, 0) // c.Exp, 0) //nolint: gomnd
 	c.drawCount(hud, 4, c.Heal, 2)
 
 	return hud

@@ -243,6 +243,7 @@ TODO list:
 
 * Gameplay:
   * Tweak enemy behavior:
+    * Enemies are too aggressive, they don't have openings, every dark souls enemy has
     * If player comes closer maybe the shield is raise? or the enemy attacks (can be tweak with aggressive parameter?)
   * Make simple test map with multiple enemies, see how they behave
   * Think about adding roll/dodge for gameplay experimentation
@@ -256,6 +257,9 @@ TODO list:
   * Add path-finding for enemies
   * Implement specks for defeating enemies
   * Think of a mechanic to encourage player push forwards the next bonfire with loads of XP, instead of backtracking to previous bonfire and cash in.
+  * The shield can do poise damage if block correctly (like a parry).
+  * When an enemy is hit, but does not breaks poise, it should slow down their animation for a little. To really sell the hit and make the fight more dynamic.
+  * https://www.gamedeveloper.com/design/the-fundamental-pillars-of-a-combat-system
 
 * Level Design:
   * Test when possible
