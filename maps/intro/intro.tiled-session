@@ -75,26 +75,26 @@
             "expandedObjectLayers": [
                 4
             ],
-            "scale": 2.3736,
-            "selectedLayer": 2,
+            "scale": 1.8828,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 1967.4755645433097,
-                "y": 2281.5554432086283
+                "x": 2006.5859358402379,
+                "y": 2808.317399617591
             }
         },
         "tiles.tsx": {
-            "scaleInDock": 2.498,
+            "scaleInDock": 1.3896,
             "scaleInEditor": 3.37
         },
         "tiles_rules.tmx": {
             "expandedObjectLayers": [
                 3
             ],
-            "scale": 3.24,
-            "selectedLayer": 2,
+            "scale": 4.1506,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 90.12345679012347,
-                "y": 72.83950617283949
+                "x": 74.92892593841853,
+                "y": 63.00293933407219
             }
         },
         "tiles_rules.tsx": {
@@ -108,14 +108,15 @@
     "map.tileHeight": 8,
     "map.tileWidth": 8,
     "openFiles": [
-        "intro.tmx"
+        "intro.tmx",
+        "tiles_rules.tmx"
     ],
     "project": "intro.tiled-project",
     "property.type": "color",
     "recentFiles": [
+        "tiles_rules.tmx",
         "intro.tmx",
         "tiles.tsx",
-        "tiles_rules.tmx",
         "tiles_rules.tsx",
         ":/automap-tiles.tsx",
         "/Users/nico/Dropbox/projectos/love/kero/game/maps/map.json",

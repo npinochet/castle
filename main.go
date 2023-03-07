@@ -142,6 +142,7 @@ func main() {
 	ebiten.SetWindowSize(screenWidth*scale, screenHeight*scale)
 	ebiten.SetWindowTitle("Castle")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	ebiten.SetFPSMode(ebiten.FPSModeVsyncOffMaximum)
 
 	game.init()
 	if err := ebiten.RunGame(game); err != nil {
