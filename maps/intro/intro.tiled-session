@@ -75,15 +75,15 @@
             "expandedObjectLayers": [
                 4
             ],
-            "scale": 1.8828,
-            "selectedLayer": 0,
+            "scale": 5.4337,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 2006.5859358402379,
-                "y": 2808.317399617591
+                "x": 1705.6517658317537,
+                "y": 3006.698934427738
             }
         },
         "tiles.tsx": {
-            "scaleInDock": 1.3896,
+            "scaleInDock": 2.3099,
             "scaleInEditor": 3.37
         },
         "tiles_rules.tmx": {
@@ -93,8 +93,8 @@
             "scale": 4.1506,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 74.92892593841853,
-                "y": 63.00293933407219
+                "x": 119.98265311039368,
+                "y": 79.8679708957741
             }
         },
         "tiles_rules.tsx": {
@@ -112,7 +112,7 @@
         "tiles_rules.tmx"
     ],
     "project": "intro.tiled-project",
-    "property.type": "color",
+    "property.type": "object",
     "recentFiles": [
         "tiles_rules.tmx",
         "intro.tmx",

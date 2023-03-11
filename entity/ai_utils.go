@@ -33,7 +33,7 @@ type AIConfig struct {
 func DefaultAIConfig() *AIConfig {
 	// TODO: Review config attributes and make them more understandable.
 	return &AIConfig{
-		viewDist:   100,
+		viewDist:   70,
 		combatDist: 100,
 		backUpDist: 35,
 		reactDist:  20,

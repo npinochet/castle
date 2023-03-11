@@ -88,9 +88,11 @@ func (a *Actor) ManageAnim() {
 
 func (a *Actor) SimpleUpdate(dt float64) {
 	a.ManageAnim()
-	if target := a.AI.Target; target != nil {
-		if a.Anim.State == anim.WalkTag || a.Anim.State == anim.IdleTag {
-			a.Anim.FlipX = target.X > a.X
+	if a.AI != nil {
+		if target := a.AI.Target; target != nil {
+			if a.Anim.State == anim.WalkTag || a.Anim.State == anim.IdleTag {
+				a.Anim.FlipX = target.X > a.X
+			}
 		}
 	}
 
@@ -148,7 +150,6 @@ func (a *Actor) Attack(attackTag string, damage, staminaDamage float64) {
 			}
 			a.Body.Vx -= blockForce
 			for _, other := range contacted {
-				// TODO: If other state == parryblock then take poise damage
 				// Find a better way to refactor this behaviour
 				if other.ParryBlock {
 					a.Stats.AddPoise(-damage)

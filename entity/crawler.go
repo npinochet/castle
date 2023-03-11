@@ -13,7 +13,7 @@ const (
 	crawlerWidth, crawlerHeight                       = 11, 8
 	crawlerOffsetX, crawlerOffsetY, crawlerOffsetFlip = -4, -4, 10
 	crawlerSpeed                                      = 100
-	crawlerDamage                                     = 20
+	crawlerHealth, crawlerDamage                      = 30, 20
 )
 
 type crawler struct {
@@ -25,7 +25,10 @@ func NewCrawler(x, y, w, h float64, props *core.Property) *core.Entity {
 	animc.FlipX = props.FlipX
 
 	crawler := &crawler{
-		Actor: NewActor(x, y, crawlerWidth, crawlerHeight, []string{"Attack"}, animc, nil, &stats.Comp{MaxPoise: crawlerDamage}),
+		Actor: NewActor(x, y, crawlerWidth, crawlerHeight, []string{"Attack"}, animc, nil, &stats.Comp{
+			MaxPoise:  crawlerDamage,
+			MaxHealth: crawlerHealth,
+		}),
 	}
 	crawler.Speed = crawlerSpeed
 	crawler.AddComponent(crawler)
@@ -34,7 +37,11 @@ func NewCrawler(x, y, w, h float64, props *core.Property) *core.Entity {
 	if props.View != nil {
 		view = bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
 	}
-	crawler.setupAI(view)
+	if props.AI != "none" {
+		crawler.setupAI(view)
+	} else {
+		crawler.Speed = 0
+	}
 
 	return &crawler.Entity
 }
