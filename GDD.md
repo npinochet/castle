@@ -281,3 +281,38 @@ Level design steps [How to Design Great Metroidvania Levels | Game Design](https
 * Develop the abilities
 * Map out each room
 * Test, Review, Adapt
+
+## NOTHING WORKS
+
+### What feels wrong
+
+* You can overcome an enemy really easy
+* Combat feels boring
+  * Everything is stiff [and slow?]
+  * Feels like a waiting game
+  * Stamina management feels more as a inconvenience than an actual mechanic that raises stakes
+* It's not difficult
+  * Enemies aren't really a threat
+  * Have no idea how Castlevania fixes this
+* I've loose the main objective focus, It doesn't really make you feel nervous or in danger
+
+### Actionables
+
+* Add a quick step/dodge mechanic where you can approach or flee the enemy. Enemies can do this too, so you have to be focused and block or dodge incoming quick step attacks.
+* Make a tall enemy that can't be jumped over
+* Find a way to make enemies follow you and really overwhelm and bother you when you pass them through
+  * For example in dark souls you can't really run through enemies some times, because they can stop you in narrow doors or geometry and overwhelm you
+* Polish combat? Rethink combat, maybe change the animations a bit, make them faster?
+  * Rethink anticipation frames
+* Have stakes
+  * You can't really care about your HP if there is nothing to loose
+* Rethink stamina and blocking mechanic? Think of a way to limit player spamming attack button or hide behind shield
+* I've believe the game is difficult enough, but it need to be more dynamic, like teams of enemy working together, not a hallway with enemy 1v1 the whole way
+  * Still, make sure to make them die again and again
+
+### Key elements missing from game which Dark Souls has
+
+In MDA context, Dynamics:
+
+* Positioning: The player must position themselves correctly in relation to the enemy to avoid attacks and exploit weaknesses.
+* Adaptation: The player must adapt to each enemy's attack patterns, weaknesses, and strengths to overcome them.
