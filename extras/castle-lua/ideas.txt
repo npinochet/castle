@@ -1,5 +1,0 @@
-- have a zelda 2 style shield for proyectiles (can be use a defence mechanism for having a short ranged weapon)
-
-- maybe you can deal more damage if you hit an enemy on the air? jumping and timing the hit for an enemy is really tricky and satisfying
-
-- have an enemy that can only be hurt from behind (you have to jump over it, prepare the stab and hit it from behind)

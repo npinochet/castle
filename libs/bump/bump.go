@@ -9,7 +9,7 @@ import (
 
 const DELTA = 1e-10 // floating-point margin of error.
 
-type Item interface{}
+type Item any
 type Slope struct{ L, R float64 } // Rect left and right heights, ([0, 1]) 0 = full height, 1 = zero height.
 type Rect struct {
 	X, Y, W, H float64
