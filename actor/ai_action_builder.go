@@ -1,4 +1,4 @@
-package ai
+package actor
 
 import (
 	"game/libs/bump"
@@ -7,27 +7,27 @@ import (
 
 type reaction struct {
 	condition func() bool
-	states    []WeightedState
+	states    []AIWeightedState
 }
 
 type ActionBuilder struct {
-	timeout     Timeout
-	cooldown    Cooldown
+	timeout     AITimeout
+	cooldown    AICooldown
 	conditions  [](func() bool)
 	entry, exit func()
 	reacts      []reaction
 }
 
-func (ab *ActionBuilder) SetTimeout(timeout Timeout) *ActionBuilder {
+func (ab *ActionBuilder) SetTimeout(timeout AITimeout) *ActionBuilder {
 	if timeout.Target == "" {
-		timeout.Target = CombatState
+		timeout.Target = AICombatState
 	}
 	ab.timeout = timeout
 
 	return ab
 }
 
-func (ab *ActionBuilder) SetCooldown(cooldown Cooldown) *ActionBuilder {
+func (ab *ActionBuilder) SetCooldown(cooldown AICooldown) *ActionBuilder {
 	ab.cooldown = cooldown
 
 	return ab
@@ -51,14 +51,14 @@ func (ab *ActionBuilder) SetExit(exit func()) *ActionBuilder {
 	return ab
 }
 
-func (ab *ActionBuilder) AddReaction(condition func() bool, states []WeightedState) *ActionBuilder {
-	ab.reacts = append(ab.reacts, reaction{condition, append(states, WeightedState{CombatState, 0})})
+func (ab *ActionBuilder) AddReaction(condition func() bool, states []AIWeightedState) *ActionBuilder {
+	ab.reacts = append(ab.reacts, reaction{condition, append(states, AIWeightedState{AICombatState, 0})})
 
 	return ab
 }
 
-func (ab *ActionBuilder) Build() *Action {
-	return &Action{
+func (ab *ActionBuilder) Build() *AIAction {
+	return &AIAction{
 		Timeout: ab.timeout, Cooldown: ab.cooldown,
 		Entry: ab.entry, Exit: ab.exit,
 		Condition: func() bool {
@@ -70,7 +70,7 @@ func (ab *ActionBuilder) Build() *Action {
 
 			return true
 		},
-		Next: func() []WeightedState {
+		Next: func() []AIWeightedState {
 			for _, r := range ab.reacts {
 				if r.condition() {
 					return r.states
@@ -84,13 +84,13 @@ func (ab *ActionBuilder) Build() *Action {
 
 // Preset Actions.
 
-func (c *Comp) IdleBuilder(view bump.Rect, viewDist, height float64, nextStates []WeightedState) *ActionBuilder {
-	body, anim := c.Actor.GetBody(), c.Actor.GetAnim()
+func (c *AI) IdleBuilder(view bump.Rect, viewDist, height float64, nextStates []AIWeightedState) *ActionBuilder {
+	body, anim := c.Actor.Body, c.Actor.Anim
 	builder := &ActionBuilder{}
 	builder.SetEntry(c.SetSpeedFunc(0, 0))
 	if view.W != 0 && view.H != 0 {
 		builder.AddReaction(func() bool {
-			if targets := body.QueryEntites(view, true); len(targets) > 0 {
+			if targets := body.QueryActors(c.Actor, view, true); len(targets) > 0 {
 				c.Target = targets[0]
 			}
 
@@ -98,7 +98,7 @@ func (c *Comp) IdleBuilder(view bump.Rect, viewDist, height float64, nextStates 
 		}, nextStates)
 	} else {
 		builder.AddReaction(func() bool {
-			if targets := body.QueryFront(viewDist, height, anim.FlipX, true); len(targets) > 0 {
+			if targets := body.QueryFront(c.Actor, viewDist, height, anim.FlipX, true); len(targets) > 0 {
 				c.Target = targets[0]
 			}
 
@@ -109,7 +109,7 @@ func (c *Comp) IdleBuilder(view bump.Rect, viewDist, height float64, nextStates 
 	return builder
 }
 
-func (c *Comp) PursuitBuilder(combatDist, speed, maxSpeed float64, nextStates []WeightedState) *ActionBuilder {
+func (c *AI) PursuitBuilder(combatDist, speed, maxSpeed float64, nextStates []AIWeightedState) *ActionBuilder {
 	builder := &ActionBuilder{}
 	builder.AddCondition(c.OutRangeFunc(combatDist))
 	builder.SetEntry(c.SetSpeedFunc(speed, maxSpeed))
@@ -118,15 +118,15 @@ func (c *Comp) PursuitBuilder(combatDist, speed, maxSpeed float64, nextStates []
 	return builder
 }
 
-func (c *Comp) WaitBuilder(duration, maxDuration float64) *ActionBuilder {
+func (c *AI) WaitBuilder(duration, maxDuration float64) *ActionBuilder {
 	builder := &ActionBuilder{}
-	builder.SetTimeout(Timeout{CombatState, duration, maxDuration})
+	builder.SetTimeout(AITimeout{AICombatState, duration, maxDuration})
 	builder.SetEntry(c.SetSpeedFunc(0, 0))
 
 	return builder
 }
 
-func (c *Comp) PaceBuilder(backUpDist, reactDist, speed, maxSpeed float64, react []WeightedState) *ActionBuilder {
+func (c *AI) PaceBuilder(backUpDist, reactDist, speed, maxSpeed float64, react []AIWeightedState) *ActionBuilder {
 	builder := &ActionBuilder{}
 	builder.SetEntry(func() {
 		s, ms := speed, maxSpeed
@@ -135,7 +135,7 @@ func (c *Comp) PaceBuilder(backUpDist, reactDist, speed, maxSpeed float64, react
 			s *= -1
 			ms /= 2
 		}
-		c.Actor.SetSpeed(s, ms)
+		c.SetSpeedFunc(s, ms)()
 	})
 	if len(react) > 0 {
 		builder.AddReaction(c.InRangeFunc(reactDist), react)
@@ -144,8 +144,8 @@ func (c *Comp) PaceBuilder(backUpDist, reactDist, speed, maxSpeed float64, react
 	return builder
 }
 
-func (c *Comp) AnimBuilder(animTag string, nextStates []WeightedState) *ActionBuilder {
-	anim := c.Actor.GetAnim()
+func (c *AI) AnimBuilder(animTag string, nextStates []AIWeightedState) *ActionBuilder {
+	anim := c.Actor.Anim
 	builder := &ActionBuilder{}
 	builder.AddReaction(func() bool { return anim.State != animTag }, nextStates)
 

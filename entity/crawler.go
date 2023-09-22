@@ -1,9 +1,7 @@
 package entity
 
 import (
-	"game/comps/ai"
-	"game/comps/anim"
-	"game/comps/stats"
+	"game/actor"
 	"game/core"
 	"game/libs/bump"
 )
@@ -16,55 +14,46 @@ const (
 	crawlerHealth, crawlerDamage                      = 30, 20
 )
 
-type crawler struct {
-	*Actor
-}
+type Crawler struct{ actor.Actor }
 
-func NewCrawler(x, y, w, h float64, props *core.Property) *core.Entity {
-	animc := &anim.Comp{FilesName: crawlerAnimFile, OX: crawlerOffsetX, OY: crawlerOffsetY, OXFlip: crawlerOffsetFlip}
-	animc.FlipX = props.FlipX
-
-	crawler := &crawler{
-		Actor: NewActor(x, y, crawlerWidth, crawlerHeight, []string{"Attack"}, animc, nil, &stats.Comp{
-			MaxPoise:  crawlerDamage,
-			MaxHealth: crawlerHealth,
-		}),
+func NewCrawler(x, y, _, _ float64, props *core.Property) core.Entity {
+	crawler := &Crawler{
+		Actor: actor.NewActor(x, y, crawlerWidth, crawlerHeight, []string{"Attack"}),
 	}
 	crawler.Speed = crawlerSpeed
-	crawler.AddComponent(crawler)
+	crawler.Stats.MaxPoise = crawlerDamage
+	crawler.Stats.MaxHealth = crawlerHealth
+	crawler.Anim.FilesName = crawlerAnimFile
+	crawler.Anim.OX, crawler.Anim.OY = crawlerOffsetX, crawlerOffsetY
+	crawler.Anim.OXFlip = crawlerOffsetFlip
+	crawler.Anim.FlipX = props.FlipX
 
 	var view bump.Rect
 	if props.View != nil {
 		view = bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
 	}
+
 	if props.AI != "none" {
 		crawler.setupAI(view)
 	} else {
 		crawler.Speed = 0
 	}
 
-	return &crawler.Entity
+	return crawler
 }
 
-func (c *crawler) Init(entity *core.Entity) {
-	hurtbox, err := c.Anim.GetFrameHitbox(anim.HurtboxSliceName)
-	if err != nil {
-		panic("no hurtbox found")
-	}
-	c.Hitbox.PushHitbox(hurtbox, false)
+func (c *Crawler) Update(dt float64) {
+	c.Actor.Update(dt)
+	c.BasicUpdate(dt)
 }
 
-func (c *crawler) Update(dt float64) {
-	c.SimpleUpdate(dt)
-}
-
-func (c *crawler) setupAI(view bump.Rect) {
-	aiConfig := DefaultAIConfig()
-	aiConfig.viewRect = view
-	aiConfig.PaceReact = []ai.WeightedState{{"Attack", 1}, {"Wait", 0}}
-	aiConfig.Attacks = []Attack{{"Attack", crawlerDamage, 20}}
-	aiConfig.CombatOptions = []ai.WeightedState{{"Pursuit", 100}, {"Pace", 2}, {"Wait", 1}, {"RunAttack", 1}, {"Attack", 1}}
+func (c *Crawler) setupAI(view bump.Rect) {
+	aiConfig := actor.DefaultAIConfig()
+	aiConfig.ViewRect = view
+	aiConfig.PaceReact = []actor.AIWeightedState{{"Attack", 1}, {"Wait", 0}}
+	aiConfig.Attacks = []actor.Attack{{"Attack", crawlerDamage, 20}}
+	aiConfig.CombatOptions = []actor.AIWeightedState{{"Pursuit", 100}, {"Pace", 2}, {"Wait", 1}, {"RunAttack", 1}, {"Attack", 1}}
 
 	c.Speed, c.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
-	c.SetDefaultAI(aiConfig)
+	c.SetDefaultAI(aiConfig) // errors, must run after init()
 }

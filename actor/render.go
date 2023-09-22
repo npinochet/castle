@@ -1,14 +1,13 @@
-package render
+package actor
 
 import (
-	"game/core"
 	"math"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type Comp struct {
+type Render struct {
 	Image        *ebiten.Image
 	X, Y         float64
 	FlipX, FlipY bool
@@ -18,7 +17,7 @@ type Comp struct {
 	w, h         float64
 }
 
-func (c *Comp) Init(entity *core.Entity) {
+func (c *Render) Init() {
 	w, h := c.Image.Size()
 	c.w, c.h = float64(w), float64(h)
 	if c.RollingTime != 0 {
@@ -31,7 +30,7 @@ func (c *Comp) Init(entity *core.Entity) {
 	}
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Render) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}
 	var sx, sy, dx, dy float64 = 1, 1, 0, 0
 	if c.FlipX {

@@ -1,9 +1,7 @@
 package entity
 
 import (
-	"game/comps/anim"
-	"game/comps/body"
-	"game/comps/textbox"
+	"game/actor"
 	"game/core"
 	"game/libs/bump"
 )
@@ -14,33 +12,30 @@ const (
 	gramOffsetX, gramOffsetY, gramOffsetFlip = -1, -2, 0
 )
 
-type gram struct {
-	*Actor
+type Gram struct {
+	actor.Actor
+	actor.Textbox
 }
 
-func NewGram(x, y, w, h float64, props *core.Property) *core.Entity {
-	animc := &anim.Comp{FilesName: gramAnimFile, OX: gramOffsetX, OY: gramOffsetY, OXFlip: gramOffsetFlip}
-	animc.FlipX = props.FlipX
-
-	body := &body.Comp{Unmovable: true}
-	gram := &gram{Actor: NewActor(x, y, gramWidth, gramHeight, nil, animc, body, nil)}
-	textbox := &textbox.Comp{
-		Text: "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr",
-		Body: body,
-		Area: func() bump.Rect {
-			return bump.NewRect(gram.X-10, gram.Y, gramWidth+20, gramHeight)
-		},
+func NewGram(x, y, _, _ float64, props *core.Property) core.Entity {
+	gram := &Gram{
+		Actor: actor.NewActor(x, y, gramWidth, gramHeight, nil),
 	}
-	gram.AddComponent(textbox, gram)
+	gram.Body.Unmovable = true
 	gram.Stats.MaxPoise, gram.Stats.Poise = 100, 100
+	gram.Anim.FilesName = gramAnimFile
+	gram.Anim.OX, gram.Anim.OY = gramOffsetX, gramOffsetY
+	gram.Anim.OXFlip = gramOffsetFlip
+	gram.Anim.FlipX = props.FlipX
+	gram.Textbox = actor.Textbox{
+		Text: "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr",
+		Area: func() bump.Rect { return bump.NewRect(gram.X-10, gram.Y, gramWidth+20, gramHeight) },
+	}
 
-	return &gram.Entity
+	return gram
 }
 
-func (g *gram) Init(entity *core.Entity) {
-	hurtbox, err := g.Anim.GetFrameHitbox(anim.HurtboxSliceName)
-	if err != nil {
-		panic("no hurtbox found")
-	}
-	g.Hitbox.PushHitbox(hurtbox, false)
+func (g *Gram) Update(dt float64) {
+	g.Actor.Update(dt)
+	g.Textbox.Update(&g.Actor, dt)
 }

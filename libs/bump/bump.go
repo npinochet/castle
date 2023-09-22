@@ -40,11 +40,11 @@ const (
 	Slide
 )
 
-func NewRect(x, y, w, h float64) Rect                { return Rect{X: x, Y: y, W: w, H: h} }
-func DefaultFilter(item, other Item) (ColType, bool) { return Slide, true }
-func NilFilter(item, other Item) (ColType, bool)     { return 0, false }
+func NewRect(x, y, w, h float64) Rect         { return Rect{X: x, Y: y, W: w, H: h} }
+func DefaultFilter(_, _ Item) (ColType, bool) { return Slide, true }
+func NilFilter(_, _ Item) (ColType, bool)     { return 0, false }
 
-func DefaultSimpleFilter(item Item) bool {
+func DefaultSimpleFilter(_ Item) bool {
 	return true
 }
 

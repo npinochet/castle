@@ -1,9 +1,7 @@
 package entity
 
 import (
-	"game/comps/ai"
-	"game/comps/anim"
-	"game/comps/stats"
+	"game/actor"
 	"game/core"
 	"game/libs/bump"
 	"time"
@@ -18,20 +16,20 @@ const (
 	skelemanPoise                                        = 30
 )
 
-type skeleman struct {
-	*Actor
+type Skeleman struct {
+	actor.Actor
 }
 
-func NewSkeleman(x, y, w, h float64, props *core.Property) *core.Entity {
-	animc := &anim.Comp{FilesName: skelemanAnimFile, OX: skelemanOffsetX, OY: skelemanOffsetY, OXFlip: skelemanOffsetFlip}
-	animc.FlipX = props.FlipX
-
-	attackTags := []string{"AttackShort", "AttackLong"}
-	skeleman := &skeleman{
-		Actor: NewActor(x, y, skelemanWidth, skelemanHeight, attackTags, animc, nil, &stats.Comp{MaxPoise: skelemanPoise}),
+func NewSkeleman(x, y, _, _ float64, props *core.Property) core.Entity {
+	skeleman := &Skeleman{
+		Actor: actor.NewActor(x, y, skelemanWidth, skelemanHeight, []string{"AttackShort", "AttackLong"}),
 	}
 	skeleman.Speed = skelemanSpeed
-	skeleman.AddComponent(skeleman)
+	skeleman.Stats.MaxPoise = skelemanPoise
+	skeleman.Anim.FilesName = skelemanAnimFile
+	skeleman.Anim.OX, skeleman.Anim.OY = skelemanOffsetX, skelemanOffsetY
+	skeleman.Anim.OXFlip = skelemanOffsetFlip
+	skeleman.Anim.FlipX = props.FlipX
 
 	var view bump.Rect
 	if props.View != nil {
@@ -40,46 +38,39 @@ func NewSkeleman(x, y, w, h float64, props *core.Property) *core.Entity {
 
 	skeleman.setupAI(view)
 
-	return &skeleman.Entity
+	return skeleman
 }
 
-func (g *skeleman) Init(entity *core.Entity) {
-	hurtbox, err := g.Anim.GetFrameHitbox(anim.HurtboxSliceName)
-	if err != nil {
-		panic("no hurtbox found")
-	}
-	g.Hitbox.PushHitbox(hurtbox, false)
+func (s *Skeleman) Update(dt float64) {
+	s.Actor.Update(dt)
+	s.BasicUpdate(dt)
 }
 
-func (g *skeleman) Update(dt float64) {
-	g.SimpleUpdate(dt)
-}
-
-func (g *skeleman) AttackJump(damage, stamina float64) {
-	g.Speed, g.Body.MaxX = skelemanSpeed, skelemanMaxSpeed*2
+func (s *Skeleman) AttackJump(damage, stamina float64) {
+	s.Speed, s.Body.MaxX = skelemanSpeed, skelemanMaxSpeed*2
 	go func() {
 		time.Sleep(1 * time.Millisecond)
-		g.Attack("AttackShort", damage, stamina)
+		s.Attack("AttackShort", damage, stamina)
 	}()
-	g.Body.Vy = -g.Speed
-	if g.Anim.FlipX {
-		g.Body.Vx += skelemanMaxSpeed * 2
+	s.Body.Vy = -s.Speed
+	if s.Anim.FlipX {
+		s.Body.Vx += skelemanMaxSpeed * 2
 	} else {
-		g.Body.Vx -= skelemanMaxSpeed * 2
+		s.Body.Vx -= skelemanMaxSpeed * 2
 	}
 }
 
-func (g *skeleman) setupAI(view bump.Rect) {
-	aiConfig := DefaultAIConfig()
-	aiConfig.viewRect = view
-	aiConfig.PaceReact = []ai.WeightedState{{"AttackShort", 1}, {"Wait", 0}}
-	jumpAttack := Attack{"AttackJump", skelemanDamage, 30}
-	aiConfig.Attacks = []Attack{
+func (s *Skeleman) setupAI(view bump.Rect) {
+	aiConfig := actor.DefaultAIConfig()
+	aiConfig.ViewRect = view
+	aiConfig.PaceReact = []actor.AIWeightedState{{"AttackShort", 1}, {"Wait", 0}}
+	jumpAttack := actor.Attack{"AttackJump", skelemanDamage, 30}
+	aiConfig.Attacks = []actor.Attack{
 		{"AttackShort", skelemanDamage, 20},
 		{"AttackLong", skelemanDamage / 2, 40},
 		jumpAttack,
 	}
-	aiConfig.CombatOptions = []ai.WeightedState{
+	aiConfig.CombatOptions = []actor.AIWeightedState{
 		{"Pursuit", 100},
 		{"Pace", 2},
 		{"Wait", 1},
@@ -89,13 +80,13 @@ func (g *skeleman) setupAI(view bump.Rect) {
 		{"AttackJump", 1},
 	}
 
-	g.Speed, g.Body.MaxX = skelemanSpeed, skelemanMaxSpeed
-	g.SetDefaultAI(aiConfig)
+	s.Speed, s.Body.MaxX = skelemanSpeed, skelemanMaxSpeed
+	s.SetDefaultAI(aiConfig)
 
-	g.AI.Fsm.SetAction(ai.State("AttackJump"), g.AI.AnimBuilder("AttackShort", nil).
-		SetCooldown(ai.Cooldown{1.5, 2.5}).
-		AddCondition(g.AI.EnoughStamina(jumpAttack.StaminaDamage)).
-		SetEntry(func() { g.AttackJump(jumpAttack.Damage, jumpAttack.StaminaDamage) }).
-		SetExit(func() { g.Body.MaxX = skelemanMaxSpeed }).
+	s.AI.Fsm.SetAction(actor.AIState("AttackJump"), s.AI.AnimBuilder("AttackShort", nil).
+		SetCooldown(actor.AICooldown{1.5, 2.5}).
+		AddCondition(s.AI.EnoughStamina(jumpAttack.StaminaDamage)).
+		SetEntry(func() { s.AttackJump(jumpAttack.Damage, jumpAttack.StaminaDamage) }).
+		SetExit(func() { s.Body.MaxX = skelemanMaxSpeed }).
 		Build())
 }

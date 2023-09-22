@@ -1,4 +1,4 @@
-package anim
+package actor
 
 const (
 	IdleTag       = "Idle"
@@ -11,8 +11,9 @@ const (
 	ConsumeTag    = "Consume"
 )
 
-func DefaultFsm() *Fsm {
-	return &Fsm{
+func DefaultAFsm() *AFsm {
+	return &AFsm{
+		Initial: IdleTag,
 		Transitions: map[string]string{
 			WalkTag:       IdleTag,
 			AttackTag:     IdleTag,
@@ -21,8 +22,8 @@ func DefaultFsm() *Fsm {
 			BlockTag:      "",
 			ClimbTag:      "",
 		},
-		Exit: map[string]func(*Comp){
-			StaggerTag: func(ac *Comp) { ac.Data.PlaySpeed = 1 },
+		Exit: map[string]func(*Actor){
+			StaggerTag: func(a *Actor) { a.Anim.Data.PlaySpeed = 1 },
 		},
 	}
 }

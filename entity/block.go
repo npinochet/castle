@@ -1,9 +1,7 @@
 package entity
 
 import (
-	"game/comps/body"
-	"game/comps/hitbox"
-	"game/comps/render"
+	"game/actor"
 	"game/core"
 	"game/libs/bump"
 	"image/color"
@@ -13,45 +11,45 @@ import (
 
 const blockSize = 20
 
-type BlockComponent struct {
-	body   *body.Comp
-	hitbox *hitbox.Comp
+type Block struct {
+	core.CoreEntity
+	actor.Body
+	actor.Hitbox
+	actor.Render
 }
 
-func NewBlock(x, y float64, props map[string]interface{}) *core.Entity {
+func NewBlock(x, y float64, props map[string]interface{}) *Block {
 	w, _ := props["w"].(float64)
 	h, _ := props["h"].(float64)
 	image := ebiten.NewImage(int(w), int(h))
 	image.Fill(color.White)
 
-	block := &core.Entity{X: x, Y: y, W: 8, H: 8}
-	body := &body.Comp{}
-	hitbox := &hitbox.Comp{}
-	block.AddComponent(body, hitbox, &render.Comp{Image: image}, &BlockComponent{body: body, hitbox: hitbox})
-
-	return block
+	return &Block{
+		CoreEntity: core.CoreEntity{X: x, Y: y, W: 8, H: 8},
+		Render:     actor.Render{Image: image},
+	}
 }
 
-func (b *BlockComponent) Init(entity *core.Entity) {
-	b.hitbox.HurtFunc = b.BlockHurt
-	b.hitbox.BlockFunc = b.BlockBlock
-	b.hitbox.PushHitbox(bump.Rect{X: entity.X, Y: entity.Y, W: blockSize, H: blockSize}, false)
+func (b *Block) Init() {
+	b.Hitbox.HurtFunc = b.BlockHurt
+	b.Hitbox.BlockFunc = b.BlockBlock
+	b.Hitbox.PushHitbox(nil, bump.Rect{X: b.CoreEntity.X, Y: b.CoreEntity.Y, W: blockSize, H: blockSize}, false)
 }
 
-func (b *BlockComponent) BlockHurt(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {
-	b.body.Vy -= 30
+func (b *Block) BlockHurt(_ *actor.Actor, col *bump.Collision, _ float64) {
+	b.Body.Vy -= 30
 
 	force := 50.0
 	if col.Normal.X > 0 {
 		force *= -1
 	}
-	b.body.Vx += force
+	b.Body.Vx += force
 }
 
-func (b *BlockComponent) BlockBlock(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {
+func (b *Block) BlockBlock(_ *actor.Actor, col *bump.Collision, _ float64) {
 	force := 50.0
 	if col.Normal.X > 0 {
 		force *= -1
 	}
-	b.body.Vx += force
+	b.Body.Vx += force
 }

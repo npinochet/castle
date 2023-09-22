@@ -25,7 +25,7 @@ type Property struct {
 	AI           string
 }
 
-type EntityContructor func(x, y, w, h float64, props *Property) *Entity
+type EntityContructor func(x, y, w, h float64, props *Property) Entity
 
 type Map struct {
 	data                             *tiled.Map

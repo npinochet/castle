@@ -1,53 +1,53 @@
-package ai
+package actor
 
 import (
 	"log"
 	"math/rand"
 )
 
-type State string
+type AIState string
 
-type WeightedState struct {
-	State
+type AIWeightedState struct {
+	State  AIState
 	Weight float64
 }
 
-type Timeout struct {
-	Target                State
+type AITimeout struct {
+	Target                AIState
 	Duration, MaxDuration float64
 }
 
-type Cooldown struct {
+type AICooldown struct {
 	Duration, MaxDuration float64
 }
 
-type Action struct {
-	Timeout     Timeout
-	Cooldown    Cooldown
+type AIAction struct {
+	Timeout     AITimeout
+	Cooldown    AICooldown
 	Condition   func() bool
-	Next        func() []WeightedState
+	Next        func() []AIWeightedState
 	Entry, Exit func()
 }
 
-type Fsm struct {
-	Actions        map[State]*Action
-	State, Initial State
+type AIFsm struct {
+	Actions        map[AIState]*AIAction
+	State, Initial AIState
 	timer          float64
-	timeoutTarget  State
-	cooldowns      map[State]float64
+	timeoutTarget  AIState
+	cooldowns      map[AIState]float64
 }
 
-func NewFsm(initial State) *Fsm {
-	return &Fsm{Initial: initial, Actions: map[State]*Action{}}
+func NewAIFsm(initial AIState) *AIFsm {
+	return &AIFsm{Initial: initial, Actions: map[AIState]*AIAction{}}
 }
 
-func (f *Fsm) SetAction(state State, action *Action) *Fsm {
+func (f *AIFsm) SetAction(state AIState, action *AIAction) *AIFsm {
 	f.Actions[state] = action
 
 	return f
 }
 
-func (f *Fsm) update(dt float64) {
+func (f *AIFsm) update(dt float64) {
 	if f.State == "" {
 		f.State = f.Initial
 		if action := f.Actions[f.State]; action != nil {
@@ -64,11 +64,11 @@ func (f *Fsm) update(dt float64) {
 	if f.timeoutTarget != "" {
 		f.timer -= dt
 		if f.timer <= 0 {
-			f.setState([]WeightedState{{f.timeoutTarget, 1}})
+			f.setState([]AIWeightedState{{f.timeoutTarget, 1}})
 		}
 	}
 	if f.cooldowns == nil {
-		f.cooldowns = map[State]float64{}
+		f.cooldowns = map[AIState]float64{}
 	}
 	for state, timer := range f.cooldowns {
 		f.cooldowns[state] -= dt
@@ -78,7 +78,7 @@ func (f *Fsm) update(dt float64) {
 	}
 }
 
-func (f *Fsm) setState(states []WeightedState) {
+func (f *AIFsm) setState(states []AIWeightedState) {
 	if action := f.Actions[f.State]; action != nil {
 		if action.Cooldown.Duration > 0 {
 			f.cooldowns[f.State] = action.Cooldown.Duration
@@ -110,8 +110,8 @@ func (f *Fsm) setState(states []WeightedState) {
 	}
 }
 
-func (f *Fsm) selectState(states []WeightedState) State {
-	actions := make([]*Action, len(states))
+func (f *AIFsm) selectState(states []AIWeightedState) AIState {
+	actions := make([]*AIAction, len(states))
 	for i, s := range states {
 		action := f.Actions[s.State]
 		if action == nil {

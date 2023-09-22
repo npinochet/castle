@@ -3,12 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"game/actor"
 	"game/assets"
-	"game/comps/ai"
-	"game/comps/anim"
-	"game/comps/body"
-	"game/comps/hitbox"
-	"game/comps/stats"
 	"game/core"
 	"game/entity"
 	"game/utils"
@@ -86,7 +82,7 @@ func (g *Game) init() {
 	}
 	player = entity.NewPlayer(obj.X, obj.Y, nil)
 	g.world.Camera.Follow(player)
-	g.world.AddEntity(&player.Entity)
+	g.world.AddEntity(player)
 
 	g.world.Map.LoadBumpObjects(g.world.Space, "collisions")
 	g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
@@ -134,7 +130,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	utils.DrawText(screen, fmt.Sprintf(`%0.2f`, ebiten.ActualFPS()), assets.TinyFont, op)
 }
 
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+func (g *Game) Layout(_, _ int) (int, int) {
 	return screenWidth, screenHeight
 }
 
@@ -152,18 +148,18 @@ func main() {
 
 func debugControls() {
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
-		body.DebugDraw = !body.DebugDraw
+		actor.BDebugDraw = !actor.BDebugDraw
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key2) {
-		hitbox.DebugDraw = !hitbox.DebugDraw
+		actor.HDebugDraw = !actor.HDebugDraw
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key3) {
-		ai.DebugDraw = !ai.DebugDraw
+		actor.AIDebugDraw = !actor.AIDebugDraw
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key4) {
-		stats.DebugDraw = !stats.DebugDraw
+		actor.StDebugDraw = !actor.StDebugDraw
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key5) {
-		anim.DebugDraw = !anim.DebugDraw
+		actor.ADebugDraw = !actor.ADebugDraw
 	}
 }

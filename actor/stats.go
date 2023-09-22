@@ -1,9 +1,8 @@
-package stats
+package actor
 
 import (
 	"fmt"
 	"game/assets"
-	"game/core"
 	"game/utils"
 	"image"
 	"image/color"
@@ -17,38 +16,38 @@ import (
 )
 
 const (
-	defaultHealth         = 100
-	defaultStamina        = 80
-	defaultPoise          = 30
-	defaultHeal           = 3
-	defaultRecoverRate    = 20
-	defaultRecoverSeconds = 3
+	stDefaultHealth         = 100
+	stDefaultStamina        = 80
+	stDefaultPoise          = 30
+	stDefaultHeal           = 3
+	stDefaultRecoverRate    = 20
+	stDefaultRecoverSeconds = 3
 
 	// HUD consts.
-	hudIconsX                = 7
-	barEndX1, barEndX2, barH = 8, 12, 7
-	barMiddleH               = barH - 2
-	middleBarX1, middleBarX2 = 7, 8
-	innerBarH                = 3
-	enemyBarW                = 10
-	maxTextWidth             = 50
+	stHudIconsX                    = 7
+	stBarEndX1, stBarEndX2, stBarH = 8, 12, 7
+	stBarMiddleH                   = stBarH - 2
+	stMiddleBarX1, stMiddleBarX2   = 7, 8
+	stInnerBarH                    = 3
+	stEnemyBarW                    = 10
+	stMaxTextWidth                 = 50
 )
 
 var (
-	hudImage, _, _    = ebitenutil.NewImageFromFile("assets/hud.png")
-	barEndImage, _    = hudImage.SubImage(image.Rect(barEndX1, 0, barEndX2, barH)).(*ebiten.Image)
-	middleBarImage, _ = hudImage.SubImage(image.Rect(middleBarX1, 0, middleBarX2, barH)).(*ebiten.Image)
-	healthColor       = color.RGBA{172, 50, 50, 255}
-	staminaColor      = color.RGBA{55, 148, 110, 255}
-	poiseColor        = color.RGBA{91, 110, 225, 255}
-	borderColor       = color.RGBA{34, 32, 52, 255}
-	emptyColor        = color.RGBA{89, 86, 82, 255}
-	lagColor          = color.RGBA{251, 242, 54, 255}
+	stHudImage, _, _    = ebitenutil.NewImageFromFile("assets/hud.png")
+	stBarEndImage, _    = stHudImage.SubImage(image.Rect(stBarEndX1, 0, stBarEndX2, stBarH)).(*ebiten.Image)
+	stMiddleBarImage, _ = stHudImage.SubImage(image.Rect(stMiddleBarX1, 0, stMiddleBarX2, stBarH)).(*ebiten.Image)
+	stHealthColor       = color.RGBA{172, 50, 50, 255}
+	stStaminaColor      = color.RGBA{55, 148, 110, 255}
+	stPoiseColor        = color.RGBA{91, 110, 225, 255}
+	stBorderColor       = color.RGBA{34, 32, 52, 255}
+	stEmptyColor        = color.RGBA{89, 86, 82, 255}
+	stLagColor          = color.RGBA{251, 242, 54, 255}
 )
 
-var DebugDraw = false
+var StDebugDraw = false
 
-type Comp struct {
+type Stats struct {
 	Hud, Pause, NoDebug                     bool
 	MaxHealth, Health                       float64
 	MaxStamina, Stamina                     float64
@@ -62,18 +61,18 @@ type Comp struct {
 	StaminaRecoverRateMultiplier            float64
 }
 
-func (c *Comp) Init(entity *core.Entity) {
+func (c *Stats) Init() {
 	if c.MaxHealth == 0 {
-		c.MaxHealth = defaultHealth
+		c.MaxHealth = stDefaultHealth
 	}
 	if c.MaxStamina == 0 {
-		c.MaxStamina = defaultStamina
+		c.MaxStamina = stDefaultStamina
 	}
 	if c.MaxPoise == 0 {
-		c.MaxPoise = defaultPoise
+		c.MaxPoise = stDefaultPoise
 	}
 	if c.MaxHeal == 0 {
-		c.MaxHeal = defaultHeal
+		c.MaxHeal = stDefaultHeal
 	}
 	if c.Health < c.MaxHealth {
 		c.Health = c.MaxHealth
@@ -88,17 +87,17 @@ func (c *Comp) Init(entity *core.Entity) {
 		c.Heal = c.MaxHeal
 	}
 	if c.StaminaRecoverRate == 0 {
-		c.StaminaRecoverRate = defaultRecoverRate
+		c.StaminaRecoverRate = stDefaultRecoverRate
 	}
 	if c.PoiseRecoverSeconds == 0 {
-		c.PoiseRecoverSeconds = defaultRecoverSeconds
+		c.PoiseRecoverSeconds = stDefaultRecoverSeconds
 	}
 	c.healthLag = c.Health
 	c.staminaLag = c.Stamina
 	c.poiseLag = c.Poise
 }
 
-func (c *Comp) Update(dt float64) {
+func (c *Stats) Update(dt float64) {
 	if c.healthTween != nil {
 		if lag, done := c.healthTween.Update(float32(dt)); done {
 			c.healthTween = nil
@@ -134,8 +133,8 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
-	if DebugDraw {
+func (c *Stats) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	if StDebugDraw {
 		c.debugDraw(screen, entityPos)
 	}
 	if c.Hud {
@@ -149,28 +148,28 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 		return
 	}
 
-	healthBar := c.headBarImage(c.Health, c.MaxHealth, c.healthLag, healthColor)
+	healthBar := c.headBarImage(c.Health, c.MaxHealth, c.healthLag, stHealthColor)
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-2, -10)
 	screen.DrawImage(healthBar, op)
 }
 
-func (c *Comp) HealthPercent() float64  { return c.Health / c.MaxHealth }
-func (c *Comp) StaminaPercent() float64 { return c.Stamina / c.MaxStamina }
-func (c *Comp) PoisePercent() float64   { return c.Poise / c.MaxPoise }
+func (c *Stats) HealthPercent() float64  { return c.Health / c.MaxHealth }
+func (c *Stats) StaminaPercent() float64 { return c.Stamina / c.MaxStamina }
+func (c *Stats) PoisePercent() float64   { return c.Poise / c.MaxPoise }
 
-func (c *Comp) AddHealth(amount float64) {
+func (c *Stats) AddHealth(amount float64) {
 	c.healthLag = math.Max(c.Health, c.healthLag)
 	c.Health = math.Min(c.Health+amount, c.MaxHealth)
 	c.healthTween = gween.New(float32(c.healthLag), float32(c.Health), 1, ease.Linear)
 }
-func (c *Comp) AddStamina(amount float64) {
+func (c *Stats) AddStamina(amount float64) {
 	c.staminaLag = c.Stamina
-	//c.staminaLag = math.Max(c.Stamina, c.staminaLag)
+	// c.staminaLag = math.Max(c.Stamina, c.staminaLag)
 	c.Stamina = math.Min(c.Stamina+amount, c.MaxStamina)
 	c.staminaTween = gween.New(float32(c.staminaLag), float32(c.Stamina), 1, ease.Linear)
 }
-func (c *Comp) AddPoise(amount float64) {
+func (c *Stats) AddPoise(amount float64) {
 	c.poiseLag = math.Max(c.Poise, c.poiseLag)
 	c.Poise = math.Min(c.Poise+amount, c.MaxPoise)
 	c.poiseTween = gween.New(float32(c.poiseLag), float32(c.Poise), 1, ease.Linear)
@@ -189,88 +188,88 @@ func (c *Comp) AddPoise(amount float64) {
 		})
 	}
 }
-func (c *Comp) AddHeal(amount int) {
+func (c *Stats) AddHeal(amount int) {
 	if c.Heal += amount; c.Heal > c.MaxHeal {
 		c.Heal = c.MaxHeal
 	}
 }
-func (c *Comp) AddExp(amount int) {
+func (c *Stats) AddExp(amount int) {
 	c.Exp += amount
 }
 
-func (c *Comp) drawHud() *ebiten.Image {
-	_, h := hudImage.Size()
+func (c *Stats) drawHud() *ebiten.Image {
+	_, h := stHudImage.Size()
 	w, _ := ebiten.WindowSize()
 	hud := ebiten.NewImage(w, h)
-	icons, _ := hudImage.SubImage(image.Rect(0, 0, hudIconsX, h)).(*ebiten.Image)
+	icons, _ := stHudImage.SubImage(image.Rect(0, 0, stHudIconsX, h)).(*ebiten.Image)
 	hud.DrawImage(icons, nil)
 
-	c.drawSegment(hud, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
-	c.drawSegment(hud, 1, c.Stamina, c.MaxStamina, c.staminaLag, staminaColor)
-	//c.drawSegment(hud, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
+	c.drawSegment(hud, 0, c.Health, c.MaxHealth, c.healthLag, stHealthColor)
+	c.drawSegment(hud, 1, c.Stamina, c.MaxStamina, c.staminaLag, stStaminaColor)
+	// c.drawSegment(hud, 2, c.Poise, c.MaxPoise, c.poiseLag, stPoiseColor)
 	c.drawCount(hud, 2, 128, 0) // c.Exp, 0) //nolint: gomnd
 	c.drawCount(hud, 3, c.Heal, 2)
 
 	return hud
 }
 
-func (c *Comp) drawSegment(hud *ebiten.Image, y, current, max, lag float64, barColor color.Color) {
-	fullBar := ebiten.NewImage(int(max), innerBarH)
-	fullBar.Fill(emptyColor)
+func (c *Stats) drawSegment(hud *ebiten.Image, y, current, max, lag float64, barColor color.Color) {
+	fullBar := ebiten.NewImage(int(max), stInnerBarH)
+	fullBar.Fill(stEmptyColor)
 	if lag > 0 {
-		bar := ebiten.NewImage(int(lag+1), innerBarH)
-		bar.Fill(lagColor)
+		bar := ebiten.NewImage(int(lag+1), stInnerBarH)
+		bar.Fill(stLagColor)
 		fullBar.DrawImage(bar, nil)
 	}
 	if current > 0 {
-		bar := ebiten.NewImage(int(current+1), innerBarH)
+		bar := ebiten.NewImage(int(current+1), stInnerBarH)
 		bar.Fill(barColor)
 		fullBar.DrawImage(bar, nil)
 	}
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(max, 1)
-	op.GeoM.Translate(hudIconsX, barMiddleH*y)
-	hud.DrawImage(middleBarImage, op)
+	op.GeoM.Translate(stHudIconsX, stBarMiddleH*y)
+	hud.DrawImage(stMiddleBarImage, op)
 
 	op.GeoM.Reset()
-	op.GeoM.Translate(hudIconsX, barMiddleH*y+2)
+	op.GeoM.Translate(stHudIconsX, stBarMiddleH*y+2)
 	hud.DrawImage(fullBar, op)
 
 	op.GeoM.Reset()
-	op.GeoM.Translate(barMiddleH+max, barMiddleH*y)
-	hud.DrawImage(barEndImage, op)
+	op.GeoM.Translate(stBarMiddleH+max, stBarMiddleH*y)
+	hud.DrawImage(stBarEndImage, op)
 }
 
-func (c *Comp) drawCount(hud *ebiten.Image, y float64, count int, offset float64) {
-	fullBar := ebiten.NewImage(maxTextWidth, barH+2)
-	fullBar.Fill(borderColor)
+func (c *Stats) drawCount(hud *ebiten.Image, y float64, count int, offset float64) {
+	fullBar := ebiten.NewImage(stMaxTextWidth, stBarH+2)
+	fullBar.Fill(stBorderColor)
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(0, 2)
 	w, _ := utils.DrawText(fullBar, fmt.Sprint(count), assets.TinyFont, op)
-	fullBar, _ = fullBar.SubImage(image.Rect(0, 0, w+2, barH+2)).(*ebiten.Image)
+	fullBar, _ = fullBar.SubImage(image.Rect(0, 0, w+2, stBarH+2)).(*ebiten.Image)
 
 	op.GeoM.Reset()
 	op.GeoM.Translate(0, -2)
-	op.GeoM.Translate(hudIconsX, barMiddleH*y+2+offset)
+	op.GeoM.Translate(stHudIconsX, stBarMiddleH*y+2+offset)
 	hud.DrawImage(fullBar, op)
 }
 
-func (c *Comp) headBarImage(current, max, lag float64, barColor color.Color) *ebiten.Image {
-	image := ebiten.NewImage(enemyBarW+2, innerBarH)
-	image.Fill(borderColor)
-	fullBar := ebiten.NewImage(enemyBarW, 1)
-	fullBar.Fill(emptyColor)
+func (c *Stats) headBarImage(current, max, lag float64, barColor color.Color) *ebiten.Image {
+	image := ebiten.NewImage(stEnemyBarW+2, stInnerBarH)
+	image.Fill(stBorderColor)
+	fullBar := ebiten.NewImage(stEnemyBarW, 1)
+	fullBar.Fill(stEmptyColor)
 
 	round := 0.5
-	if width := int((lag/max)*enemyBarW + round); width > 0 {
+	if width := int((lag/max)*stEnemyBarW + round); width > 0 {
 		bar := ebiten.NewImage(width, 1)
-		bar.Fill(lagColor)
+		bar.Fill(stLagColor)
 		fullBar.DrawImage(bar, nil)
 	}
 
-	if width := int((current/max)*enemyBarW + round); width > 0 {
+	if width := int((current/max)*stEnemyBarW + round); width > 0 {
 		bar := ebiten.NewImage(width, 1)
 		bar.Fill(barColor)
 		fullBar.DrawImage(bar, nil)
@@ -282,7 +281,7 @@ func (c *Comp) headBarImage(current, max, lag float64, barColor color.Color) *eb
 	return image
 }
 
-func (c *Comp) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Stats) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	if c.NoDebug {
 		return
 	}
