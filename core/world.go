@@ -16,10 +16,11 @@ type World struct {
 	entities      []*Entity
 	entitiesCache map[uint64]*Entity
 	Map           *Map
+	freezeTimer   float64
 }
 
 func NewWorld(width, height float64) *World {
-	return &World{bump.NewSpace(), camera.New(width, height), nil, map[uint64]*Entity{}, nil}
+	return &World{bump.NewSpace(), camera.New(width, height), nil, map[uint64]*Entity{}, nil, 0}
 }
 
 func (w *World) AddEntity(entity *Entity) *Entity {
@@ -53,6 +54,9 @@ func (w *World) SetMap(tiledMap *Map, roomsLayer string) {
 
 func (w *World) Update(dt float64) {
 	w.Camera.Update(dt)
+	if w.freezeTimer -= dt; w.freezeTimer >= 0 {
+		return
+	}
 	if w.Map != nil {
 		w.Map.Update(dt)
 	}
@@ -74,6 +78,10 @@ func (w *World) Draw(screen *ebiten.Image) {
 		foreground, _ := w.Map.foregroundImage.SubImage(w.Camera.Bounds()).(*ebiten.Image)
 		screen.DrawImage(foreground, nil)
 	}
+}
+
+func (w *World) Freeze(time float64) {
+	w.freezeTimer = time
 }
 
 func (w *World) RemoveEntity(id uint64) {

@@ -150,4 +150,5 @@ func (p *Player) controlBlocking() {
 func (p *Player) OnHurt(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {
 	p.Actor.Hurt(otherHc.Entity, damage, nil)
 	p.World.Camera.Shake(0.5, 1)
+	p.World.Freeze(0.1)
 }

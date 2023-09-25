@@ -21,6 +21,7 @@ import (
 )
 
 /* TODO
+- JUICE UP COMBAT, IM TALKING STOP TIME, PARTICLE EFFECTS, FLASHING BABY
 - Add animation tiles on update for Tiled map.
 - Maybe stop time while camera transition is playing, and move follower entity to border?
 - AI component for enemies.

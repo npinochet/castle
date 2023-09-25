@@ -13,7 +13,7 @@ import (
 
 const (
 	defaultAttackPushForce                    = 100
-	defaultReactForce                         = 200
+	defaultReactForce                         = 100
 	defaultMaxXDiv, defaultMaxXRecoverRateDiv = 2, 3
 )
 
@@ -132,7 +132,7 @@ func (a *Actor) Attack(attackTag string, damage, staminaDamage float64) {
 	a.ResetState(attackTag)
 
 	var contacted []*hitbox.Comp
-	var once, blockForceOnce, blocked bool
+	var once, freezeOnce, blockForceOnce, blocked bool
 	a.Anim.OnFrames(func(frame int) {
 		hitbox, err := a.Anim.GetFrameHitbox(anim.HitboxSliceName)
 		if err != nil {
@@ -142,9 +142,14 @@ func (a *Actor) Attack(attackTag string, damage, staminaDamage float64) {
 		}
 
 		blocked, contacted = a.Hitbox.HitFromHitBox(hitbox, damage, contacted)
+		if len(contacted) > 0 && a == PlayerRef.Actor && !freezeOnce {
+			freezeOnce = true
+			a.World.Freeze(0.1)
+			a.World.Camera.Shake(0.1, 1)
+		}
 		if blocked && !blockForceOnce {
 			blockForceOnce = true
-			blockForce := force
+			blockForce := a.ReactForce / 4
 			if !once {
 				blockForce *= 2
 			}
