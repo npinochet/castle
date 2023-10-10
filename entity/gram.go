@@ -15,15 +15,17 @@ const (
 )
 
 type gram struct {
-	*Actor
+	*core.Entity
+	ActorControl
 }
 
+func (g *gram) Tag() string { return "gram" }
+
 func NewGram(x, y, w, h float64, props *core.Property) *core.Entity {
-	animc := &anim.Comp{FilesName: gramAnimFile, OX: gramOffsetX, OY: gramOffsetY, OXFlip: gramOffsetFlip}
-	animc.FlipX = props.FlipX
+	animc := &anim.Comp{FilesName: gramAnimFile, OX: gramOffsetX, OY: gramOffsetY, OXFlip: gramOffsetFlip, FlipX: props.FlipX}
 
 	body := &body.Comp{Unmovable: true}
-	gram := &gram{Actor: NewActor(x, y, gramWidth, gramHeight, nil, animc, body, nil)}
+	gram := &gram{Entity: NewActorControl(x, y, gramWidth, gramHeight, nil, animc, body, nil)}
 	textbox := &textbox.Comp{
 		Text: "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr",
 		Body: body,
@@ -32,9 +34,10 @@ func NewGram(x, y, w, h float64, props *core.Property) *core.Entity {
 		},
 	}
 	gram.AddComponent(textbox, gram)
+	gram.BindControl(gram.Entity)
 	gram.Stats.MaxPoise, gram.Stats.Poise = 100, 100
 
-	return &gram.Entity
+	return gram.Entity
 }
 
 func (g *gram) Init(entity *core.Entity) {

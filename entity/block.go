@@ -18,7 +18,9 @@ type BlockComponent struct {
 	hitbox *hitbox.Comp
 }
 
-func NewBlock(x, y float64, props map[string]interface{}) *core.Entity {
+func (b *BlockComponent) Tag() string { return "BlockComponent" }
+
+func NewBlock(x, y float64, props map[string]any) *core.Entity {
 	w, _ := props["w"].(float64)
 	h, _ := props["h"].(float64)
 	image := ebiten.NewImage(int(w), int(h))
@@ -38,7 +40,7 @@ func (b *BlockComponent) Init(entity *core.Entity) {
 	b.hitbox.PushHitbox(bump.Rect{X: entity.X, Y: entity.Y, W: blockSize, H: blockSize}, false)
 }
 
-func (b *BlockComponent) BlockHurt(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {
+func (b *BlockComponent) BlockHurt(other *core.Entity, col *bump.Collision, damage float64) {
 	b.body.Vy -= 30
 
 	force := 50.0
@@ -48,7 +50,7 @@ func (b *BlockComponent) BlockHurt(otherHc *hitbox.Comp, col *bump.Collision, da
 	b.body.Vx += force
 }
 
-func (b *BlockComponent) BlockBlock(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {
+func (b *BlockComponent) BlockBlock(other *core.Entity, col *bump.Collision, damage float64) {
 	force := 50.0
 	if col.Normal.X > 0 {
 		force *= -1

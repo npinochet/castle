@@ -17,21 +17,22 @@ const (
 )
 
 type crawler struct {
-	*Actor
+	*core.Entity
+	ActorControl
 }
+
+func (c *crawler) Tag() string { return "Crawler" }
 
 func NewCrawler(x, y, w, h float64, props *core.Property) *core.Entity {
 	animc := &anim.Comp{FilesName: crawlerAnimFile, OX: crawlerOffsetX, OY: crawlerOffsetY, OXFlip: crawlerOffsetFlip}
 	animc.FlipX = props.FlipX
 
 	crawler := &crawler{
-		Actor: NewActor(x, y, crawlerWidth, crawlerHeight, []string{"Attack"}, animc, nil, &stats.Comp{
-			MaxPoise:  crawlerDamage,
-			MaxHealth: crawlerHealth,
-		}),
+		Entity: NewActorControl(x, y, crawlerWidth, crawlerHeight, []string{"Attack"}, animc, nil, &stats.Comp{MaxPoise: crawlerDamage, MaxHealth: crawlerHealth}),
 	}
-	crawler.Speed = crawlerSpeed
 	crawler.AddComponent(crawler)
+	crawler.BindControl(crawler.Entity)
+	crawler.Control.Speed = crawlerSpeed
 
 	var view bump.Rect
 	if props.View != nil {
@@ -40,10 +41,10 @@ func NewCrawler(x, y, w, h float64, props *core.Property) *core.Entity {
 	if props.AI != "none" {
 		crawler.setupAI(view)
 	} else {
-		crawler.Speed = 0
+		crawler.Control.Speed = 0
 	}
 
-	return &crawler.Entity
+	return crawler.Entity
 }
 
 func (c *crawler) Init(entity *core.Entity) {
@@ -55,7 +56,7 @@ func (c *crawler) Init(entity *core.Entity) {
 }
 
 func (c *crawler) Update(dt float64) {
-	c.SimpleUpdate(dt)
+	c.Control.SimpleUpdate(dt, c.AI.Target)
 }
 
 func (c *crawler) setupAI(view bump.Rect) {
@@ -65,6 +66,6 @@ func (c *crawler) setupAI(view bump.Rect) {
 	aiConfig.Attacks = []Attack{{"Attack", crawlerDamage, 20}}
 	aiConfig.CombatOptions = []ai.WeightedState{{"Pursuit", 100}, {"Pace", 2}, {"Wait", 1}, {"RunAttack", 1}, {"Attack", 1}}
 
-	c.Speed, c.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
+	c.Control.Speed, c.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
 	c.SetDefaultAI(aiConfig)
 }

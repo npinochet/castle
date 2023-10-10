@@ -19,8 +19,11 @@ const (
 )
 
 type skeleman struct {
-	*Actor
+	*core.Entity
+	ActorControl
 }
+
+func (s *skeleman) Tag() string { return "skeleman" }
 
 func NewSkeleman(x, y, w, h float64, props *core.Property) *core.Entity {
 	animc := &anim.Comp{FilesName: skelemanAnimFile, OX: skelemanOffsetX, OY: skelemanOffsetY, OXFlip: skelemanOffsetFlip}
@@ -28,10 +31,11 @@ func NewSkeleman(x, y, w, h float64, props *core.Property) *core.Entity {
 
 	attackTags := []string{"AttackShort", "AttackLong"}
 	skeleman := &skeleman{
-		Actor: NewActor(x, y, skelemanWidth, skelemanHeight, attackTags, animc, nil, &stats.Comp{MaxPoise: skelemanPoise}),
+		Entity: NewActorControl(x, y, skelemanWidth, skelemanHeight, attackTags, animc, nil, &stats.Comp{MaxPoise: skelemanPoise}),
 	}
-	skeleman.Speed = skelemanSpeed
 	skeleman.AddComponent(skeleman)
+	skeleman.BindControl(skeleman.Entity)
+	skeleman.Control.Speed = skelemanSpeed
 
 	var view bump.Rect
 	if props.View != nil {
@@ -40,7 +44,7 @@ func NewSkeleman(x, y, w, h float64, props *core.Property) *core.Entity {
 
 	skeleman.setupAI(view)
 
-	return &skeleman.Entity
+	return skeleman.Entity
 }
 
 func (g *skeleman) Init(entity *core.Entity) {
@@ -52,16 +56,16 @@ func (g *skeleman) Init(entity *core.Entity) {
 }
 
 func (g *skeleman) Update(dt float64) {
-	g.SimpleUpdate(dt)
+	g.Control.SimpleUpdate(dt, g.AI.Target)
 }
 
 func (g *skeleman) AttackJump(damage, stamina float64) {
-	g.Speed, g.Body.MaxX = skelemanSpeed, skelemanMaxSpeed*2
+	g.Control.Speed, g.Body.MaxX = skelemanSpeed, skelemanMaxSpeed*2
 	go func() {
 		time.Sleep(1 * time.Millisecond)
-		g.Attack("AttackShort", damage, stamina)
+		g.Control.Attack("AttackShort", damage, stamina)
 	}()
-	g.Body.Vy = -g.Speed
+	g.Body.Vy = -g.Control.Speed
 	if g.Anim.FlipX {
 		g.Body.Vx += skelemanMaxSpeed * 2
 	} else {
@@ -89,7 +93,7 @@ func (g *skeleman) setupAI(view bump.Rect) {
 		{"AttackJump", 1},
 	}
 
-	g.Speed, g.Body.MaxX = skelemanSpeed, skelemanMaxSpeed
+	g.Control.Speed, g.Body.MaxX = skelemanSpeed, skelemanMaxSpeed
 	g.SetDefaultAI(aiConfig)
 
 	g.AI.Fsm.SetAction(ai.State("AttackJump"), g.AI.AnimBuilder("AttackShort", nil).

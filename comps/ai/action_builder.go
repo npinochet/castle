@@ -1,6 +1,9 @@
 package ai
 
 import (
+	"game/comps/anim"
+	"game/comps/body"
+	"game/core"
 	"game/libs/bump"
 	"math/rand"
 )
@@ -85,12 +88,12 @@ func (ab *ActionBuilder) Build() *Action {
 // Preset Actions.
 
 func (c *Comp) IdleBuilder(view bump.Rect, viewDist, height float64, nextStates []WeightedState) *ActionBuilder {
-	body, anim := c.Actor.GetBody(), c.Actor.GetAnim()
+	bodyc, animc := core.GetComponent[*body.Comp](c.Entity), core.GetComponent[*anim.Comp](c.Entity)
 	builder := &ActionBuilder{}
 	builder.SetEntry(c.SetSpeedFunc(0, 0))
 	if view.W != 0 && view.H != 0 {
 		builder.AddReaction(func() bool {
-			if targets := body.QueryEntites(view, true); len(targets) > 0 {
+			if targets := bodyc.QueryEntites(view, true); len(targets) > 0 {
 				c.Target = targets[0]
 			}
 
@@ -98,7 +101,7 @@ func (c *Comp) IdleBuilder(view bump.Rect, viewDist, height float64, nextStates 
 		}, nextStates)
 	} else {
 		builder.AddReaction(func() bool {
-			if targets := body.QueryFront(viewDist, height, anim.FlipX, true); len(targets) > 0 {
+			if targets := bodyc.QueryFront(viewDist, height, animc.FlipX, true); len(targets) > 0 {
 				c.Target = targets[0]
 			}
 
@@ -135,7 +138,7 @@ func (c *Comp) PaceBuilder(backUpDist, reactDist, speed, maxSpeed float64, react
 			s *= -1
 			ms /= 2
 		}
-		c.Actor.SetSpeed(s, ms)
+		c.SetSpeedFunc(s, ms)()
 	})
 	if len(react) > 0 {
 		builder.AddReaction(c.InRangeFunc(reactDist), react)
@@ -145,9 +148,9 @@ func (c *Comp) PaceBuilder(backUpDist, reactDist, speed, maxSpeed float64, react
 }
 
 func (c *Comp) AnimBuilder(animTag string, nextStates []WeightedState) *ActionBuilder {
-	anim := c.Actor.GetAnim()
+	animc := core.GetComponent[*anim.Comp](c.Entity)
 	builder := &ActionBuilder{}
-	builder.AddReaction(func() bool { return anim.State != animTag }, nextStates)
+	builder.AddReaction(func() bool { return animc.State != animTag }, nextStates)
 
 	return builder
 }

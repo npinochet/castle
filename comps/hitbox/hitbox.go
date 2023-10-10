@@ -10,11 +10,14 @@ import (
 	"github.com/lafriks/go-tiled"
 )
 
-const blockPriority = 1
+const (
+	Tag           = "Hitbox"
+	blockPriority = 1
+)
 
 var DebugDraw = false
 
-type HitFunc func(*Comp, *bump.Collision, float64)
+type HitFunc func(*core.Entity, *bump.Collision, float64)
 
 type Hitbox struct {
 	rect  bump.Rect
@@ -23,13 +26,15 @@ type Hitbox struct {
 }
 
 type Comp struct {
-	Entity              *core.Entity
+	*core.Entity
 	HurtFunc, BlockFunc HitFunc
 	ParryBlock          bool
 	space               *bump.Space
 	hurtBoxes           []*Hitbox
 	debugLastHitbox     bump.Rect
 }
+
+func (c *Comp) Tag() string { return Tag }
 
 func (c *Comp) Init(entity *core.Entity) {
 	c.Entity = entity
@@ -123,10 +128,10 @@ func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) 
 	for comp, info := range doesHit {
 		if info.hit {
 			if comp.HurtFunc != nil {
-				comp.HurtFunc(c, info.col, damage)
+				comp.HurtFunc(c.Entity, info.col, damage)
 			}
 		} else if comp.BlockFunc != nil {
-			comp.BlockFunc(c, info.col, damage)
+			comp.BlockFunc(c.Entity, info.col, damage)
 		}
 	}
 

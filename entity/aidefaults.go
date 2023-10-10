@@ -48,16 +48,11 @@ func DefaultAIConfig() *AIConfig {
 
 // TODO: Review speed changes, some speed transitions are not working as expected
 // TODO: Sometimes Idle state resets and a new target is selected from nowhere
-func (a *Actor) SetDefaultAI(config *AIConfig) {
+func (a *ActorControl) SetDefaultAI(config *AIConfig) {
 	if config == nil {
 		config = DefaultAIConfig()
 	}
-	speed, maxSpeed := a.Speed, a.Body.MaxX
-
-	if a.AI == nil {
-		a.AI = &ai.Comp{Actor: a}
-		a.AddComponent(a.AI)
-	}
+	speed, maxSpeed := a.Control.Speed, a.Body.MaxX
 	fsm := ai.NewFsm("Idle")
 
 	fsm.SetAction("Idle", a.AI.IdleBuilder(config.viewRect, config.viewDist, defaultViewHeight, nil).Build())
@@ -72,8 +67,8 @@ func (a *Actor) SetDefaultAI(config *AIConfig) {
 	fsm.SetAction("Guard", (&ai.ActionBuilder{}).
 		SetCooldown(ai.Cooldown{3, 0}).
 		SetTimeout(ai.Timeout{"Pace", 1, 2}).
-		SetEntry(func() { a.SetSpeed(-speed, maxSpeed/4); a.ShieldUp() }).
-		SetExit(func() { a.ShieldDown() }).
+		SetEntry(func() { a.Control.SetSpeed(-speed, maxSpeed/4); a.Control.ShieldUp() }).
+		SetExit(func() { a.Control.ShieldDown() }).
 		Build())
 
 	for _, attack := range config.Attacks {
@@ -81,7 +76,7 @@ func (a *Actor) SetDefaultAI(config *AIConfig) {
 		fsm.SetAction(ai.State(attack.AnimTag), a.AI.AnimBuilder(attack.AnimTag, nil).
 			SetCooldown(ai.Cooldown{1.5, 2.5}).
 			AddCondition(a.AI.EnoughStamina(attack.StaminaDamage)).
-			SetEntry(func() { a.Attack(attack.AnimTag, attack.Damage, attack.StaminaDamage) }).
+			SetEntry(func() { a.Control.Attack(attack.AnimTag, attack.Damage, attack.StaminaDamage) }).
 			Build())
 	}
 

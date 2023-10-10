@@ -69,7 +69,7 @@ func NewMap(mapPath string, foregroundLayerName, backgroundLayerName string) *Ma
 	return &Map{data, foreImage, backImage}
 }
 
-func (m *Map) Update(dt float64) {
+func (m *Map) Update(_ float64) {
 	// TODO: Update animation system.
 }
 

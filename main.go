@@ -35,11 +35,11 @@ import (
 - Rethink Poise mechanic, is shouldn't be a bar that increses with time, it should be more like a health that resets.
 - Implement estus flasks.
 - Implement backstepping (kind of life rolling). (think about adding I frames or not, maybe just shrink the hurtbox).
-- Consider scapping core.Entity all together, use interface{} (pointer) as entities and use Actor for everything.
+- Consider scapping core.Entity all together, use interface{} (pointer) as entities and use ActorControl for everything.
 	Every Comp will have an actor referencing it's owner.
 
 
-- Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
+- Clean up actor.ManageAnim and body.Vx code, make it sry with player and other ActorControls.
 - Add a Timeout system for AI states.
 - Clean up AI code, Make a default AI behaviour for actors if none are present. Make it tweekable with other params maybe.
 - Think of movement accion or states the anim component can have.
@@ -69,7 +69,7 @@ const (
 
 var (
 	game       = &Game{}
-	player     *entity.Player
+	player     *core.Entity
 	canRestart = true
 )
 
@@ -87,7 +87,7 @@ func (g *Game) init() {
 	}
 	player = entity.NewPlayer(obj.X, obj.Y, nil)
 	g.world.Camera.Follow(player)
-	g.world.AddEntity(&player.Entity)
+	g.world.AddEntity(player)
 
 	g.world.Map.LoadBumpObjects(g.world.Space, "collisions")
 	g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
@@ -112,7 +112,7 @@ func (g *Game) Update() error {
 	}
 	debugControls()
 
-	if player.Stats.Health <= 0 && canRestart {
+	if core.GetComponent[*stats.Comp](player).Health <= 0 && canRestart {
 		canRestart = false
 		time.AfterFunc(2, func() {
 			game.init()

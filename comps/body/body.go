@@ -25,6 +25,7 @@ const (
 type Team int
 
 const (
+	Tag           = "Body"
 	NoneTeam Team = iota
 	PlayerTeam
 	EnemyTeam
@@ -47,6 +48,8 @@ type Comp struct {
 	prevVx                     float64
 	debugQueryRect             bump.Rect
 }
+
+func (c *Comp) Tag() string { return Tag }
 
 func (c *Comp) Init(entity *core.Entity) {
 	c.entity = entity

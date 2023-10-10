@@ -31,8 +31,10 @@ type Rock struct {
 	render *render.Comp
 	body   *body.Comp
 	hitbox *hitbox.Comp
-	owner  *Actor
+	owner  *ActorControl
 }
+
+func (r *Rock) Tag() string { return "Rock" }
 
 func init() {
 	var err error
@@ -42,7 +44,7 @@ func init() {
 	}
 }
 
-func NewRock(x, y float64, owner *Actor) *core.Entity {
+func NewRock(x, y float64, owner *ActorControl) *core.Entity {
 	vx, vy := rockMaxVel, 60.0
 	if target := owner.AI.Target; target != nil {
 		tx, ty := target.Position()
@@ -80,8 +82,8 @@ func (r *Rock) Update(dt float64) {
 	}
 }
 
-func (r *Rock) RockHurt(otherHc *hitbox.Comp, _ *bump.Collision, _ float64) {
-	if otherHc != r.owner.Hitbox {
+func (r *Rock) RockHurt(other *core.Entity, _ *bump.Collision, _ float64) {
+	if other != r.owner.Control.Entity {
 		r.Remove()
 	}
 }

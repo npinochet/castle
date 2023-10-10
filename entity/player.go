@@ -3,7 +3,7 @@ package entity
 import (
 	"game/comps/anim"
 	"game/comps/body"
-	"game/comps/hitbox"
+	"game/comps/stats"
 	"game/core"
 	"game/libs/bump"
 	"game/utils"
@@ -28,27 +28,28 @@ const (
 var PlayerRef *Player
 
 type Player struct {
-	*Actor
-	pad       utils.ControlPack
-	speed     float64
-	jumpSpeed float64
+	*core.Entity
+	ActorControl
+	pad              utils.ControlPack
+	speed, jumpSpeed float64
 }
 
-func NewPlayer(x, y float64, props map[string]interface{}) *Player {
+func (*Player) Tag() string { return "Player" }
+
+func NewPlayer(x, y float64, props map[string]any) *core.Entity {
 	animc := &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
 	bodyc := &body.Comp{MaxX: playerMaxX, Team: body.PlayerTeam}
+	statsc := &stats.Comp{Hud: true, NoDebug: true, Stamina: 65}
 	player := &Player{
-		Actor: NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag}, animc, bodyc, nil),
-		pad:   utils.NewControlPack(),
-		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
+		Entity: NewActorControl(x, y, playerWidth, playerHeight, []string{anim.AttackTag}, animc, bodyc, statsc),
+		pad:    utils.NewControlPack(),
+		speed:  playerSpeed, jumpSpeed: playerJumpSpeed,
 	}
 	player.AddComponent(player)
-	player.Stats.Hud = true
-	player.Stats.NoDebug = true
-	player.Stats.MaxStamina, player.Stats.Stamina = 65, 65
+	player.BindControl(player.Entity)
 	PlayerRef = player
 
-	return PlayerRef
+	return player.Entity
 }
 
 func (p *Player) Init(entity *core.Entity) {
@@ -61,27 +62,27 @@ func (p *Player) Init(entity *core.Entity) {
 }
 
 func (p *Player) Update(dt float64) {
-	p.control(dt)
-	p.ManageAnim()
+	p.input(dt)
+	p.Control.ManageAnim()
 	if moving := p.pad.KeyDown(utils.KeyLeft) || p.pad.KeyDown(utils.KeyRight); p.Anim.State == anim.WalkTag && !moving {
 		p.Anim.SetState(anim.IdleTag)
 	}
 }
 
-func (p *Player) control(dt float64) { // TODO: refactor this
+func (p *Player) input(dt float64) { // TODO: refactor this
 	actionPressed := p.pad.KeyPressedBuffered(utils.KeyAction, keyBufferDuration)
 	healPressed := p.pad.KeyPressedBuffered(utils.KeyHeal, keyBufferDuration)
-	if p.pausedState() && p.Anim.State != anim.ConsumeTag {
+	if p.Control.PausedState() && p.Anim.State != anim.ConsumeTag {
 		return
 	}
 	if actionPressed {
-		p.Attack(anim.AttackTag, playerDamage, playerDamage)
+		p.Control.Attack(anim.AttackTag, playerDamage, playerDamage)
 	}
 	if healPressed {
-		p.Heal(playerHealFrame, playerHeal)
+		p.Control.Heal(playerHealFrame, playerHeal)
 	}
-	p.controlBlocking()
-	p.controlClimbing(dt)
+	p.inputBlocking()
+	p.inputClimbing(dt)
 
 	flip := p.Anim.FlipX
 	if p.pad.KeyDown(utils.KeyLeft) {
@@ -101,7 +102,7 @@ func (p *Player) control(dt float64) { // TODO: refactor this
 		p.Anim.FlipX = flip
 	}
 	if p.pad.KeyPressed(utils.KeyJump) && p.canJump() {
-		p.ClimbOff()
+		p.Control.ClimbOff()
 		p.Body.Vy = -p.jumpSpeed
 	}
 
@@ -118,15 +119,15 @@ func (p *Player) canJump() bool {
 		p.Anim.State != anim.ConsumeTag
 }
 
-func (p *Player) controlClimbing(dt float64) {
+func (p *Player) inputClimbing(dt float64) {
 	if p.pad.KeyDown(utils.KeyUp) || p.pad.KeyDown(utils.KeyDown) {
-		p.ClimbOn(p.pad.KeyDown(utils.KeyDown))
+		p.Control.ClimbOn(p.pad.KeyDown(utils.KeyDown))
 	}
 	if p.Anim.State != anim.ClimbTag {
 		return
 	}
 	if !p.Body.OnLadder {
-		p.ClimbOff()
+		p.Control.ClimbOff()
 	}
 	p.Body.Vy = 0
 	speed := p.speed * 5 * dt
@@ -138,17 +139,17 @@ func (p *Player) controlClimbing(dt float64) {
 	}
 }
 
-func (p *Player) controlBlocking() {
+func (p *Player) inputBlocking() {
 	if p.pad.KeyDown(utils.KeyGuard) {
-		p.ShieldUp()
+		p.Control.ShieldUp()
 	}
 	if p.pad.KeyReleased(utils.KeyGuard) {
-		p.ShieldDown()
+		p.Control.ShieldDown()
 	}
 }
 
-func (p *Player) OnHurt(otherHc *hitbox.Comp, col *bump.Collision, damage float64) {
-	p.Actor.Hurt(otherHc.Entity, damage, nil)
+func (p *Player) OnHurt(other *core.Entity, col *bump.Collision, damage float64) {
+	Hurt(p.Entity, other, damage, nil)
 	p.World.Camera.Shake(0.5, 1)
 	p.World.Freeze(0.1)
 }

@@ -9,8 +9,11 @@ import (
 const knightAnimFile = "assets/knight"
 
 type Knight struct {
-	*Actor
+	*core.Entity
+	ActorControl
 }
+
+func (k *Knight) Tag() string { return "Knight" }
 
 func NewKnight(x, y, w, h float64, props *core.Property) *core.Entity {
 	speed := 100.0
@@ -18,13 +21,15 @@ func NewKnight(x, y, w, h float64, props *core.Property) *core.Entity {
 	animc.FlipX = props.FlipX
 
 	knight := &Knight{
-		Actor: NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag}, animc, nil, &stats.Comp{MaxPoise: 25}),
+		Entity: NewActorControl(x, y, playerWidth, playerHeight, []string{anim.AttackTag}, animc, nil, &stats.Comp{MaxPoise: 25}),
 	}
-	knight.Speed = speed
-	knight.SetDefaultAI(nil)
 	knight.AddComponent(knight)
+	knight.BindControl(knight.Entity)
+	knight.Control.Speed = speed
 
-	return &knight.Entity
+	knight.SetDefaultAI(nil)
+
+	return knight.Entity
 }
 
 func (k *Knight) Init(entity *core.Entity) {
@@ -36,5 +41,5 @@ func (k *Knight) Init(entity *core.Entity) {
 }
 
 func (k *Knight) Update(dt float64) {
-	k.SimpleUpdate(dt)
+	k.Control.SimpleUpdate(dt, k.AI.Target)
 }

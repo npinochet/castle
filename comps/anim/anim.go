@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	Tag              = "Anim"
 	HurtboxSliceName = "hurtbox"
 	HitboxSliceName  = "hitbox"
 	BlockSliceName   = "blockbox"
@@ -44,6 +45,8 @@ type Comp struct {
 	callback       FrameCallback
 	slices         map[string]map[int]bump.Rect
 }
+
+func (c *Comp) Tag() string { return Tag }
 
 func (c *Comp) Init(entity *core.Entity) {
 	var err error

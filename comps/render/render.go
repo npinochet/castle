@@ -8,6 +8,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+const Tag = "Render"
+
 type Comp struct {
 	Image        *ebiten.Image
 	X, Y         float64
@@ -17,6 +19,8 @@ type Comp struct {
 	r            float64
 	w, h         float64
 }
+
+func (c *Comp) Tag() string { return Tag }
 
 func (c *Comp) Init(entity *core.Entity) {
 	w, h := c.Image.Size()

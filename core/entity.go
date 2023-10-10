@@ -1,8 +1,10 @@
 package core
 
-import "github.com/hajimehoshi/ebiten/v2"
+import (
+	"github.com/hajimehoshi/ebiten/v2"
+)
 
-type Component interface{}
+type Component interface{ Tag() string } // Or use any with tag = reflect.TypeOf((var x T)).String().
 
 type Initializer interface{ Init(*Entity) }
 type Updater interface{ Update(dt float64) }
@@ -11,54 +13,75 @@ type Drawer interface {
 }
 
 type Entity struct {
-	ID         uint64
-	World      *World
-	Active     bool
-	X, Y, W, H float64
-	Components []Component
+	ID          uint64
+	World       *World
+	X, Y, W, H  float64
+	Components  map[string]Component
+	orderedTags []string
 }
 
 func (e *Entity) Position() (float64, float64)               { return e.X, e.Y }
 func (e *Entity) Rect() (float64, float64, float64, float64) { return e.X, e.Y, e.W, e.H }
 
 func (e *Entity) AddComponent(components ...Component) Component {
-	e.Components = append(e.Components, components...)
+	if e.Components == nil {
+		e.Components = map[string]Component{}
+	}
+	for _, c := range components {
+		e.Components[c.Tag()] = c
+		e.orderedTags = append(e.orderedTags, c.Tag())
+	}
 
 	return components[0]
 }
 
+func (e *Entity) AddComponentWithTag(component Component, tag string) (Component, bool) {
+	if e.Components[tag] != nil {
+		return nil, false
+	}
+	e.Components[tag] = component
+	e.orderedTags = append(e.orderedTags, tag)
+
+	return component, true
+}
+
+// func (e *Entity) GetComponent[T Component](tag string) Component { return e.Components[tag] }.
+func GetComponent[T Component](entity *Entity) T {
+	var zero T
+	comp, _ := entity.Components[zero.Tag()].(T)
+
+	return comp
+}
+func GetComponentWithTag[T Component](entity *Entity, tag string) T {
+	comp, _ := entity.Components[tag].(T)
+
+	return comp
+}
+
 func (e *Entity) InitComponents() {
-	e.Active = true
-	for _, c := range e.Components {
-		if initializer, ok := c.(Initializer); ok {
+	for _, tag := range e.orderedTags {
+		if initializer, ok := e.Components[tag].(Initializer); ok {
 			initializer.Init(e)
 		}
 	}
 }
 
 func (e *Entity) UpdateComponents(dt float64) {
-	if !e.Active {
-		return
-	}
-	for _, c := range e.Components {
-		if updater, ok := c.(Updater); ok {
+	for _, tag := range e.orderedTags {
+		if updater, ok := e.Components[tag].(Updater); ok {
 			updater.Update(dt)
 		}
 	}
 }
 
 func (e *Entity) Draw(screen *ebiten.Image) {
-	if !e.Active {
-		return
-	}
-
 	entityPos := ebiten.GeoM{}
 	entityPos.Translate(e.X, e.Y)
 	x, y := e.World.Camera.Position()
 	entityPos.Translate(-x, -y)
 
-	for _, c := range e.Components {
-		if drawer, ok := c.(Drawer); ok {
+	for _, tag := range e.orderedTags {
+		if drawer, ok := e.Components[tag].(Drawer); ok {
 			drawer.Draw(screen, entityPos)
 		}
 	}
