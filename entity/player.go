@@ -1,10 +1,11 @@
 package entity
 
 import (
-	"game/comps/anim"
-	"game/comps/body"
-	"game/comps/stats"
+	"game/comps/basic/anim"
+	"game/comps/basic/body"
+	"game/comps/basic/stats"
 	"game/core"
+	"game/entity/defaults"
 	"game/libs/bump"
 	"game/utils"
 	"math"
@@ -28,25 +29,22 @@ const (
 var PlayerRef *Player
 
 type Player struct {
-	*core.Entity
-	ActorControl
+	*defaults.Actor
 	pad              utils.ControlPack
 	speed, jumpSpeed float64
 }
 
-func (*Player) Tag() string { return "Player" }
-
 func NewPlayer(x, y float64, props map[string]any) *core.Entity {
-	animc := &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
-	bodyc := &body.Comp{MaxX: playerMaxX, Team: body.PlayerTeam}
-	statsc := &stats.Comp{Hud: true, NoDebug: true, Stamina: 65}
 	player := &Player{
-		Entity: NewActorControl(x, y, playerWidth, playerHeight, []string{anim.AttackTag}, animc, bodyc, statsc),
-		pad:    utils.NewControlPack(),
-		speed:  playerSpeed, jumpSpeed: playerJumpSpeed,
+		Actor: defaults.NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag}),
+		pad:   utils.NewControlPack(),
+		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
 	}
+	player.Anim = &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
+	player.Body = &body.Comp{MaxX: playerMaxX, Team: body.PlayerTeam}
+	player.Stats = &stats.Comp{Hud: true, NoDebug: true, Stamina: 65}
+	player.SetupComponents()
 	player.AddComponent(player)
-	player.BindControl(player.Entity)
 	PlayerRef = player
 
 	return player.Entity
@@ -149,7 +147,7 @@ func (p *Player) inputBlocking() {
 }
 
 func (p *Player) OnHurt(other *core.Entity, col *bump.Collision, damage float64) {
-	Hurt(p.Entity, other, damage, nil)
+	defaults.Hurt(p.Entity, other, damage, nil)
 	p.World.Camera.Shake(0.5, 1)
 	p.World.Freeze(0.1)
 }

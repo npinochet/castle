@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"game/assets"
 	"game/comps/ai"
-	"game/comps/anim"
-	"game/comps/body"
-	"game/comps/hitbox"
-	"game/comps/stats"
+	"game/comps/basic/anim"
+	"game/comps/basic/body"
+	"game/comps/basic/hitbox"
+	"game/comps/basic/stats"
 	"game/core"
 	"game/entity"
 	"game/utils"
@@ -35,11 +35,11 @@ import (
 - Rethink Poise mechanic, is shouldn't be a bar that increses with time, it should be more like a health that resets.
 - Implement estus flasks.
 - Implement backstepping (kind of life rolling). (think about adding I frames or not, maybe just shrink the hurtbox).
-- Consider scapping core.Entity all together, use interface{} (pointer) as entities and use ActorControl for everything.
+- Consider scapping core.Entity all together, use interface{} (pointer) as entities and use Actor for everything.
 	Every Comp will have an actor referencing it's owner.
 
 
-- Clean up actor.ManageAnim and body.Vx code, make it sry with player and other ActorControls.
+- Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
 - Add a Timeout system for AI states.
 - Clean up AI code, Make a default AI behaviour for actors if none are present. Make it tweekable with other params maybe.
 - Think of movement accion or states the anim component can have.

@@ -13,8 +13,8 @@ type Item any
 type Slope struct{ L, R float64 } // Rect left and right heights, ([0, 1]) 0 = full height, 1 = zero height.
 type Rect struct {
 	X, Y, W, H float64
-	Priority   int   // Which rects should be evaluated for collision first (Slopes should have higher priority than solid blocks).
-	Slope      Slope // Slope adjusted H accordingly.
+	Priority   int // Which rects should be evaluated for collision first (Slopes should have higher priority than solid blocks).
+	Slope          // Slope adjusted H accordingly.
 }
 type Vec2 struct{ X, Y float64 }
 

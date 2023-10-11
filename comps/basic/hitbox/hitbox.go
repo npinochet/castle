@@ -10,10 +10,7 @@ import (
 	"github.com/lafriks/go-tiled"
 )
 
-const (
-	Tag           = "Hitbox"
-	blockPriority = 1
-)
+const blockPriority = 1
 
 var DebugDraw = false
 
@@ -33,8 +30,6 @@ type Comp struct {
 	hurtBoxes           []*Hitbox
 	debugLastHitbox     bump.Rect
 }
-
-func (c *Comp) Tag() string { return Tag }
 
 func (c *Comp) Init(entity *core.Entity) {
 	c.Entity = entity

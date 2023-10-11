@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	Tag                   = "Stats"
 	defaultHealth         = 100
 	defaultStamina        = 80
 	defaultPoise          = 30
@@ -62,8 +61,6 @@ type Comp struct {
 	poiseTimer                              *time.Timer
 	StaminaRecoverRateMultiplier            float64
 }
-
-func (c *Comp) Tag() string { return Tag }
 
 func (c *Comp) Init(entity *core.Entity) {
 	if c.MaxHealth == 0 {

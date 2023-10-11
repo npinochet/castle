@@ -1,10 +1,11 @@
 package entity
 
 import (
-	"game/comps/body"
-	"game/comps/hitbox"
-	"game/comps/render"
+	"game/comps/basic/body"
+	"game/comps/basic/hitbox"
+	"game/comps/basic/render"
 	"game/core"
+	"game/entity/defaults"
 	"game/libs/bump"
 	"math"
 	"time"
@@ -27,14 +28,12 @@ var (
 )
 
 type Rock struct {
-	core.Entity
+	*core.Entity
 	render *render.Comp
 	body   *body.Comp
 	hitbox *hitbox.Comp
-	owner  *ActorControl
+	owner  *defaults.Actor
 }
-
-func (r *Rock) Tag() string { return "Rock" }
 
 func init() {
 	var err error
@@ -44,7 +43,7 @@ func init() {
 	}
 }
 
-func NewRock(x, y float64, owner *ActorControl) *core.Entity {
+func NewRock(x, y float64, owner *defaults.Actor) *core.Entity {
 	vx, vy := rockMaxVel, 60.0
 	if target := owner.AI.Target; target != nil {
 		tx, ty := target.Position()
@@ -58,7 +57,7 @@ func NewRock(x, y float64, owner *ActorControl) *core.Entity {
 		FilterOut: []*body.Comp{owner.Body},
 	}
 	rock := &Rock{
-		Entity: core.Entity{X: x, Y: y, W: rockSize, H: rockSize},
+		Entity: &core.Entity{X: x, Y: y, W: rockSize, H: rockSize},
 		render: &render.Comp{Image: rockImage, RollingTime: rockRollingTime},
 		body:   body,
 		hitbox: &hitbox.Comp{},
@@ -66,7 +65,7 @@ func NewRock(x, y float64, owner *ActorControl) *core.Entity {
 	}
 	rock.AddComponent(rock.render, body, rock.hitbox, rock)
 
-	return &rock.Entity
+	return rock.Entity
 }
 
 func (r *Rock) Init(entity *core.Entity) {

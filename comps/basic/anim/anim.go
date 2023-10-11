@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	Tag              = "Anim"
 	HurtboxSliceName = "hurtbox"
 	HitboxSliceName  = "hitbox"
 	BlockSliceName   = "blockbox"
@@ -46,9 +45,7 @@ type Comp struct {
 	slices         map[string]map[int]bump.Rect
 }
 
-func (c *Comp) Tag() string { return Tag }
-
-func (c *Comp) Init(entity *core.Entity) {
+func (c *Comp) Init(_ *core.Entity) {
 	var err error
 	if c.Image, _, err = ebitenutil.NewImageFromFile(fmt.Sprintf("%s.png", c.FilesName)); err != nil {
 		log.Fatal(err)

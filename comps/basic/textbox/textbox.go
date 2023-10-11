@@ -2,7 +2,7 @@ package textbox
 
 import (
 	"game/assets"
-	"game/comps/body"
+	"game/comps/basic/body"
 	"game/core"
 	"game/libs/bump"
 	"game/libs/camera"
@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	Tag                          = "TextBox"
 	boxX, defaultBoxY            = 6.0, 30.0
 	boxMarginY, boxMinY, boxMaxY = 5, 25, 96 - boxH - boxMarginY
 	boxInnerW                    = 160
@@ -37,8 +36,6 @@ type Comp struct {
 	active bool
 	camera *camera.Camera
 }
-
-func (c *Comp) Tag() string { return Tag }
 
 func (c *Comp) Init(entity *core.Entity) {
 	c.entity = entity

@@ -22,8 +22,8 @@ type Cooldown struct {
 }
 
 type Action struct {
-	Timeout     Timeout
-	Cooldown    Cooldown
+	Timeout
+	Cooldown
 	Condition   func() bool
 	Next        func() []WeightedState
 	Entry, Exit func()
@@ -38,7 +38,11 @@ type Fsm struct {
 }
 
 func NewFsm(initial State) *Fsm {
-	return &Fsm{Initial: initial, Actions: map[State]*Action{}}
+	return &Fsm{
+		Initial:   initial,
+		Actions:   map[State]*Action{},
+		cooldowns: map[State]float64{},
+	}
 }
 
 func (f *Fsm) SetAction(state State, action *Action) *Fsm {
@@ -66,9 +70,6 @@ func (f *Fsm) update(dt float64) {
 		if f.timer <= 0 {
 			f.setState([]WeightedState{{f.timeoutTarget, 1}})
 		}
-	}
-	if f.cooldowns == nil {
-		f.cooldowns = map[State]float64{}
 	}
 	for state, timer := range f.cooldowns {
 		f.cooldowns[state] -= dt

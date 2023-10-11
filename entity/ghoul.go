@@ -2,10 +2,11 @@ package entity
 
 import (
 	"game/comps/ai"
-	"game/comps/anim"
-	"game/comps/body"
-	"game/comps/stats"
+	"game/comps/basic/anim"
+	"game/comps/basic/body"
+	"game/comps/basic/stats"
 	"game/core"
+	"game/entity/defaults"
 	"game/libs/bump"
 	"strconv"
 )
@@ -21,38 +22,33 @@ const (
 )
 
 type ghoul struct {
-	*core.Entity
-	ActorControl
+	*defaults.Actor
 	rocks int
 }
 
-func (g *ghoul) Tag() string { return "ghoul" }
-
 func NewGhoul(x, y, w, h float64, props *core.Property) *core.Entity {
-	animc := &anim.Comp{FilesName: ghoulAnimFile, OX: ghoulOffsetX, OY: ghoulOffsetY, OXFlip: ghoulOffsetFlip}
-	animc.FlipX = props.FlipX
-
-	body := &body.Comp{MaxX: ghoulMaxSpeed}
-
 	rocks, _ := strconv.Atoi(props.Custom["rocks"])
 	attackTags := []string{"AttackShort", "AttackLong"}
 	ghoul := &ghoul{
-		Entity: NewActorControl(x, y, ghoulWidth, ghoulHeight, attackTags, animc, body, &stats.Comp{MaxHealth: ghoulHealth, MaxPoise: ghoulDamage}),
-		rocks:  rocks,
+		Actor: defaults.NewActor(x, y, ghoulWidth, ghoulHeight, attackTags),
+		rocks: rocks,
 	}
-	ghoul.AddComponent(ghoul)
-	ghoul.BindControl(ghoul.Entity)
+	ghoul.Anim = &anim.Comp{FilesName: ghoulAnimFile, OX: ghoulOffsetX, OY: ghoulOffsetY, OXFlip: ghoulOffsetFlip, FlipX: props.FlipX}
+	ghoul.Body = &body.Comp{MaxX: ghoulMaxSpeed}
+	ghoul.Stats = &stats.Comp{MaxHealth: ghoulHealth, MaxPoise: ghoulDamage}
 	ghoul.Control.Speed = ghoulSpeed
 
 	var view bump.Rect
-	if props.View != nil {
-		view = bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
+	if v := props.View; v != nil {
+		view = bump.NewRect(v.X, v.Y, v.Width, v.Height)
 	}
 	if props.AI == "poacher" {
 		ghoul.setupPoacherAI(view)
 	} else {
 		ghoul.setupDefaultAI(view)
 	}
+	ghoul.SetupComponents()
+	ghoul.AddComponent(ghoul)
 
 	return ghoul.Entity
 }
@@ -78,7 +74,7 @@ func (g *ghoul) ThrowRock() {
 	g.Anim.OnFrames(func(frame int) {
 		if frame == ghoulThrowFrame {
 			g.Stats.AddStamina(-rockDamage)
-			g.World.AddEntity(NewRock(g.X-2, g.Y-4, &g.ActorControl))
+			g.World.AddEntity(NewRock(g.X-2, g.Y-4, g.Actor))
 			g.rocks--
 			g.Anim.OnFrames(nil)
 		}
@@ -86,11 +82,11 @@ func (g *ghoul) ThrowRock() {
 }
 
 func (g *ghoul) setupDefaultAI(view bump.Rect) {
-	aiConfig := DefaultAIConfig()
-	aiConfig.viewRect = view
-	aiConfig.PaceReact = []ai.WeightedState{{"AttackShort", 1}, {"Wait", 0}}
-	aiConfig.Attacks = []Attack{{"AttackShort", ghoulDamage, 20}, {"AttackLong", ghoulDamage, 40}}
-	aiConfig.CombatOptions = []ai.WeightedState{
+	config := defaults.DefaultAIConfig()
+	config.ViewRect = view
+	config.PaceReact = []ai.WeightedState{{"AttackShort", 1}, {"Wait", 0}}
+	config.Attacks = []defaults.Attack{{"AttackShort", ghoulDamage, 20}, {"AttackLong", ghoulDamage, 40}}
+	config.CombatOptions = []ai.WeightedState{
 		{"Pursuit", 100},
 		{"Pace", 2},
 		{"Wait", 1},
@@ -99,28 +95,24 @@ func (g *ghoul) setupDefaultAI(view bump.Rect) {
 		{"AttackShort", 1},
 		{"Throw", 1.5},
 	}
+	g.SetDefaultAI(config)
 
-	g.Control.Speed, g.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
-	g.SetDefaultAI(aiConfig)
-
-	g.AI.Fsm.SetAction("Throw", g.AI.AnimBuilder("Throw", nil).
+	g.AI.Fsm.SetAction("Throw", g.AnimBuilder("Throw", nil).
 		SetCooldown(ai.Cooldown{2, 3}).
-		AddCondition(g.AI.EnoughStamina(rockDamage)).
+		AddCondition(g.EnoughStamina(rockDamage)).
 		AddCondition(func() bool { return g.rocks > 0 }).
-		AddCondition(g.AI.OutRangeFunc(aiConfig.backUpDist)).
+		AddCondition(g.OutRangeFunc(config.BackUpDist)).
 		SetEntry(func() { g.ThrowRock() }).
 		Build())
 }
 
 func (g *ghoul) setupPoacherAI(view bump.Rect) {
-	aiConfig := DefaultAIConfig()
-	aiConfig.viewRect = view
-	aiConfig.CombatOptions = []ai.WeightedState{{"Wait", 0}, {"Throw", 1}}
+	config := defaults.DefaultAIConfig()
+	config.ViewRect = view
+	config.CombatOptions = []ai.WeightedState{{"Wait", 0}, {"Throw", 1}}
+	g.SetDefaultAI(config)
 
-	g.Control.Speed, g.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
-	g.SetDefaultAI(aiConfig)
-
-	g.AI.Fsm.SetAction("Wait", g.AI.WaitBuilder(2, 0).
+	g.AI.Fsm.SetAction("Wait", g.WaitBuilder(2, 0).
 		AddReaction(func() bool {
 			if g.rocks <= 0 {
 				g.setupDefaultAI(view)
@@ -131,10 +123,10 @@ func (g *ghoul) setupPoacherAI(view bump.Rect) {
 			return false
 		}, nil).
 		Build())
-	g.AI.Fsm.SetAction("Throw", g.AI.AnimBuilder("Throw", nil).
+	g.AI.Fsm.SetAction("Throw", g.AnimBuilder("Throw", nil).
 		SetCooldown(ai.Cooldown{1, 0}).
 		AddCondition(func() bool { return g.rocks > 0 }).
-		AddCondition(g.AI.OutRangeFunc(aiConfig.backUpDist)).
+		AddCondition(g.OutRangeFunc(config.BackUpDist)).
 		SetEntry(func() { g.ThrowRock() }).
 		Build())
 }

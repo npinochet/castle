@@ -2,9 +2,10 @@ package entity
 
 import (
 	"game/comps/ai"
-	"game/comps/anim"
-	"game/comps/stats"
+	"game/comps/basic/anim"
+	"game/comps/basic/stats"
 	"game/core"
+	"game/entity/defaults"
 	"game/libs/bump"
 )
 
@@ -16,22 +17,12 @@ const (
 	crawlerHealth, crawlerDamage                      = 30, 20
 )
 
-type crawler struct {
-	*core.Entity
-	ActorControl
-}
-
-func (c *crawler) Tag() string { return "Crawler" }
+type crawler struct{ *defaults.Actor }
 
 func NewCrawler(x, y, w, h float64, props *core.Property) *core.Entity {
-	animc := &anim.Comp{FilesName: crawlerAnimFile, OX: crawlerOffsetX, OY: crawlerOffsetY, OXFlip: crawlerOffsetFlip}
-	animc.FlipX = props.FlipX
-
-	crawler := &crawler{
-		Entity: NewActorControl(x, y, crawlerWidth, crawlerHeight, []string{"Attack"}, animc, nil, &stats.Comp{MaxPoise: crawlerDamage, MaxHealth: crawlerHealth}),
-	}
-	crawler.AddComponent(crawler)
-	crawler.BindControl(crawler.Entity)
+	crawler := &crawler{Actor: defaults.NewActor(x, y, crawlerWidth, crawlerHeight, []string{"Attack"})}
+	crawler.Anim = &anim.Comp{FilesName: crawlerAnimFile, OX: crawlerOffsetX, OY: crawlerOffsetY, OXFlip: crawlerOffsetFlip, FlipX: props.FlipX}
+	crawler.Stats = &stats.Comp{MaxPoise: crawlerDamage, MaxHealth: crawlerHealth}
 	crawler.Control.Speed = crawlerSpeed
 
 	var view bump.Rect
@@ -43,6 +34,8 @@ func NewCrawler(x, y, w, h float64, props *core.Property) *core.Entity {
 	} else {
 		crawler.Control.Speed = 0
 	}
+	crawler.SetupComponents()
+	crawler.AddComponent(crawler)
 
 	return crawler.Entity
 }
@@ -60,12 +53,12 @@ func (c *crawler) Update(dt float64) {
 }
 
 func (c *crawler) setupAI(view bump.Rect) {
-	aiConfig := DefaultAIConfig()
-	aiConfig.viewRect = view
-	aiConfig.PaceReact = []ai.WeightedState{{"Attack", 1}, {"Wait", 0}}
-	aiConfig.Attacks = []Attack{{"Attack", crawlerDamage, 20}}
-	aiConfig.CombatOptions = []ai.WeightedState{{"Pursuit", 100}, {"Pace", 2}, {"Wait", 1}, {"RunAttack", 1}, {"Attack", 1}}
+	config := defaults.DefaultAIConfig()
+	config.ViewRect = view
+	config.PaceReact = []ai.WeightedState{{"Attack", 1}, {"Wait", 0}}
+	config.Attacks = []defaults.Attack{{"Attack", crawlerDamage, 20}}
+	config.CombatOptions = []ai.WeightedState{{"Pursuit", 100}, {"Pace", 2}, {"Wait", 1}, {"RunAttack", 1}, {"Attack", 1}}
 
 	c.Control.Speed, c.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
-	c.SetDefaultAI(aiConfig)
+	c.SetDefaultAI(config)
 }

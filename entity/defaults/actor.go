@@ -1,12 +1,12 @@
-package entity
+package defaults
 
 import (
 	"game/comps/ai"
-	"game/comps/anim"
-	"game/comps/body"
+	"game/comps/basic/anim"
+	"game/comps/basic/body"
+	"game/comps/basic/hitbox"
+	"game/comps/basic/stats"
 	"game/comps/control"
-	"game/comps/hitbox"
-	"game/comps/stats"
 	"game/core"
 	"game/libs/bump"
 )
@@ -17,7 +17,8 @@ const (
 	defaultMaxXDiv, defaultMaxXRecoverRateDiv = 2, 3
 )
 
-type ActorControl struct {
+type Actor struct {
+	*core.Entity
 	Control *control.Comp
 	Body    *body.Comp
 	Hitbox  *hitbox.Comp
@@ -26,45 +27,34 @@ type ActorControl struct {
 	AI      *ai.Comp
 }
 
-func (a *ActorControl) BindControl(entity *core.Entity) {
-	a.Control = core.GetComponent[*control.Comp](entity)
-	a.Body = core.GetComponent[*body.Comp](entity)
-	a.Hitbox = core.GetComponent[*hitbox.Comp](entity)
-	a.Anim = core.GetComponent[*anim.Comp](entity)
-	a.Stats = core.GetComponent[*stats.Comp](entity)
-
-	a.AI = core.GetComponent[*ai.Comp](entity)
-}
-
-func NewActorControl(x, y, w, h float64, attackTags []string, animc *anim.Comp, bodyc *body.Comp, stat *stats.Comp) *core.Entity {
-	if bodyc == nil {
-		bodyc = &body.Comp{}
+func NewActor(x, y, w, h float64, attackTags []string) *Actor {
+	a := &Actor{
+		Entity: &core.Entity{X: x, Y: y, W: w, H: h},
+		Control: &control.Comp{
+			BlockMaxXDiv: defaultMaxXDiv, BlockRecoverRateDiv: defaultMaxXRecoverRateDiv,
+			AttackPushForce: defaultAttackPushForce,
+			ReactForce:      defaultReactForce,
+			AttackTags:      attackTags,
+		},
+		Body:   &body.Comp{},
+		Hitbox: &hitbox.Comp{},
+		Anim:   &anim.Comp{Fsm: anim.DefaultFsm()},
+		Stats:  &stats.Comp{},
+		AI:     &ai.Comp{},
 	}
-	if stat == nil {
-		stat = &stats.Comp{}
-	}
-	if animc.Fsm == nil {
-		animc.Fsm = anim.DefaultFsm()
-	}
-	hitboxc := &hitbox.Comp{}
-	controlc := &control.Comp{
-		BlockMaxXDiv: defaultMaxXDiv, BlockRecoverRateDiv: defaultMaxXRecoverRateDiv,
-		AttackPushForce: defaultAttackPushForce,
-		ReactForce:      defaultReactForce,
-		AttackTags:      attackTags,
-	}
-	aic := &ai.Comp{}
-
-	a := &core.Entity{X: x, Y: y, W: w, H: h}
-	a.AddComponent(hitboxc, bodyc, animc, stat, controlc, aic)
-	aic.Entity = a
-
-	animc.Fsm.Exit[anim.ConsumeTag] = func(_ *anim.Comp) { controlc.ResetState(anim.IdleTag) }
-	animc.Fsm.Exit[anim.ConsumeTag] = func(_ *anim.Comp) { controlc.ResetState(anim.IdleTag) }
-	hitboxc.BlockFunc = func(other *core.Entity, col *bump.Collision, damage float64) { Block(a, other, damage, nil) }
-	hitboxc.HurtFunc = func(other *core.Entity, col *bump.Collision, damage float64) { Hurt(a, other, damage, nil) }
 
 	return a
+}
+
+func (a *Actor) SetupComponents() {
+	a.AddComponent(a.Hitbox, a.Body, a.Anim, a.Stats, a.Control, a.AI)
+
+	if a.Anim != nil && a.Anim.Fsm == nil {
+		a.Anim.Fsm = anim.DefaultFsm()
+		a.Anim.Fsm.Exit[anim.ConsumeTag] = func(_ *anim.Comp) { a.Control.ResetState(anim.IdleTag) }
+	}
+	a.Hitbox.BlockFunc = func(other *core.Entity, col *bump.Collision, damage float64) { Block(a.Entity, other, damage, nil) }
+	a.Hitbox.HurtFunc = func(other *core.Entity, col *bump.Collision, damage float64) { Hurt(a.Entity, other, damage, nil) }
 }
 
 func Hurt(a, other *core.Entity, damage float64, poiseBreak func(force, damage float64)) {

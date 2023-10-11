@@ -1,31 +1,24 @@
 package entity
 
 import (
-	"game/comps/anim"
-	"game/comps/stats"
+	"game/comps/basic/anim"
+	"game/comps/basic/stats"
 	"game/core"
+	"game/entity/defaults"
 )
 
 const knightAnimFile = "assets/knight"
 
-type Knight struct {
-	*core.Entity
-	ActorControl
-}
-
-func (k *Knight) Tag() string { return "Knight" }
+type Knight struct{ *defaults.Actor }
 
 func NewKnight(x, y, w, h float64, props *core.Property) *core.Entity {
 	speed := 100.0
-	animc := &anim.Comp{FilesName: knightAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
-	animc.FlipX = props.FlipX
-
-	knight := &Knight{
-		Entity: NewActorControl(x, y, playerWidth, playerHeight, []string{anim.AttackTag}, animc, nil, &stats.Comp{MaxPoise: 25}),
-	}
-	knight.AddComponent(knight)
-	knight.BindControl(knight.Entity)
+	knight := &Knight{Actor: defaults.NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag})}
+	knight.Anim = &anim.Comp{FilesName: knightAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip, FlipX: props.FlipX}
+	knight.Stats = &stats.Comp{MaxPoise: 25}
 	knight.Control.Speed = speed
+	knight.SetupComponents()
+	knight.AddComponent(knight)
 
 	knight.SetDefaultAI(nil)
 

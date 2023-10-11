@@ -1,16 +1,12 @@
 package control
 
 import (
-	"game/comps/anim"
-	"game/comps/body"
-	"game/comps/hitbox"
-	"game/comps/stats"
+	"game/comps/basic/anim"
+	"game/comps/basic/body"
+	"game/comps/basic/hitbox"
+	"game/comps/basic/stats"
 	"game/core"
 	"game/utils"
-)
-
-const (
-	Tag = "Control"
 )
 
 type Comp struct {
@@ -25,8 +21,6 @@ type Comp struct {
 	ReactForce, AttackPushForce       float64
 	weightSave                        float64
 }
-
-func (c *Comp) Tag() string { return Tag }
 
 func (c *Comp) SetSpeed(speed, maxX float64) {
 	c.Speed, c.Body.MaxX = speed, maxX
@@ -79,7 +73,7 @@ func (c *Comp) PausedState() bool {
 	return utils.Contains(append(c.AttackTags, anim.StaggerTag, anim.ConsumeTag), c.Anim.State)
 }
 
-func (c *Comp) ResetState(state string) {
+func (c *Comp) ResetState(state string) { // TODO: I hate ResetState, kill it somehow, fucking control comp
 	c.ClimbOff()
 	c.ShieldDown()
 	c.Body.MaxXMultiplier = 0

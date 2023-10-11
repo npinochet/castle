@@ -1,10 +1,12 @@
 package core
 
 import (
+	"reflect"
+
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type Component interface{ Tag() string } // Or use any with tag = reflect.TypeOf((var x T)).String().
+type Component any // Or use any with tag = reflect.TypeOf((var x T)).String().
 
 type Initializer interface{ Init(*Entity) }
 type Updater interface{ Update(dt float64) }
@@ -28,8 +30,11 @@ func (e *Entity) AddComponent(components ...Component) Component {
 		e.Components = map[string]Component{}
 	}
 	for _, c := range components {
-		e.Components[c.Tag()] = c
-		e.orderedTags = append(e.orderedTags, c.Tag())
+		tag := reflect.TypeOf(c).String()
+		if e.Components[tag] == nil {
+			e.orderedTags = append(e.orderedTags, tag)
+		}
+		e.Components[tag] = c
 	}
 
 	return components[0]
@@ -37,7 +42,7 @@ func (e *Entity) AddComponent(components ...Component) Component {
 
 func (e *Entity) AddComponentWithTag(component Component, tag string) (Component, bool) {
 	if e.Components[tag] != nil {
-		return nil, false
+		return e.Components[tag], false
 	}
 	e.Components[tag] = component
 	e.orderedTags = append(e.orderedTags, tag)
@@ -47,8 +52,9 @@ func (e *Entity) AddComponentWithTag(component Component, tag string) (Component
 
 // func (e *Entity) GetComponent[T Component](tag string) Component { return e.Components[tag] }.
 func GetComponent[T Component](entity *Entity) T {
-	var zero T
-	comp, _ := entity.Components[zero.Tag()].(T)
+	var t T
+	tag := reflect.TypeOf(t).String()
+	comp, _ := entity.Components[tag].(T)
 
 	return comp
 }
