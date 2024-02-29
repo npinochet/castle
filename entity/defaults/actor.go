@@ -55,6 +55,7 @@ func (a *Actor) SetupComponents() {
 	}
 	a.Hitbox.BlockFunc = func(other *core.Entity, col *bump.Collision, damage float64) { Block(a.Entity, other, damage, nil) }
 	a.Hitbox.HurtFunc = func(other *core.Entity, col *bump.Collision, damage float64) { Hurt(a.Entity, other, damage, nil) }
+	a.Hitbox.ParryBlocking = func() bool { return a.Anim.State == anim.ParryBlockTag }
 }
 
 func Hurt(a, other *core.Entity, damage float64, poiseBreak func(force, damage float64)) {
@@ -66,7 +67,7 @@ func Hurt(a, other *core.Entity, damage float64, poiseBreak func(force, damage f
 	controlc.Stats.AddHealth(-damage)
 
 	force := controlc.ReactForce / 2
-	if controlc.X > other.X {
+	if a.X < other.X {
 		force *= -1
 	}
 
@@ -77,12 +78,12 @@ func Hurt(a, other *core.Entity, damage float64, poiseBreak func(force, damage f
 				controlc.Stagger(force)
 			}
 		}
-		poiseBreak(controlc.ReactForce, damage)
+		poiseBreak(force*2, damage)
 	} else {
 		if controlc.Anim.State == anim.ConsumeTag {
 			controlc.Stagger(force)
 		} else {
-			controlc.Body.Vx -= force
+			controlc.Body.Vx += force
 		}
 	}
 

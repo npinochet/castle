@@ -11,7 +11,7 @@ const knightAnimFile = "assets/knight"
 
 type Knight struct{ *defaults.Actor }
 
-func NewKnight(x, y, w, h float64, props *core.Property) *core.Entity {
+func NewKnight(x, y, _, _ float64, props *core.Property) *core.Entity {
 	speed := 100.0
 	knight := &Knight{Actor: defaults.NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag})}
 	knight.Anim = &anim.Comp{FilesName: knightAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip, FlipX: props.FlipX}
@@ -25,7 +25,7 @@ func NewKnight(x, y, w, h float64, props *core.Property) *core.Entity {
 	return knight.Entity
 }
 
-func (k *Knight) Init(entity *core.Entity) {
+func (k *Knight) Init(_ *core.Entity) {
 	hurtbox, err := k.Anim.GetFrameHitbox(anim.HurtboxSliceName)
 	if err != nil {
 		panic("no hurtbox found")

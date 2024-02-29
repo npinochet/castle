@@ -34,7 +34,7 @@ type Player struct {
 	speed, jumpSpeed float64
 }
 
-func NewPlayer(x, y float64, props map[string]any) *core.Entity {
+func NewPlayer(x, y float64, _ map[string]any) *core.Entity {
 	player := &Player{
 		Actor: defaults.NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag}),
 		pad:   utils.NewControlPack(),
@@ -50,7 +50,7 @@ func NewPlayer(x, y float64, props map[string]any) *core.Entity {
 	return player.Entity
 }
 
-func (p *Player) Init(entity *core.Entity) {
+func (p *Player) Init(_ *core.Entity) {
 	p.Hitbox.HurtFunc = p.OnHurt
 	hurtbox, err := p.Anim.GetFrameHitbox(anim.HurtboxSliceName)
 	if err != nil {
@@ -104,7 +104,7 @@ func (p *Player) input(dt float64) { // TODO: refactor this
 		p.Body.Vy = -p.jumpSpeed
 	}
 
-	// TODO: Debug, remove later
+	// TODO: Debug, remove later.
 	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
 		p.Stats.Heal = p.Stats.MaxHeal
 	}
@@ -146,7 +146,7 @@ func (p *Player) inputBlocking() {
 	}
 }
 
-func (p *Player) OnHurt(other *core.Entity, col *bump.Collision, damage float64) {
+func (p *Player) OnHurt(other *core.Entity, _ *bump.Collision, damage float64) {
 	defaults.Hurt(p.Entity, other, damage, nil)
 	p.World.Camera.Shake(0.5, 1)
 	p.World.Freeze(0.1)

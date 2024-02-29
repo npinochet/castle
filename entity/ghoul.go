@@ -26,7 +26,7 @@ type ghoul struct {
 	rocks int
 }
 
-func NewGhoul(x, y, w, h float64, props *core.Property) *core.Entity {
+func NewGhoul(x, y, _, _ float64, props *core.Property) *core.Entity {
 	rocks, _ := strconv.Atoi(props.Custom["rocks"])
 	attackTags := []string{"AttackShort", "AttackLong"}
 	ghoul := &ghoul{
@@ -53,7 +53,7 @@ func NewGhoul(x, y, w, h float64, props *core.Property) *core.Entity {
 	return ghoul.Entity
 }
 
-func (g *ghoul) Init(entity *core.Entity) {
+func (g *ghoul) Init(_ *core.Entity) {
 	hurtbox, err := g.Anim.GetFrameHitbox(anim.HurtboxSliceName)
 	if err != nil {
 		panic("no hurtbox found")
@@ -67,17 +67,13 @@ func (g *ghoul) Update(dt float64) {
 
 func (g *ghoul) ThrowRock() {
 	tag := "Throw"
-	if g.Stats.Stamina <= 0 || g.Anim.State == tag || g.Anim.State == anim.StaggerTag {
+	if g.Anim.State == tag || g.Anim.State == anim.StaggerTag {
 		return
 	}
 	g.Control.ResetState(tag)
-	g.Anim.OnFrames(func(frame int) {
-		if frame == ghoulThrowFrame {
-			g.Stats.AddStamina(-rockDamage)
-			g.World.AddEntity(NewRock(g.X-2, g.Y-4, g.Actor))
-			g.rocks--
-			g.Anim.OnFrames(nil)
-		}
+	g.Anim.OnFrame(ghoulThrowFrame, func() {
+		g.World.AddEntity(NewRock(g.X-2, g.Y-4, g.Actor))
+		g.rocks--
 	})
 }
 
@@ -85,7 +81,7 @@ func (g *ghoul) setupDefaultAI(view bump.Rect) {
 	config := defaults.DefaultAIConfig()
 	config.ViewRect = view
 	config.PaceReact = []ai.WeightedState{{"AttackShort", 1}, {"Wait", 0}}
-	config.Attacks = []defaults.Attack{{"AttackShort", ghoulDamage, 20}, {"AttackLong", ghoulDamage, 40}}
+	config.Attacks = []defaults.Attack{{"AttackShort", ghoulDamage}, {"AttackLong", ghoulDamage}}
 	config.CombatOptions = []ai.WeightedState{
 		{"Pursuit", 100},
 		{"Pace", 2},
@@ -99,7 +95,6 @@ func (g *ghoul) setupDefaultAI(view bump.Rect) {
 
 	g.AI.Fsm.SetAction("Throw", g.AnimBuilder("Throw", nil).
 		SetCooldown(ai.Cooldown{2, 3}).
-		AddCondition(g.EnoughStamina(rockDamage)).
 		AddCondition(func() bool { return g.rocks > 0 }).
 		AddCondition(g.OutRangeFunc(config.BackUpDist)).
 		SetEntry(func() { g.ThrowRock() }).

@@ -14,6 +14,14 @@ const blockPriority = 1
 
 var DebugDraw = false
 
+type BlockType int
+
+const (
+	NoBlock BlockType = iota
+	Block
+	ParryBlock
+)
+
 type HitFunc func(*core.Entity, *bump.Collision, float64)
 
 type Hitbox struct {
@@ -25,7 +33,7 @@ type Hitbox struct {
 type Comp struct {
 	*core.Entity
 	HurtFunc, BlockFunc HitFunc
-	ParryBlock          bool
+	ParryBlocking       func() bool
 	space               *bump.Space
 	hurtBoxes           []*Hitbox
 	debugLastHitbox     bump.Rect
@@ -36,7 +44,7 @@ func (c *Comp) Init(entity *core.Entity) {
 	c.space = entity.World.Space
 }
 
-func (c *Comp) Update(dt float64) {
+func (c *Comp) Update(_ float64) {
 	for _, box := range c.hurtBoxes {
 		p := bump.Vec2{X: c.Entity.X + box.rect.X, Y: c.Entity.Y + box.rect.Y}
 		c.space.Move(box, p, bump.NilFilter)
@@ -89,7 +97,7 @@ func (c *Comp) PopHitbox() *Hitbox {
 	return box
 }
 
-func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) (bool, []*Comp) {
+func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) (BlockType, []*Comp) {
 	c.debugLastHitbox = rect
 	rect.X += c.Entity.X
 	rect.Y += c.Entity.Y
@@ -101,7 +109,7 @@ func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) 
 	}
 
 	var contacted []*Comp
-	blocked := false
+	blocked := NoBlock
 	doesHit := map[*Comp]hitInfo{}
 	for _, col := range cols {
 		if other, ok := col.Other.(*Hitbox); ok {
@@ -111,12 +119,17 @@ func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) 
 			contacted = append(contacted, other.comp)
 			if other.block {
 				doesHit[other.comp] = hitInfo{false, col}
-				blocked = true
+				if blocked == NoBlock {
+					blocked = Block
+				}
+				if other.comp.ParryBlocking() {
+					blocked = ParryBlock
+				}
 			} else if _, set := doesHit[other.comp]; !set {
 				doesHit[other.comp] = hitInfo{true, col}
 			}
-		} else if _, ok := col.Other.(*tiled.Object); ok {
-			blocked = true // TODO: Should not stagger when hitting slope
+		} else if _, ok := col.Other.(*tiled.Object); ok && blocked == NoBlock {
+			blocked = Block // TODO: Should not stagger when hitting slope
 		}
 	}
 

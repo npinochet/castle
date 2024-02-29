@@ -21,12 +21,18 @@ const (
 
 type skeleman struct{ *defaults.Actor }
 
-func NewSkeleman(x, y, w, h float64, props *core.Property) *core.Entity {
+func NewSkeleman(x, y, _, _ float64, props *core.Property) *core.Entity {
 	attackTags := []string{"AttackShort", "AttackLong"}
 	skeleman := &skeleman{
 		Actor: defaults.NewActor(x, y, skelemanWidth, skelemanHeight, attackTags),
 	}
-	skeleman.Anim = &anim.Comp{FilesName: skelemanAnimFile, OX: skelemanOffsetX, OY: skelemanOffsetY, OXFlip: skelemanOffsetFlip, FlipX: props.FlipX}
+	skeleman.Anim = &anim.Comp{
+		FilesName: skelemanAnimFile,
+		OX:        skelemanOffsetX,
+		OY:        skelemanOffsetY,
+		OXFlip:    skelemanOffsetFlip,
+		FlipX:     props.FlipX,
+	}
 	skeleman.Stats = &stats.Comp{MaxPoise: skelemanPoise}
 	skeleman.Control.Speed = skelemanSpeed
 
@@ -72,10 +78,10 @@ func (s *skeleman) setupAI(view bump.Rect) {
 	aiConfig := defaults.DefaultAIConfig()
 	aiConfig.ViewRect = view
 	aiConfig.PaceReact = []ai.WeightedState{{"AttackShort", 1}, {"Wait", 0}}
-	jumpAttack := defaults.Attack{"AttackJump", skelemanDamage, 30}
+	jumpAttack := defaults.Attack{"AttackJump", skelemanDamage}
 	aiConfig.Attacks = []defaults.Attack{
-		{"AttackShort", skelemanDamage, 20},
-		{"AttackLong", skelemanDamage / 2, 40},
+		{"AttackShort", skelemanDamage},
+		{"AttackLong", skelemanDamage / 2},
 		jumpAttack,
 	}
 	aiConfig.CombatOptions = []ai.WeightedState{
@@ -93,8 +99,7 @@ func (s *skeleman) setupAI(view bump.Rect) {
 
 	s.AI.Fsm.SetAction(ai.State("AttackJump"), s.AnimBuilder("AttackShort", nil).
 		SetCooldown(ai.Cooldown{1.5, 2.5}).
-		AddCondition(s.EnoughStamina(jumpAttack.StaminaDamage)).
-		SetEntry(func() { s.AttackJump(jumpAttack.Damage, jumpAttack.StaminaDamage) }).
+		SetEntry(func() { s.AttackJump(jumpAttack.Damage, 0) }).
 		SetExit(func() { s.Body.MaxX = skelemanMaxSpeed }).
 		Build())
 }

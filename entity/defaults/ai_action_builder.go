@@ -69,6 +69,7 @@ func (ab *ActionBuilder) Build() *ai.Action {
 					return false
 				}
 			}
+
 			return true
 		},
 		Next: func() []ai.WeightedState {
@@ -146,7 +147,7 @@ func (a *Actor) PaceBuilder(backUpDist, reactDist, speed, maxSpeed float64, reac
 
 func (a *Actor) AnimBuilder(animTag string, nextStates []ai.WeightedState) *ActionBuilder {
 	builder := &ActionBuilder{}
-	builder.AddReaction(func() bool { return a.Anim.State != animTag }, nextStates) // panic
+	builder.AddReaction(func() bool { return a.Anim.State != animTag }, nextStates)
 
 	return builder
 }
@@ -173,10 +174,6 @@ func (a *Actor) InRangeFunc(maxDist float64) func() bool {
 
 func (a *Actor) OutRangeFunc(maxDist float64) func() bool {
 	return func() bool { return !a.InTargetRange(0, maxDist) }
-}
-
-func (a *Actor) EnoughStamina(minStamina float64) func() bool {
-	return func() bool { return a.Stats.Stamina >= minStamina }
 }
 
 func (a *Actor) SetSpeedFunc(speed, maxSpeed float64) func() {

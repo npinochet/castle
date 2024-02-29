@@ -6,6 +6,7 @@ import (
 	"game/comps/basic/hitbox"
 	"game/comps/basic/stats"
 	"game/core"
+	"game/libs/bump"
 	"game/utils"
 )
 
@@ -22,9 +23,7 @@ type Comp struct {
 	weightSave                        float64
 }
 
-func (c *Comp) SetSpeed(speed, maxX float64) {
-	c.Speed, c.Body.MaxX = speed, maxX
-}
+func (c *Comp) SetSpeed(speed, maxX float64) { c.Speed, c.Body.MaxX = speed, maxX }
 
 func (c *Comp) Init(e *core.Entity) {
 	c.Entity = e
@@ -36,7 +35,7 @@ func (c *Comp) Init(e *core.Entity) {
 }
 
 func (c *Comp) ManageAnim() {
-	// TODO: Make more general, maybe add speed in the mix
+	// TODO: Make more general, maybe add speed in the mix.
 	if state := c.Anim.State; state == anim.IdleTag || state == anim.WalkTag {
 		nextState := anim.IdleTag
 		if c.Body.Vx != 0 {
@@ -45,7 +44,6 @@ func (c *Comp) ManageAnim() {
 		c.Anim.SetState(nextState)
 	}
 	c.Stats.Pause = c.PausedState()
-	c.Hitbox.ParryBlock = c.Anim.State == anim.ParryBlockTag
 }
 
 func (c *Comp) SimpleUpdate(dt float64, target *core.Entity) {
@@ -81,60 +79,54 @@ func (c *Comp) ResetState(state string) { // TODO: I hate ResetState, kill it so
 	c.Anim.SetState(state)
 }
 
+// TODO: This is a mess...
 func (c *Comp) Attack(attackTag string, damage, staminaDamage float64) {
 	if c.PausedState() || c.Stats.Stamina <= 0 {
 		return
 	}
-	force := -c.AttackPushForce
-	if c.Anim.FlipX {
-		force *= -1
-	}
 	c.ResetState(attackTag)
 
 	var contacted []*hitbox.Comp
-	var once, blockForceOnce, blocked bool
-	//var freezeOnce bool
-	c.Anim.OnFrames(func(frame int) {
-		hitbox, err := c.Anim.GetFrameHitbox(anim.HitboxSliceName)
-		if err != nil {
+	var once bool
+	c.Anim.OnHitboxUpdate(anim.HitboxSliceName, func(hitboxRect bump.Rect, newHitbox bool) {
+		if newHitbox {
 			contacted = nil
-
-			return
 		}
-
-		blocked, contacted = c.Hitbox.HitFromHitBox(hitbox, damage, contacted)
+		var blocked hitbox.BlockType
+		blocked, contacted = c.Hitbox.HitFromHitBox(hitboxRect, damage, contacted)
 		/*if len(contacted) > 0 && c.Entity == entity.PlayerRef.Entity && !freezeOnce {
 			freezeOnce = true
 			c.World.Freeze(0.1)
 			c.World.Camera.Shake(0.1, 1)
 		}*/
-		if blocked && !blockForceOnce {
-			blockForceOnce = true
+		if blocked != hitbox.NoBlock {
 			blockForce := c.ReactForce / 4
+			if c.Anim.FlipX {
+				blockForce *= -1
+			}
 			if !once {
 				blockForce *= 2
 			}
-			c.Body.Vx -= blockForce
-			for _, other := range contacted {
-				// Find a better way to refactor this behaviour
-				if other.ParryBlock {
-					c.Stats.AddPoise(-damage)
-					if c.Stats.Poise <= 0 {
-						force := c.ReactForce / 2
-						if c.X > other.Entity.X {
-							force *= -1
-						}
-						c.Stagger(force * (damage / c.Stats.MaxHealth))
+			c.Body.Vx += blockForce
+			if blocked == hitbox.ParryBlock {
+				c.Stats.AddPoise(-damage)
+				if c.Stats.Poise <= 0 {
+					force := -c.ReactForce / 2
+					if c.Anim.FlipX {
+						force *= -1
 					}
-
-					break
+					c.Stagger(force * (damage / c.Stats.MaxHealth))
 				}
 			}
 		}
 		if !once {
-			c.Stats.AddStamina(-staminaDamage)
-			c.Body.Vx += force
 			once = true
+			c.Stats.AddStamina(-staminaDamage)
+			force := c.AttackPushForce
+			if c.Anim.FlipX {
+				force *= -1
+			}
+			c.Body.Vx -= force
 		}
 	})
 }
@@ -168,18 +160,15 @@ func (c *Comp) Heal(effectFrame int, amount float64) {
 	}
 	c.ResetState(anim.ConsumeTag)
 	c.Body.MaxXMultiplier = -1
-	c.Anim.OnFrames(func(frame int) {
-		if frame == effectFrame {
-			c.Anim.OnFrames(nil)
-			c.Stats.AddHeal(-1)
-			c.Stats.AddHealth(amount)
-		}
+	c.Anim.OnFrame(effectFrame, func() {
+		c.Stats.AddHeal(-1)
+		c.Stats.AddHealth(amount)
 	})
 }
 
 func (c *Comp) Stagger(force float64) {
 	c.ResetState(anim.StaggerTag)
-	c.Body.Vx = -force
+	c.Body.Vx = force
 }
 
 func (c *Comp) ShieldUp() {

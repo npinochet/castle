@@ -17,7 +17,7 @@ const (
 
 type gram struct{ *defaults.Actor }
 
-func NewGram(x, y, w, h float64, props *core.Property) *core.Entity {
+func NewGram(x, y, _, _ float64, props *core.Property) *core.Entity {
 	gram := &gram{Actor: defaults.NewActor(x, y, gramWidth, gramHeight, nil)}
 	gram.Anim = &anim.Comp{FilesName: gramAnimFile, OX: gramOffsetX, OY: gramOffsetY, OXFlip: gramOffsetFlip, FlipX: props.FlipX}
 	gram.Body = &body.Comp{Unmovable: true}

@@ -38,7 +38,7 @@ func (b *Block) Init(entity *core.Entity) {
 	b.hitbox.PushHitbox(bump.Rect{X: entity.X, Y: entity.Y, W: blockSize, H: blockSize}, false)
 }
 
-func (b *Block) BlockHurt(other *core.Entity, col *bump.Collision, damage float64) {
+func (b *Block) BlockHurt(_ *core.Entity, col *bump.Collision, _ float64) {
 	b.body.Vy -= 30
 
 	force := 50.0
@@ -48,7 +48,7 @@ func (b *Block) BlockHurt(other *core.Entity, col *bump.Collision, damage float6
 	b.body.Vx += force
 }
 
-func (b *Block) BlockBlock(other *core.Entity, col *bump.Collision, damage float64) {
+func (b *Block) BlockBlock(_ *core.Entity, col *bump.Collision, _ float64) {
 	force := 50.0
 	if col.Normal.X > 0 {
 		force *= -1

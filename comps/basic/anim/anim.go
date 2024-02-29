@@ -22,7 +22,7 @@ const (
 
 var DebugDraw = false
 
-type FrameCallback func(frame int)
+type HitboxCallback func(hitbox bump.Rect, once bool)
 
 type Fsm struct {
 	Initial     string
@@ -41,7 +41,8 @@ type Comp struct {
 	Image          *ebiten.Image
 	Data           *aseprite.File
 	Fsm            *Fsm
-	callback       FrameCallback
+	hitboxCallback func()
+	frameCallbacks map[int]func()
 	slices         map[string]map[int]bump.Rect
 }
 
@@ -55,6 +56,7 @@ func (c *Comp) Init(_ *core.Entity) {
 	}
 
 	c.SetState(c.Data.Meta.Animations[0].Name)
+	c.frameCallbacks = map[int]func(){}
 	rect := c.Data.Frames.FrameAtIndex(c.Data.CurrentFrame).SpriteSourceSize
 	c.w, c.h = float64(rect.Width), float64(rect.Height)
 
@@ -72,7 +74,8 @@ func (c *Comp) SetState(state string) {
 		panic(err)
 	}
 	// c.Data.AnimationInfo.frameCounter = 0 // TODO: This needs to happen. opened a PR: https://github.com/damienfamed75/aseprite/pull/4
-	c.callback = nil
+	c.hitboxCallback = nil
+	c.frameCallbacks = map[int]func(){}
 	if callback := c.Fsm.Entry[c.State]; callback != nil {
 		callback(c)
 	}
@@ -92,8 +95,13 @@ func (c *Comp) Update(dt float64) {
 			c.SetState(nextState)
 		}
 	}
-	if c.callback != nil { // TODO: review and refactor whole per frame callback frame mechanic.
-		c.callback(c.Data.CurrentFrame - c.Data.CurrentAnimation.From)
+	currentAnimFrame := c.Data.CurrentFrame - c.Data.CurrentAnimation.From
+	if frameCallback := c.frameCallbacks[currentAnimFrame]; frameCallback != nil {
+		frameCallback()
+		delete(c.frameCallbacks, currentAnimFrame)
+	}
+	if c.hitboxCallback != nil {
+		c.hitboxCallback()
 	}
 }
 
@@ -117,9 +125,21 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	}
 }
 
-func (c *Comp) OnFrames(callback FrameCallback) {
-	c.callback = callback
+func (c *Comp) OnHitboxUpdate(sliceName string, callback HitboxCallback) {
+	newHitbox := true
+	c.hitboxCallback = func() {
+		hitbox, err := c.GetFrameHitbox(sliceName)
+		if err != nil {
+			newHitbox = true
+
+			return
+		}
+		callback(hitbox, newHitbox)
+		newHitbox = false
+	}
 }
+
+func (c *Comp) OnFrame(frame int, callback func()) { c.frameCallbacks[frame] = callback }
 
 func (c *Comp) GetFrameHitbox(sliceName string) (bump.Rect, error) {
 	keys := c.slices[sliceName]

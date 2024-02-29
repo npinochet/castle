@@ -1185,7 +1185,7 @@
   <object id="259" x="1840" y="2808" width="48" height="16"/>
  </objectgroup>
  <objectgroup color="#4fa63b" id="4" name="entities">
-  <object id="11" name="Player" gid="26" x="1928" y="2784" width="8" height="8"/>
+  <object id="11" name="Player" gid="26" x="2136" y="2232" width="8" height="8"/>
   <object id="12" name="Knight" gid="27" x="1952" y="2040" width="8" height="8"/>
   <object id="27" name="GhoulWithRocks" gid="2147483676" x="2008" y="2384" width="8" height="8">
    <properties>

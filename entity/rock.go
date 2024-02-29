@@ -68,13 +68,13 @@ func NewRock(x, y float64, owner *defaults.Actor) *core.Entity {
 	return rock.Entity
 }
 
-func (r *Rock) Init(entity *core.Entity) {
+func (r *Rock) Init(_ *core.Entity) {
 	r.body.Friction = false
 	r.hitbox.HurtFunc, r.hitbox.BlockFunc = r.RockHurt, r.RockHurt
 	r.hitbox.PushHitbox(bump.Rect{X: r.X, Y: r.X, W: rockSize, H: rockSize}, false)
 }
 
-func (r *Rock) Update(dt float64) {
+func (r *Rock) Update(_ float64) {
 	_, contacted := r.hitbox.HitFromHitBox(bump.Rect{H: rockSize, W: rockSize}, rockDamage, []*hitbox.Comp{r.owner.Hitbox})
 	if len(contacted) > 1 || r.body.Ground {
 		r.Remove()

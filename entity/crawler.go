@@ -21,7 +21,13 @@ type crawler struct{ *defaults.Actor }
 
 func NewCrawler(x, y, w, h float64, props *core.Property) *core.Entity {
 	crawler := &crawler{Actor: defaults.NewActor(x, y, crawlerWidth, crawlerHeight, []string{"Attack"})}
-	crawler.Anim = &anim.Comp{FilesName: crawlerAnimFile, OX: crawlerOffsetX, OY: crawlerOffsetY, OXFlip: crawlerOffsetFlip, FlipX: props.FlipX}
+	crawler.Anim = &anim.Comp{
+		FilesName: crawlerAnimFile,
+		OX:        crawlerOffsetX,
+		OY:        crawlerOffsetY,
+		OXFlip:    crawlerOffsetFlip,
+		FlipX:     props.FlipX,
+	}
 	crawler.Stats = &stats.Comp{MaxPoise: crawlerDamage, MaxHealth: crawlerHealth}
 	crawler.Control.Speed = crawlerSpeed
 
@@ -40,7 +46,7 @@ func NewCrawler(x, y, w, h float64, props *core.Property) *core.Entity {
 	return crawler.Entity
 }
 
-func (c *crawler) Init(entity *core.Entity) {
+func (c *crawler) Init(_ *core.Entity) {
 	hurtbox, err := c.Anim.GetFrameHitbox(anim.HurtboxSliceName)
 	if err != nil {
 		panic("no hurtbox found")
@@ -56,7 +62,7 @@ func (c *crawler) setupAI(view bump.Rect) {
 	config := defaults.DefaultAIConfig()
 	config.ViewRect = view
 	config.PaceReact = []ai.WeightedState{{"Attack", 1}, {"Wait", 0}}
-	config.Attacks = []defaults.Attack{{"Attack", crawlerDamage, 20}}
+	config.Attacks = []defaults.Attack{{"Attack", crawlerDamage}}
 	config.CombatOptions = []ai.WeightedState{{"Pursuit", 100}, {"Pace", 2}, {"Wait", 1}, {"RunAttack", 1}, {"Attack", 1}}
 
 	c.Control.Speed, c.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
