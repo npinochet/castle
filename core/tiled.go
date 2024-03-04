@@ -12,20 +12,18 @@ import (
 )
 
 const (
-	aiPropName   = "ai"
 	viewPropName = "view"
-	LadderClass  = "ladder"
 )
+
 const defaultCollisionPriority = -2
 
-type Property struct {
+type Propertie struct {
 	FlipX, FlipY bool
-	Custom       map[string]string
 	View         *tiled.Object
-	AI           string
+	Custom       map[string]string
 }
 
-type EntityContructor func(x, y, w, h float64, props *Property) *Entity
+type EntityContructor func(x, y, w, h float64, props *Propertie) *Entity
 
 type Map struct {
 	data                             *tiled.Map
@@ -54,14 +52,14 @@ func NewMap(mapPath string, foregroundLayerName, backgroundLayerName string) *Ma
 	}
 
 	if err := renderer.RenderLayer(foreLayerIndex); err != nil {
-		log.Println("Tiled layer unsupported for rendering:", err)
+		log.Println("map: tiled layer unsupported for rendering:", err)
 	}
 
 	foreImage := ebiten.NewImageFromImage(renderer.Result)
 	renderer.Clear()
 
 	if err := renderer.RenderLayer(backLayerIndex); err != nil {
-		log.Println("Tiled layer unsupported for rendering:", err)
+		log.Println("map: tiled layer unsupported for rendering:", err)
 	}
 
 	backImage := ebiten.NewImageFromImage(renderer.Result)
@@ -169,7 +167,7 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 			continue
 		}
 		if construct, ok := entityBindMap[tile.ID]; ok {
-			props := &Property{
+			props := &Propertie{
 				FlipX:  tile.HorizontalFlip,
 				FlipY:  tile.VerticalFlip,
 				Custom: map[string]string{},
@@ -180,16 +178,14 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 					id, _ := strconv.Atoi(prop.Value)
 					obj, err := m.FindObjectID(id)
 					if err != nil {
-						panic("cannot find object with id " + prop.Value)
+						panic("tiled: cannot find object with id " + prop.Value)
 					}
 					props.View = obj
-				case aiPropName:
-					props.AI = prop.Value
 				default:
 					props.Custom[prop.Name] = prop.Value
 				}
 			}
-			world.AddEntity(construct(obj.X, obj.Y-obj.Height, obj.Width, obj.Height, props))
+			world.Add(construct(obj.X, obj.Y-obj.Height, obj.Width, obj.Height, props))
 		}
 	}
 }

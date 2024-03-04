@@ -56,6 +56,7 @@ import (
 - No invinsibility frames after getting hit.
 	- Each enemy can hit the player after being in contact with the hitbox once.
 	- If the hitbox gets away from the player hurtbox in one frame and then it overlaps again on the next frame, it should hit again.
+
 - Add teams to actor, the AI should only target player and not other enemies (unless hit by enemy).
 - Maybe replace FSM with behaviour tree (ref: https://github.com/askft/go-behave)
 */
