@@ -17,13 +17,13 @@ const (
 
 const defaultCollisionPriority = -2
 
-type Propertie struct {
+type Properties struct {
 	FlipX, FlipY bool
 	View         *tiled.Object
 	Custom       map[string]string
 }
 
-type EntityContructor func(x, y, w, h float64, props *Propertie) *Entity
+type EntityContructor func(x, y, w, h float64, props *Properties) Entity
 
 type Map struct {
 	data                             *tiled.Map
@@ -167,7 +167,7 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 			continue
 		}
 		if construct, ok := entityBindMap[tile.ID]; ok {
-			props := &Propertie{
+			props := &Properties{
 				FlipX:  tile.HorizontalFlip,
 				FlipY:  tile.VerticalFlip,
 				Custom: map[string]string{},
