@@ -43,10 +43,9 @@ type Comp struct {
 	healthTween, staminaTween, poiseTween   *gween.Tween
 	healthLag, staminaLag, poiseLag         float64
 	poiseTimer                              *time.Timer
-	StaminaRecoverRateMultiplier            float64
 }
 
-func (c *Comp) Init(_ *core.Entity) {
+func (c *Comp) Init(_ core.Entity) {
 	if c.MaxHealth == 0 {
 		c.MaxHealth = vars.DefaultHealth
 	}
@@ -93,7 +92,7 @@ func (c *Comp) Update(dt float64) {
 	}
 
 	if !c.Pause {
-		c.Stamina += c.StaminaRecoverRate * (c.StaminaRecoverRateMultiplier + 1) * dt
+		c.Stamina += c.StaminaRecoverRate * dt
 		c.Stamina = math.Min(c.Stamina, c.MaxStamina)
 		c.Poise = math.Min(c.Poise, c.MaxPoise)
 	} else if c.Hud {
@@ -119,9 +118,7 @@ func (c *Comp) Update(dt float64) {
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
-	if DebugDraw {
-		c.debugDraw(screen, entityPos)
-	}
+	c.debugDraw(screen, entityPos)
 	if c.Hud {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(1, 1)
@@ -267,7 +264,7 @@ func (c *Comp) headBarImage(current, max, lag float64, barColor color.Color) *eb
 }
 
 func (c *Comp) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
-	if c.NoDebug {
+	if !DebugDraw || c.NoDebug {
 		return
 	}
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}

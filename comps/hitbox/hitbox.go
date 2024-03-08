@@ -26,9 +26,10 @@ const (
 type HitFunc func(core.Entity, *bump.Collision, float64, ContactType)
 
 type Hitbox struct {
-	rect        bump.Rect
-	comp        *Comp
-	contactType ContactType
+	rect              bump.Rect
+	comp              *Comp
+	contactType       ContactType
+	updateContactType func() ContactType
 }
 
 type Comp struct {
@@ -47,6 +48,11 @@ func (c *Comp) Init(entity core.Entity) {
 func (c *Comp) Update(_ float64) {
 	ex, ey := c.entity.Position()
 	for _, box := range c.hurtBoxes {
+		if box.updateContactType != nil {
+			if newContact := box.updateContactType(); newContact > 0 {
+				box.contactType = newContact
+			}
+		}
 		p := bump.Vec2{X: ex + box.rect.X, Y: ey + box.rect.Y}
 		c.space.Move(box, p, bump.NilFilter)
 	}
@@ -77,11 +83,11 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	}
 }
 
-func (c *Comp) PushHitbox(rect bump.Rect, block ContactType) {
+func (c *Comp) PushHitbox(rect bump.Rect, block ContactType, updateContactType func() ContactType) {
 	if block != Hit {
 		rect.Priority = blockPriority
 	}
-	box := &Hitbox{rect, c, block}
+	box := &Hitbox{rect, c, block, updateContactType}
 	c.space.Set(box, rect)
 	c.hurtBoxes = append(c.hurtBoxes, box)
 }

@@ -34,6 +34,9 @@ func (c *Comp) Init(entity core.Entity) {
 	if c.MaxY == 0 {
 		c.MaxY = vars.DefaultMaxY
 	}
+	if c.Weight == 0 {
+		c.Weight = 1
+	}
 	c.Friction = true
 	c.space = vars.World.Space
 

@@ -17,7 +17,7 @@ import (
 
 var DebugDraw = false
 
-type HitboxCallback func(hitbox bump.Rect, once bool)
+type SliceCallback func(slice bump.Rect, segmented bool)
 
 type Fsm struct {
 	Initial     string
@@ -31,17 +31,19 @@ type Comp struct {
 	OX, OY         float64
 	OXFlip, OYFlip float64
 	FlipX, FlipY   bool
-	w, h           float64
+	Fsm            *Fsm
+
 	State          string
 	Image          *ebiten.Image
 	Data           *aseprite.File
-	Fsm            *Fsm
-	hitboxCallback func()
+	w, h           float64
+	sliceCallback  func()
 	frameCallbacks map[int]func()
+	exitFunc       func()
 	slices         map[string]map[int]bump.Rect
 }
 
-func (c *Comp) Init(_ *core.Entity) {
+func (c *Comp) Init(_ core.Entity) {
 	var err error
 	if c.Image, _, err = ebitenutil.NewImageFromFile(c.FilesName + ".png"); err != nil {
 		log.Fatal(err)
@@ -50,27 +52,37 @@ func (c *Comp) Init(_ *core.Entity) {
 		log.Fatal(err)
 	}
 
-	c.SetState(c.Data.Meta.Animations[0].Name)
+	c.SetState(c.Data.Meta.Animations[0].Name, nil)
 	c.frameCallbacks = map[int]func(){}
 	rect := c.Data.Frames.FrameAtIndex(c.Data.CurrentFrame).SpriteSourceSize
 	c.w, c.h = float64(rect.Width), float64(rect.Height)
 
-	if err := c.allocateHitboxSlices(); err != nil {
+	if err := c.allocateSlices(); err != nil {
 		log.Println(err)
+	}
+	if c.Fsm == nil {
+		c.Fsm = DefaultFsm()
 	}
 }
 
-func (c *Comp) SetState(state string) {
+func (c *Comp) SetState(state string, exitFunc func()) {
+	if c.exitFunc != nil {
+		c.exitFunc()
+	}
+	c.exitFunc = exitFunc
 	if c.State == state {
 		return
 	}
+	if callback := c.Fsm.Exit[c.State]; callback != nil {
+		callback(c)
+	}
 	c.State = state
 	if err := c.Data.Play(state); err != nil {
-		panic(err)
+		log.Panicf("anim: %s", err)
 	}
-	// c.Data.AnimationInfo.frameCounter = 0 // TODO: This needs to happen. opened a PR: https://github.com/damienfamed75/aseprite/pull/4
-	c.hitboxCallback = nil
+	c.sliceCallback = nil
 	c.frameCallbacks = map[int]func(){}
+	// c.Data.AnimationInfo.frameCounter = 0 // TODO: This needs to happen. opened a PR: https://github.com/damienfamed75/aseprite/pull/4
 	if callback := c.Fsm.Entry[c.State]; callback != nil {
 		callback(c)
 	}
@@ -79,15 +91,12 @@ func (c *Comp) SetState(state string) {
 func (c *Comp) Update(dt float64) {
 	c.Data.Update(float32(dt))
 	if c.Data.AnimationFinished() {
-		if callback := c.Fsm.Exit[c.State]; callback != nil {
-			callback(c)
-		}
 		nextState, ok := c.Fsm.Transitions[c.State]
 		if !ok {
 			nextState = vars.IdleTag
 		}
 		if nextState != "" {
-			c.SetState(nextState)
+			c.SetState(nextState, nil)
 		}
 	}
 	currentAnimFrame := c.Data.CurrentFrame - c.Data.CurrentAnimation.From
@@ -95,8 +104,8 @@ func (c *Comp) Update(dt float64) {
 		frameCallback()
 		delete(c.frameCallbacks, currentAnimFrame)
 	}
-	if c.hitboxCallback != nil {
-		c.hitboxCallback()
+	if c.sliceCallback != nil {
+		c.sliceCallback()
 	}
 }
 
@@ -120,23 +129,23 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	}
 }
 
-func (c *Comp) OnHitboxUpdate(sliceName string, callback HitboxCallback) {
-	newHitbox := true
-	c.hitboxCallback = func() {
-		hitbox, err := c.GetFrameHitbox(sliceName)
+func (c *Comp) OnSlicePresent(sliceName string, callback SliceCallback) {
+	newSlice := true
+	c.sliceCallback = func() {
+		slice, err := c.FrameSlice(sliceName)
 		if err != nil {
-			newHitbox = true
+			newSlice = true
 
 			return
 		}
-		callback(hitbox, newHitbox)
-		newHitbox = false
+		callback(slice, newSlice)
+		newSlice = false
 	}
 }
 
 func (c *Comp) OnFrame(frame int, callback func()) { c.frameCallbacks[frame] = callback }
 
-func (c *Comp) GetFrameHitbox(sliceName string) (bump.Rect, error) {
+func (c *Comp) FrameSlice(sliceName string) (bump.Rect, error) {
 	keys := c.slices[sliceName]
 	if keys == nil {
 		return bump.Rect{}, fmt.Errorf("slice name %s not found", sliceName)
@@ -162,7 +171,7 @@ func (c *Comp) GetFrameHitbox(sliceName string) (bump.Rect, error) {
 	return rect, nil
 }
 
-func (c *Comp) allocateHitboxSlices() error {
+func (c *Comp) allocateSlices() error {
 	c.slices = map[string]map[int]bump.Rect{}
 
 	for _, sliceName := range []string{vars.HurtboxSliceName, vars.HitboxSliceName, vars.BlockSliceName} {

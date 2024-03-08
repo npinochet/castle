@@ -1,6 +1,8 @@
 package vars
 
-import "game/core"
+import (
+	"game/core"
+)
 
 const (
 	// Config.

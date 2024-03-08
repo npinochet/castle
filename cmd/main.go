@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"game/assets"
-	"game/comps/ai"
 	"game/comps/anim"
 	"game/comps/body"
 	"game/comps/hitbox"
@@ -60,6 +59,7 @@ import (
 
 - Add teams to actor, the AI should only target player and not other enemies (unless hit by enemy).
 - Maybe replace FSM with behaviour tree (ref: https://github.com/askft/go-behave)
+- Adjust bump to accept tags with the .Set(...tags) method. And add the ability to filter with them.
 */
 
 const (
@@ -68,7 +68,7 @@ const (
 
 var (
 	game       = &Game{}
-	player     entity.Player
+	player     *entity.Player
 	canRestart = true
 )
 
@@ -82,14 +82,15 @@ func (g *Game) init() {
 	player = entity.NewPlayer(obj.X, obj.Y, nil)
 	vars.World.Camera.Follow(player)
 	vars.World.Add(player)
+	entity.PlayerRef = player
 
 	vars.World.Map.LoadBumpObjects(vars.World.Space, "collisions")
 	vars.World.Map.LoadEntityObjects(vars.World, "entities", map[uint32]core.EntityContructor{
-		26: entity.NewKnight,
-		27: entity.NewGhoul,
-		28: entity.NewSkeleman,
-		29: entity.NewCrawler,
-		87: entity.NewGram,
+		//26: entity.NewKnight,
+		//27: entity.NewGhoul,
+		//28: entity.NewSkeleman,
+		//29: entity.NewCrawler,
+		//87: entity.NewGram,
 	})
 }
 
@@ -129,7 +130,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	utils.DrawText(screen, fmt.Sprintf(`%0.2f`, ebiten.ActualFPS()), assets.TinyFont, op)
 }
 
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+func (g *Game) Layout(_, _ int) (int, int) {
 	return vars.ScreenWidth, vars.ScreenHeight
 }
 
@@ -153,7 +154,7 @@ func debugControls() {
 		hitbox.DebugDraw = !hitbox.DebugDraw
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key3) {
-		ai.DebugDraw = !ai.DebugDraw
+		//ai.DebugDraw = !ai.DebugDraw
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key4) {
 		stats.DebugDraw = !stats.DebugDraw
