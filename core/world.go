@@ -10,13 +10,14 @@ import (
 )
 
 type Entity interface {
-	Components() []Component
-	Component(name string) Component
 	Init()
 	Update(dt float64)
+	Components() []Component
+	Component(name string) Component
 	Position() (float64, float64)
 	SetPosition(x, y float64)
 	Rect() (float64, float64, float64, float64)
+	SetSize(w, h float64)
 }
 
 type Component interface {

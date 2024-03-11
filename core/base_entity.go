@@ -12,6 +12,7 @@ func (e *BaseEntity) Components() []Component                    { return e.comp
 func (e *BaseEntity) Position() (float64, float64)               { return e.X, e.Y }
 func (e *BaseEntity) SetPosition(x, y float64)                   { e.X = x; e.Y = y }
 func (e *BaseEntity) Rect() (float64, float64, float64, float64) { return e.X, e.Y, e.W, e.H }
+func (e *BaseEntity) SetSize(w, h float64)                       { e.W = w; e.H = h }
 
 func (e *BaseEntity) Add(adding ...Component) {
 	if e.tagToComponent == nil {

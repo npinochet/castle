@@ -51,6 +51,9 @@ func (c *Comp) Init(_ core.Entity) {
 	if c.Data, err = aseprite.Open(c.FilesName + ".json"); err != nil {
 		log.Fatal(err)
 	}
+	if c.Fsm == nil {
+		c.Fsm = DefaultFsm()
+	}
 
 	c.SetState(c.Data.Meta.Animations[0].Name, nil)
 	c.frameCallbacks = map[int]func(){}
@@ -59,9 +62,6 @@ func (c *Comp) Init(_ core.Entity) {
 
 	if err := c.allocateSlices(); err != nil {
 		log.Println(err)
-	}
-	if c.Fsm == nil {
-		c.Fsm = DefaultFsm()
 	}
 }
 
