@@ -13,30 +13,42 @@ import (
 
 type Actor interface {
 	core.Entity
-	ActionTags() []string
-	Anim() *anim.Comp
-	Body() *body.Comp
-	Hitbox() *hitbox.Comp
-	Stats() *stats.Comp
+	Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp)
 }
 
-func Hurt(a Actor, other core.Entity, damage, reactForce float64) {
+type Control struct {
+	actor  Actor
+	anim   *anim.Comp
+	body   *body.Comp
+	hitbox *hitbox.Comp
+	stats  *stats.Comp
+	paused bool
+}
+
+func NewControl(a Actor) *Control {
+	c := &Control{actor: a}
+	c.anim, c.body, c.hitbox, c.stats = a.Comps()
+
+	return c
+}
+
+func (c *Control) Hurt(other core.Entity, damage, reactForce float64) {
 	// TODO: Figure out force stuff here. For Block() too.
-	ShieldDown(a)
-	a.Stats().AddPoise(-damage)
-	a.Stats().AddHealth(-damage)
+	c.ShieldDown()
+	c.stats.AddPoise(-damage)
+	c.stats.AddHealth(-damage)
 
 	force := reactForce
-	ax, _ := a.Position()
+	ax, _ := c.actor.Position()
 	if ox, _ := other.Position(); ax < ox {
 		force *= -1
 	}
 
-	a.Body().Vx += force
-	if a.Stats().Poise <= 0 || a.Anim().State == vars.ConsumeTag {
-		force *= 2 * (damage / a.Stats().MaxHealth)
-		a.Anim().SetState(vars.StaggerTag, nil)
-		a.Body().Vx += force
+	c.body.Vx += force
+	if c.stats.Poise <= 0 || c.anim.State == vars.ConsumeTag {
+		force *= 2 * (damage / c.stats.MaxHealth)
+		c.anim.SetState(vars.StaggerTag, nil)
+		c.body.Vx += force
 	}
 
 	/*if aic := core.GetComponent[*ai.Comp](a); aic != nil {
@@ -46,44 +58,45 @@ func Hurt(a Actor, other core.Entity, damage, reactForce float64) {
 	}*/
 }
 
-func Block(a Actor, other core.Entity, damage, reactForce float64, contactType hitbox.ContactType) {
-	a.Stats().AddStamina(-damage)
+func (c *Control) Block(other core.Entity, damage, reactForce float64, contactType hitbox.ContactType) {
+	c.stats.AddStamina(-damage)
 	if contactType == hitbox.ParryBlock {
 		return
 	}
 
 	force := reactForce / 2
-	ax, _ := a.Position()
+	ax, _ := c.actor.Position()
 	if ox, _ := other.Position(); ax < ox {
 		force *= -1
 	}
 
-	a.Body().Vx += force
-	if a.Stats().Stamina < 0 {
-		ShieldDown(a)
-		prevPlaySpeed := a.Anim().Data.PlaySpeed
-		a.Anim().Data.PlaySpeed = 0.5 // double time stagger.
-		force *= 2 * (damage / a.Stats().MaxHealth)
-		a.Anim().SetState(vars.StaggerTag, func() { a.Anim().Data.PlaySpeed = prevPlaySpeed })
-		a.Body().Vx += force
+	c.body.Vx += force
+	if c.stats.Stamina < 0 {
+		c.ShieldDown()
+		prevPlaySpeed := c.anim.Data.PlaySpeed
+		c.anim.Data.PlaySpeed = 0.5 // double time stagger.
+		force *= 2 * (damage / c.stats.MaxHealth)
+		c.anim.SetState(vars.StaggerTag, func() { c.anim.Data.PlaySpeed = prevPlaySpeed })
+		c.body.Vx += force
 	}
 }
 
 // TODO: This is a mess...
-func Act(a Actor, actionTag string, damage, staminaDamage, reactForce, pushForce float64) {
-	if PausingState(a) || a.Stats().Stamina <= 0 {
+func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pushForce float64) {
+	if c.PausingState() || c.stats.Stamina <= 0 {
 		return
 	}
-	a.Anim().SetState(actionTag, nil)
+	c.paused = true
+	c.anim.SetState(attackTag, func() { c.paused = false })
 
 	var contactType hitbox.ContactType
 	var contacted []*hitbox.Comp
 	var once bool
-	a.Anim().OnSlicePresent(vars.HitboxSliceName, func(slice bump.Rect, segmented bool) {
+	c.anim.OnSlicePresent(vars.HitboxSliceName, func(slice bump.Rect, segmented bool) {
 		if segmented {
 			contacted = nil
 		}
-		contactType, contacted = a.Hitbox().HitFromHitBox(slice, damage, contacted)
+		contactType, contacted = c.hitbox.HitFromHitBox(slice, damage, contacted)
 		/*if len(contacted) > 0 && c.Entity == entity.PlayerRef.Entity && !freezeOnce {
 			freezeOnce = true
 			c.World.Freeze(0.1)
@@ -94,47 +107,47 @@ func Act(a Actor, actionTag string, damage, staminaDamage, reactForce, pushForce
 			if !once {
 				blockForce *= 2
 			}
-			if a.Anim().FlipX {
+			if c.anim.FlipX {
 				blockForce *= -1
 			}
-			a.Body().Vx += blockForce
+			c.body.Vx += blockForce
 			if contactType == hitbox.ParryBlock {
-				if a.Stats().AddPoise(-damage); a.Stats().Poise <= 0 {
-					a.Anim().SetState(vars.StaggerTag, nil)
+				if c.stats.AddPoise(-damage); c.stats.Poise <= 0 {
+					c.anim.SetState(vars.StaggerTag, nil)
 					force := reactForce
-					if a.Anim().FlipX {
+					if c.anim.FlipX {
 						force *= -1
 					}
-					a.Body().Vx += force * (damage / a.Stats().MaxHealth)
+					c.body.Vx += force * (damage / c.stats.MaxHealth)
 				}
 			}
 		}
 		if !once {
 			once = true
-			a.Stats().AddStamina(-staminaDamage)
+			c.stats.AddStamina(-staminaDamage)
 			force := pushForce
-			if a.Anim().FlipX {
+			if c.anim.FlipX {
 				force *= -1
 			}
-			a.Body().Vx -= force
+			c.body.Vx -= force
 		}
 	})
 }
 
-func ShieldUp(a Actor) {
-	if PausingState(a) || BlockingState(a) || a.Stats().Stamina <= 0 {
+func (c *Control) ShieldUp() {
+	if c.PausingState() || c.BlockingState() || c.stats.Stamina <= 0 {
 		return
 	}
-	prevMaxX, prevStaminaRecoverRate := a.Body().MaxX, a.Stats().StaminaRecoverRate
-	a.Body().MaxX /= 2
-	a.Stats().StaminaRecoverRate /= 3
-	a.Anim().SetState(vars.ParryBlockTag, func() { a.Body().MaxX, a.Stats().StaminaRecoverRate = prevMaxX, prevStaminaRecoverRate })
-	blockSlice, err := a.Anim().FrameSlice(vars.BlockSliceName)
+	prevMaxX, prevStaminaRecoverRate := c.body.MaxX, c.stats.StaminaRecoverRate
+	c.body.MaxX /= 2
+	c.stats.StaminaRecoverRate /= 3
+	c.anim.SetState(vars.ParryBlockTag, func() { c.body.MaxX, c.stats.StaminaRecoverRate = prevMaxX, prevStaminaRecoverRate })
+	blockSlice, err := c.anim.FrameSlice(vars.BlockSliceName)
 	if err != nil {
 		panic(err)
 	}
-	a.Hitbox().PushHitbox(blockSlice, hitbox.ParryBlock, func() hitbox.ContactType {
-		if a.Anim().State == vars.ParryBlockTag {
+	c.hitbox.PushHitbox(blockSlice, hitbox.ParryBlock, func() hitbox.ContactType {
+		if c.anim.State == vars.ParryBlockTag {
 			return hitbox.ParryBlock
 		}
 
@@ -142,69 +155,69 @@ func ShieldUp(a Actor) {
 	})
 }
 
-func ShieldDown(a Actor) {
-	if !BlockingState(a) {
+func (c *Control) ShieldDown() {
+	if !c.BlockingState() {
 		return
 	}
-	a.Anim().SetState(vars.IdleTag, nil)
-	a.Hitbox().PopHitbox()
+	c.anim.SetState(vars.IdleTag, nil)
+	c.hitbox.PopHitbox()
 }
 
-func PausingState(a Actor) bool {
-	return utils.Contains(append(a.ActionTags(), vars.StaggerTag, vars.ConsumeTag), a.Anim().State)
+func (c *Control) PausingState() bool {
+	return c.paused || utils.Contains([]string{vars.StaggerTag, vars.ConsumeTag}, c.anim.State)
 }
 
-func BlockingState(a Actor) bool {
-	return a.Anim().State == vars.BlockTag || a.Anim().State == vars.ParryBlockTag
+func (c *Control) BlockingState() bool {
+	return c.anim.State == vars.BlockTag || c.anim.State == vars.ParryBlockTag
 }
 
-func CanJump(a Actor) bool {
-	return (a.Anim().State == vars.ClimbTag || a.Body().Ground) &&
-		!BlockingState(a) && a.Anim().State != vars.ConsumeTag
+func (c *Control) CanJump() bool {
+	return (c.anim.State == vars.ClimbTag || c.body.Ground) &&
+		!c.BlockingState() && c.anim.State != vars.ConsumeTag
 }
 
-func ClimbOn(a Actor, goingDown bool) {
-	if PausingState(a) {
+func (c *Control) ClimbOn(goingDown bool) {
+	if c.PausingState() {
 		return
 	}
-	/*a.Body().ClipLadder = a.Body().ClipLadder || goingDown
-	if !a.Body().OnLadder || a.Anim().State == anim.ClimbTag {
+	/*c.body.ClipLadder = c.body.ClipLadder || goingDown
+	if !c.body.OnLadder || c.anim.State == anim.ClimbTag {
 		return
 	}
 	*/
-	prevWeight := a.Body().Weight
-	a.Body().Weight = -1
-	a.Anim().SetState(vars.ClimbTag, func() { a.Body().Weight = prevWeight })
+	prevWeight := c.body.Weight
+	c.body.Weight = -1
+	c.anim.SetState(vars.ClimbTag, func() { c.body.Weight = prevWeight })
 }
 
-func ClimbOff(a Actor) {
-	if a.Anim().State != vars.ClimbTag {
+func (c *Control) ClimbOff() {
+	if c.anim.State != vars.ClimbTag {
 		return
 	}
-	//a.Body().ClipLadder = false
-	a.Anim().SetState(vars.IdleTag, nil)
+	//c.body.ClipLadder = false
+	c.anim.SetState(vars.IdleTag, nil)
 }
 
-func Remove(a Actor) {
-	if a.Body() != nil {
-		vars.World.Space.Remove(a)
+func (c *Control) Remove() {
+	if c.body != nil {
+		vars.World.Space.Remove(c.body)
 	}
-	if a.Hitbox() != nil {
-		for a.Hitbox().PopHitbox() != nil { //nolint: revive
+	if c.hitbox != nil {
+		for c.hitbox.PopHitbox() != nil { //nolint: revive
 		}
 	}
-	vars.World.Remove(a)
+	vars.World.Remove(c.actor)
 }
 
-func Heal(a Actor, effectFrame int, amount float64) {
-	if PausingState(a) || a.Stats().Heal <= 0 || !a.Body().Ground {
+func (c *Control) Heal(effectFrame int, amount float64) {
+	if c.PausingState() || c.stats.Heal <= 0 || !c.body.Ground {
 		return
 	}
-	prevMaxX := a.Body().MaxX
-	a.Body().MaxX /= 2
-	a.Anim().SetState(vars.ConsumeTag, func() { a.Body().MaxX = prevMaxX })
-	a.Anim().OnFrame(effectFrame, func() { // TODO: Can be replaced with OnSlicePresent.
-		a.Stats().AddHeal(-1)
-		a.Stats().AddHealth(amount)
+	prevMaxX := c.body.MaxX
+	c.body.MaxX /= 2
+	c.anim.SetState(vars.ConsumeTag, func() { c.body.MaxX = prevMaxX })
+	c.anim.OnFrame(effectFrame, func() { // TODO: Can be replaced with OnSlicePresent.
+		c.stats.AddHeal(-1)
+		c.stats.AddHealth(amount)
 	})
 }

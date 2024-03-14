@@ -3,6 +3,7 @@ package body
 import (
 	"fmt"
 	"game/assets"
+	"game/comps/hitbox"
 	"game/core"
 	"game/libs/bump"
 	"game/utils"
@@ -24,6 +25,7 @@ type Comp struct {
 	FilterOut                  []core.Entity
 	entity                     core.Entity
 	space                      *bump.Space
+	prevVx                     float64
 }
 
 func (c *Comp) Init(entity core.Entity) {
@@ -40,16 +42,16 @@ func (c *Comp) Init(entity core.Entity) {
 	c.Friction = true
 	c.space = vars.World.Space
 
-	c.space.Set(entity, bump.NewRect(c.entity.Rect()))
+	c.space.Set(entity, bump.NewRect(entity.Rect()))
 }
 
 func (c *Comp) Update(dt float64) {
 	if c.Solid {
 		return
 	}
-	prevVx := c.Vx
+	c.Friction = !c.Ground || c.prevVx == c.Vx
 	c.updateMovement(dt)
-	c.Friction = !c.Ground || math.Abs(prevVx-c.Vx) >= 0
+	c.prevVx = c.Vx
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
@@ -81,8 +83,8 @@ func (c *Comp) updateMovement(dt float64) {
 	c.Vy = math.Min(c.MaxY, math.Max(-c.MaxY, c.Vy))
 
 	ex, ey := c.entity.Position()
-	p := bump.Vec2{X: ex + c.Vx*dt, Y: ey + c.Vy*dt}
-	goal, cols := c.space.Move(c, p, c.bodyFilter())
+	t := bump.Vec2{X: ex + c.Vx*dt, Y: ey + c.Vy*dt}
+	goal, cols := c.space.Move(c.entity, t, c.bodyFilter())
 	c.entity.SetPosition(goal.X, goal.Y)
 
 	if c.Unmovable {
@@ -121,6 +123,10 @@ func (c *Comp) bodyFilter() func(bump.Item, bump.Item) (bump.ColType, bool) {
 			}
 
 			return bump.Cross, true
+		}
+		// TODO: add tag filtering to bump, like layers
+		if _, ok := other.(*hitbox.Hitbox); ok {
+			return 0, false
 		}
 
 		return bump.Slide, true
