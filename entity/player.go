@@ -108,10 +108,10 @@ func (p *Player) Update(dt float64) {
 		if p.body.Vx != 0 {
 			nextState = vars.WalkTag
 		}
-		p.anim.SetState(nextState, nil)
+		p.anim.SetState(nextState)
 	}
 	if moving := p.pad.KeyDown(utils.KeyLeft) || p.pad.KeyDown(utils.KeyRight); !moving && p.anim.State == vars.WalkTag {
-		p.anim.SetState(vars.IdleTag, nil)
+		p.anim.SetState(vars.IdleTag)
 	}
 }
 

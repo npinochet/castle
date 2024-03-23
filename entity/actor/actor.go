@@ -47,15 +47,9 @@ func (c *Control) Hurt(other core.Entity, damage, reactForce float64) {
 	c.body.Vx += force
 	if c.stats.Poise <= 0 || c.anim.State == vars.ConsumeTag {
 		force *= 2 * (damage / c.stats.MaxHealth)
-		c.anim.SetState(vars.StaggerTag, nil)
+		c.anim.SetState(vars.StaggerTag)
 		c.body.Vx += force
 	}
-
-	/*if aic := core.GetComponent[*ai.Comp](a); aic != nil {
-		if aic != nil && aic.Target == nil {
-			aic.Target = other
-		}
-	}*/
 }
 
 func (c *Control) Block(other core.Entity, damage, reactForce float64, contactType hitbox.ContactType) {
@@ -76,7 +70,8 @@ func (c *Control) Block(other core.Entity, damage, reactForce float64, contactTy
 		prevPlaySpeed := c.anim.Data.PlaySpeed
 		c.anim.Data.PlaySpeed = 0.5 // double time stagger.
 		force *= 2 * (damage / c.stats.MaxHealth)
-		c.anim.SetState(vars.StaggerTag, func() { c.anim.Data.PlaySpeed = prevPlaySpeed })
+		c.anim.SetState(vars.StaggerTag)
+		c.anim.SetExitCallback(func() { c.anim.Data.PlaySpeed = prevPlaySpeed }, nil)
 		c.body.Vx += force
 	}
 }
@@ -87,7 +82,8 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 		return
 	}
 	c.paused = true
-	c.anim.SetState(attackTag, func() { c.paused = false })
+	c.anim.SetState(attackTag)
+	c.anim.SetExitCallback(func() { c.paused = false }, nil)
 
 	var contactType hitbox.ContactType
 	var contacted []*hitbox.Comp
@@ -113,7 +109,7 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 			c.body.Vx += blockForce
 			if contactType == hitbox.ParryBlock {
 				if c.stats.AddPoise(-damage); c.stats.Poise <= 0 {
-					c.anim.SetState(vars.StaggerTag, nil)
+					c.anim.SetState(vars.StaggerTag)
 					force := reactForce
 					if c.anim.FlipX {
 						force *= -1
@@ -141,7 +137,9 @@ func (c *Control) ShieldUp() {
 	prevMaxX, prevStaminaRecoverRate := c.body.MaxX, c.stats.StaminaRecoverRate
 	c.body.MaxX /= 2
 	c.stats.StaminaRecoverRate /= 3
-	c.anim.SetState(vars.ParryBlockTag, func() { c.body.MaxX, c.stats.StaminaRecoverRate = prevMaxX, prevStaminaRecoverRate })
+	// TODO: this does not work, you can cancel the shield up before the ParryBlock is done
+	c.anim.SetState(vars.ParryBlockTag)
+	c.anim.SetExitCallback(func() { c.body.MaxX, c.stats.StaminaRecoverRate = prevMaxX, prevStaminaRecoverRate }, func() bool { return !c.BlockingState() })
 	blockSlice, err := c.anim.FrameSlice(vars.BlockSliceName)
 	if err != nil {
 		panic(err)
@@ -159,7 +157,7 @@ func (c *Control) ShieldDown() {
 	if !c.BlockingState() {
 		return
 	}
-	c.anim.SetState(vars.IdleTag, nil)
+	c.anim.SetState(vars.IdleTag)
 	c.hitbox.PopHitbox()
 }
 
@@ -187,7 +185,8 @@ func (c *Control) ClimbOn(goingDown bool) {
 	*/
 	prevWeight := c.body.Weight
 	c.body.Weight = -1
-	c.anim.SetState(vars.ClimbTag, func() { c.body.Weight = prevWeight })
+	c.anim.SetState(vars.ClimbTag)
+	c.anim.SetExitCallback(func() { c.body.Weight = prevWeight }, nil)
 }
 
 func (c *Control) ClimbOff() {
@@ -195,7 +194,7 @@ func (c *Control) ClimbOff() {
 		return
 	}
 	//c.body.ClipLadder = false
-	c.anim.SetState(vars.IdleTag, nil)
+	c.anim.SetState(vars.IdleTag)
 }
 
 func (c *Control) Remove() {
@@ -215,7 +214,8 @@ func (c *Control) Heal(effectFrame int, amount float64) {
 	}
 	prevMaxX := c.body.MaxX
 	c.body.MaxX /= 2
-	c.anim.SetState(vars.ConsumeTag, func() { c.body.MaxX = prevMaxX })
+	c.anim.SetState(vars.ConsumeTag)
+	c.anim.SetExitCallback(func() { c.body.MaxX = prevMaxX }, nil)
 	c.anim.OnFrame(effectFrame, func() { // TODO: Can be replaced with OnSlicePresent.
 		c.stats.AddHeal(-1)
 		c.stats.AddHealth(amount)

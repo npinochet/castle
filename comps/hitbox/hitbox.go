@@ -88,7 +88,7 @@ func (c *Comp) PushHitbox(rect bump.Rect, block ContactType, updateContactType f
 		rect.Priority = blockPriority
 	}
 	box := &Hitbox{rect, c, block, updateContactType}
-	c.space.Set(box, rect)
+	c.space.Set(box, rect, "hitbox")
 	c.hurtBoxes = append(c.hurtBoxes, box)
 }
 
@@ -109,7 +109,7 @@ func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) 
 	ex, ey := c.entity.Position()
 	rect.X += ex
 	rect.Y += ey
-	cols := c.space.Query(rect, c.hitFilter())
+	cols := c.space.Query(rect, c.hitFilter(), "hitbox", "map")
 
 	type contactInfo struct {
 		contactType ContactType

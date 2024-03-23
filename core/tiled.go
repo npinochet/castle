@@ -143,11 +143,11 @@ func (m *Map) LoadBumpObjects(space *bump.Space, objectGroupName string) {
 				Priority: defaultCollisionPriority + 1,
 				Slope:    slope,
 			}
-			space.Set(obj, rect)
+			space.Set(obj, rect, "map", "slope")
 
 			continue
 		}
-		space.Set(obj, bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height, Priority: defaultCollisionPriority})
+		space.Set(obj, bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height, Priority: defaultCollisionPriority}, "map")
 	}
 }
 

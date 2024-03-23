@@ -59,7 +59,6 @@ import (
 
 - Add teams to actor, the AI should only target player and not other enemies (unless hit by enemy).
 - Maybe replace FSM with behaviour tree (ref: https://github.com/askft/go-behave)
-- Adjust bump to accept tags with the .Set(...tags) method. And add the ability to filter with them.
 */
 
 const (

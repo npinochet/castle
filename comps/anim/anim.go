@@ -17,13 +17,16 @@ import (
 
 var DebugDraw = false
 
-type SliceCallback func(slice bump.Rect, segmented bool)
-
 type Fsm struct {
 	Initial     string
 	Transitions map[string]string
-	Entry       map[string]func(*Comp)
-	Exit        map[string]func(*Comp)
+}
+
+type SliceCallback func(slice bump.Rect, segmented bool)
+
+type stateExitCallback struct {
+	exited   func() bool
+	callback func()
 }
 
 type Comp struct {
@@ -37,10 +40,10 @@ type Comp struct {
 	Image          *ebiten.Image
 	Data           *aseprite.File
 	w, h           float64
+	slices         map[string]map[int]bump.Rect
+	exitCallback   *stateExitCallback
 	sliceCallback  func()
 	frameCallbacks map[int]func()
-	exitFunc       func()
-	slices         map[string]map[int]bump.Rect
 }
 
 func (c *Comp) Init(_ core.Entity) {
@@ -55,7 +58,7 @@ func (c *Comp) Init(_ core.Entity) {
 		c.Fsm = DefaultFsm()
 	}
 
-	c.SetState(c.Data.Meta.Animations[0].Name, nil)
+	c.SetState(c.Data.Meta.Animations[0].Name)
 	c.frameCallbacks = map[int]func(){}
 	rect := c.Data.Frames.FrameAtIndex(c.Data.CurrentFrame).SpriteSourceSize
 	c.w, c.h = float64(rect.Width), float64(rect.Height)
@@ -65,27 +68,21 @@ func (c *Comp) Init(_ core.Entity) {
 	}
 }
 
-func (c *Comp) SetState(state string, exitFunc func()) {
-	if c.exitFunc != nil {
-		c.exitFunc()
-	}
-	c.exitFunc = exitFunc
+func (c *Comp) SetState(state string) {
 	if c.State == state {
 		return
-	}
-	if callback := c.Fsm.Exit[c.State]; callback != nil {
-		callback(c)
 	}
 	c.State = state
 	if err := c.Data.Play(state); err != nil {
 		log.Panicf("anim: %s", err)
 	}
+	if c.exitCallback != nil && c.exitCallback.exited() {
+		c.exitCallback.callback()
+		c.exitCallback = nil
+	}
 	c.sliceCallback = nil
 	c.frameCallbacks = map[int]func(){}
 	// c.Data.AnimationInfo.frameCounter = 0 // TODO: This needs to happen. opened a PR: https://github.com/damienfamed75/aseprite/pull/4
-	if callback := c.Fsm.Entry[c.State]; callback != nil {
-		callback(c)
-	}
 }
 
 func (c *Comp) Update(dt float64) {
@@ -93,10 +90,10 @@ func (c *Comp) Update(dt float64) {
 	if c.Data.AnimationFinished() {
 		nextState, ok := c.Fsm.Transitions[c.State]
 		if !ok {
-			nextState = vars.IdleTag
+			nextState = c.Fsm.Initial
 		}
 		if nextState != "" {
-			c.SetState(nextState, nil)
+			c.SetState(nextState)
 		}
 	}
 	currentAnimFrame := c.Data.CurrentFrame - c.Data.CurrentAnimation.From
@@ -169,6 +166,14 @@ func (c *Comp) FrameSlice(sliceName string) (bump.Rect, error) {
 	rect.Y += c.OY
 
 	return rect, nil
+}
+
+func (c *Comp) SetExitCallback(callback func(), exited func() bool) {
+	if exited == nil {
+		currentState := c.State
+		exited = func() bool { return currentState != c.State }
+	}
+	c.exitCallback = &stateExitCallback{exited, callback}
 }
 
 func (c *Comp) allocateSlices() error {

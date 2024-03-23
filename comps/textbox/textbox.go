@@ -46,7 +46,7 @@ func (c *Comp) Init(entity core.Entity) {
 }
 
 func (c *Comp) Update(_ float64) {
-	c.active = len(ext.QueryItems(c.entity, c.Area())) > 0
+	c.active = len(ext.QueryItems(c.entity, c.Area(), "body")) > 0
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {

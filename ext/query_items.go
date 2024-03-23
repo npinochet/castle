@@ -10,16 +10,16 @@ type Recter interface {
 	Rect() (float64, float64, float64, float64)
 }
 
-func QueryItems[T comparable](item T, rect bump.Rect) []T {
-	itemsFilter := func(item bump.Item) bool {
-		if e, ok := item.(T); ok {
+func QueryItems[T comparable](item T, rect bump.Rect, tags ...bump.Tag) []T {
+	itemsFilter := func(other bump.Item) bool {
+		if e, ok := other.(T); ok {
 			return e != item
 		}
 
 		return false
 	}
 
-	cols := vars.World.Space.Query(rect, itemsFilter)
+	cols := vars.World.Space.Query(rect, itemsFilter, tags...)
 	var items []T
 	for _, c := range cols {
 		if e, ok := c.Other.(T); ok {
