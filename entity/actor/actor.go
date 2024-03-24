@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"game/comps/ai"
 	"game/comps/anim"
 	"game/comps/body"
 	"game/comps/hitbox"
@@ -13,7 +14,7 @@ import (
 
 type Actor interface {
 	core.Entity
-	Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp)
+	Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp, ai *ai.Comp)
 }
 
 type Control struct {
@@ -22,12 +23,14 @@ type Control struct {
 	body   *body.Comp
 	hitbox *hitbox.Comp
 	stats  *stats.Comp
+	ai     *ai.Comp
 	paused bool
+	speed  float64
 }
 
 func NewControl(a Actor) *Control {
 	c := &Control{actor: a}
-	c.anim, c.body, c.hitbox, c.stats = a.Comps()
+	c.anim, c.body, c.hitbox, c.stats, c.ai = a.Comps()
 
 	return c
 }

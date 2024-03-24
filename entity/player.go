@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"game/comps/ai"
 	"game/comps/anim"
 	"game/comps/body"
 	"game/comps/hitbox"
@@ -43,6 +44,7 @@ type Player struct {
 	body   *body.Comp
 	hitbox *hitbox.Comp
 	stats  *stats.Comp
+	ai     *ai.Comp
 
 	actionTags                  []string
 	speed, jumpSpeed            float64
@@ -58,6 +60,7 @@ func NewPlayer(x, y float64, actionTags []string) *Player {
 		body:       &body.Comp{MaxX: playerMaxX},
 		hitbox:     &hitbox.Comp{},
 		stats:      &stats.Comp{Hud: true, NoDebug: true, Stamina: 65},
+		ai:         &ai.Comp{},
 
 		attackPushForce: defaultAttackPushForce,
 		reactForce:      defaultReactForce,
@@ -72,8 +75,8 @@ func NewPlayer(x, y float64, actionTags []string) *Player {
 	return p
 }
 
-func (p *Player) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp) {
-	return p.anim, p.body, p.hitbox, p.stats
+func (p *Player) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp, ai *ai.Comp) {
+	return p.anim, p.body, p.hitbox, p.stats, p.ai
 }
 
 func (p *Player) Init() {
