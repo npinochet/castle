@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"game/assets"
+	"game/comps/ai"
 	"game/comps/anim"
 	"game/comps/body"
 	"game/comps/hitbox"
@@ -88,7 +89,9 @@ func (g *Game) init() {
 		//26: entity.NewKnight,
 		//27: entity.NewGhoul,
 		//28: entity.NewSkeleman,
-		//29: entity.NewCrawler,
+		29: func(x, y, w, h float64, props *core.Properties) core.Entity {
+			return entity.NewCrawler(x, y, w, h, props)
+		},
 		//87: entity.NewGram,
 	})
 }
@@ -153,7 +156,7 @@ func debugControls() {
 		hitbox.DebugDraw = !hitbox.DebugDraw
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key3) {
-		//ai.DebugDraw = !ai.DebugDraw
+		ai.DebugDraw = !ai.DebugDraw
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key4) {
 		stats.DebugDraw = !stats.DebugDraw

@@ -4,6 +4,7 @@ import (
 	"game/assets"
 	"game/core"
 	"game/utils"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -35,6 +36,9 @@ func (c *Comp) Init(entity core.Entity) {
 func (c *Comp) SetAct(act func()) { c.act = act }
 
 func (c *Comp) Add(timeout float64, action *Action) {
+	if timeout <= 0 {
+		timeout = math.MaxFloat64
+	}
 	c.actionQueue = append(c.actionQueue, actionItem{action, timeout})
 	if len(c.actionQueue) == 1 && action.Entry != nil {
 		action.Entry()
@@ -56,14 +60,12 @@ func (c *Comp) Update(dt float64) {
 		if item.action.Exit != nil {
 			item.action.Exit()
 		}
-		if c.actionQueue = c.actionQueue[1:]; len(c.actionQueue) == 0 {
-			c.Update(dt)
-
-			return
+		if c.actionQueue = c.actionQueue[1:]; len(c.actionQueue) > 0 {
+			if nextItem := c.actionQueue[0]; nextItem.action.Entry != nil {
+				nextItem.action.Entry()
+			}
 		}
-		if nextItem := c.actionQueue[0]; nextItem.action.Entry != nil {
-			nextItem.action.Entry()
-		}
+		c.Update(dt)
 	}
 }
 
@@ -76,7 +78,7 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	utils.DrawText(screen, "AI:"+c.actionQueue[0].action.Name, assets.TinyFont, op)
 }
 
-func (c *Comp) InTragetRange(minDist, maxDist float64) bool {
+func (c *Comp) InTargetRange(minDist, maxDist float64) bool {
 	if c.Target == nil {
 		return false
 	}

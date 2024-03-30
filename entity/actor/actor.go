@@ -25,7 +25,6 @@ type Control struct {
 	stats  *stats.Comp
 	ai     *ai.Comp
 	paused bool
-	speed  float64
 }
 
 func NewControl(a Actor) *Control {
@@ -52,6 +51,10 @@ func (c *Control) Hurt(other core.Entity, damage, reactForce float64) {
 		force *= 2 * (damage / c.stats.MaxHealth)
 		c.anim.SetState(vars.StaggerTag)
 		c.body.Vx += force
+	}
+
+	if c.ai != nil && c.ai.Target == nil {
+		c.ai.Target = other
 	}
 }
 
