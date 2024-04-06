@@ -3,7 +3,9 @@ package ai
 import (
 	"game/assets"
 	"game/core"
+	"game/libs/bump"
 	"game/utils"
+	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -27,6 +29,7 @@ type Comp struct {
 	Target      core.Entity
 	act         func()
 	actionQueue []actionItem
+	DebugRect   *bump.Rect
 }
 
 func (c *Comp) Init(entity core.Entity) {
@@ -54,7 +57,7 @@ func (c *Comp) Update(dt float64) {
 			return
 		}
 	}
-	item := c.actionQueue[0]
+	item := &c.actionQueue[0]
 	item.timer -= dt
 	if item.timer <= 0 || item.action.Next(dt) {
 		if item.action.Exit != nil {
@@ -76,6 +79,13 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -10)
 	utils.DrawText(screen, "AI:"+c.actionQueue[0].action.Name, assets.TinyFont, op)
+	if c.DebugRect != nil {
+		image := ebiten.NewImage(int(c.DebugRect.W), int(c.DebugRect.H))
+		image.Fill(color.NRGBA{255, 255, 0, 75})
+		op := &ebiten.DrawImageOptions{GeoM: entityPos}
+		op.GeoM.Translate(-c.DebugRect.X, -c.DebugRect.Y)
+		screen.DrawImage(image, op)
+	}
 }
 
 func (c *Comp) InTargetRange(minDist, maxDist float64) bool {

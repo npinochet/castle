@@ -73,26 +73,19 @@ func (w *World) Update(dt float64) {
 }
 
 func (w *World) Draw(screen *ebiten.Image) {
-	// TODO: Hide BackgroundImage and ForegroundImage draw code on Map package.
-	if w.Map != nil {
-		background, _ := w.Map.backgroundImage.SubImage(w.Camera.Bounds()).(*ebiten.Image)
-		screen.DrawImage(background, nil)
-	}
-	cx, cy := w.Camera.Position()
-	entityPos := ebiten.GeoM{}
-	for _, e := range w.entities {
-		x, y := e.Position()
-		entityPos.Reset()
-		entityPos.Translate(x, y)
-		entityPos.Translate(-cx, -cy)
-		for _, c := range e.Components() {
-			c.Draw(screen, entityPos)
+	w.Map.Draw(screen, w.Camera, func() {
+		cx, cy := w.Camera.Position()
+		entityPos := ebiten.GeoM{}
+		for _, e := range w.entities {
+			x, y := e.Position()
+			entityPos.Reset()
+			entityPos.Translate(x, y)
+			entityPos.Translate(-cx, -cy)
+			for _, c := range e.Components() {
+				c.Draw(screen, entityPos)
+			}
 		}
-	}
-	if w.Map != nil {
-		foreground, _ := w.Map.foregroundImage.SubImage(w.Camera.Bounds()).(*ebiten.Image)
-		screen.DrawImage(foreground, nil)
-	}
+	})
 }
 
 func Get[T Component](entity Entity) T {

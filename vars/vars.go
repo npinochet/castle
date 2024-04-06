@@ -8,6 +8,7 @@ const (
 	// Config.
 	Scale                     = 4
 	ScreenWidth, ScreenHeight = 160, 96 // 320, 240.
+	Debug                     = true
 
 	// Anim.
 	IdleTag       = "Idle"
@@ -25,7 +26,7 @@ const (
 
 	// Actor.
 	DefaultAttackPushForce                    = 100
-	DefaultReactForce                         = 100
+	DefaultReactForce                         = 50
 	DefaultMaxXDiv, DefaultMaxXRecoverRateDiv = 2, 3
 
 	// Stats.

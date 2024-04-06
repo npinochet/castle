@@ -30,11 +30,6 @@ const (
 	keyBufferDuration = 500 * time.Millisecond
 )
 
-const (
-	defaultAttackPushForce = 100
-	defaultReactForce      = 50
-)
-
 var PlayerRef *Player
 
 type Player struct {
@@ -62,8 +57,8 @@ func NewPlayer(x, y float64, actionTags []string) *Player {
 		stats:      &stats.Comp{Hud: true, NoDebug: true, Stamina: 65},
 		ai:         &ai.Comp{},
 
-		attackPushForce: defaultAttackPushForce,
-		reactForce:      defaultReactForce,
+		attackPushForce: vars.DefaultAttackPushForce,
+		reactForce:      vars.DefaultReactForce,
 		actionTags:      actionTags,
 		speed:           playerSpeed, jumpSpeed: playerJumpSpeed,
 
@@ -80,6 +75,11 @@ func (p *Player) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp,
 }
 
 func (p *Player) Init() {
+	hurtbox, err := p.anim.FrameSlice(vars.HurtboxSliceName)
+	if err != nil {
+		log.Panicf("player: %s", err)
+	}
+	p.hitbox.PushHitbox(hurtbox, hitbox.Hit, nil)
 	p.hitbox.HitFunc = func(other core.Entity, _ *bump.Collision, damage float64, contactType hitbox.ContactType) {
 		switch contactType {
 		case hitbox.Hit:
@@ -90,12 +90,6 @@ func (p *Player) Init() {
 			p.Block(other, damage, p.reactForce, contactType)
 		}
 	}
-
-	hurtbox, err := p.anim.FrameSlice(vars.HurtboxSliceName)
-	if err != nil {
-		log.Panicf("player: %s", err)
-	}
-	p.hitbox.PushHitbox(hurtbox, hitbox.Hit, nil)
 }
 
 func (p *Player) Update(dt float64) {
@@ -160,9 +154,10 @@ func (p *Player) input(dt float64) { // TODO: refactor this
 		p.body.Vy = -p.jumpSpeed
 	}
 
-	// TODO: Debug, remove later.
-	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
-		p.stats.Heal = p.stats.MaxHeal
+	if vars.Debug {
+		if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+			p.stats.Heal = p.stats.MaxHeal
+		}
 	}
 }
 

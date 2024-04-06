@@ -64,9 +64,9 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	}
 	for _, box := range c.hurtBoxes {
 		image := ebiten.NewImage(int(box.rect.W), int(box.rect.H))
-		image.Fill(color.RGBA{0, 0, 255, 100})
+		image.Fill(color.NRGBA{0, 0, 255, 75})
 		if box.contactType != Hit {
-			image.Fill(color.RGBA{255, 0, 0, 100})
+			image.Fill(color.NRGBA{255, 0, 0, 75})
 		}
 		op := &ebiten.DrawImageOptions{GeoM: entityPos}
 		op.GeoM.Translate(box.rect.X, box.rect.Y)
@@ -75,7 +75,7 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 
 	if c.debugLastHitbox.W != 0 || c.debugLastHitbox.H != 0 {
 		image := ebiten.NewImage(int(c.debugLastHitbox.W), int(c.debugLastHitbox.H))
-		image.Fill(color.RGBA{255, 255, 0, 100})
+		image.Fill(color.NRGBA{255, 255, 0, 75})
 		op := &ebiten.DrawImageOptions{GeoM: entityPos}
 		op.GeoM.Translate(c.debugLastHitbox.X, c.debugLastHitbox.Y)
 		screen.DrawImage(image, op)
@@ -134,8 +134,8 @@ func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) 
 			if other.contactType > doesHit[other.comp].contactType {
 				doesHit[other.comp] = contactInfo{other.contactType, col}
 			}
-		} else if _, ok := col.Other.(*tiled.Object); ok && Block > contact {
-			contact = Block // TODO: Should not stagger when hitting slope
+		} else if _, ok := col.Other.(*tiled.Object); ok && contact < Block && !c.space.Has(col.Other, "slope") {
+			contact = Block
 		}
 	}
 

@@ -2,6 +2,7 @@ package core
 
 import (
 	"game/libs/bump"
+	"game/libs/camera"
 	"log"
 	"math"
 	"strconv"
@@ -69,6 +70,20 @@ func NewMap(mapPath string, foregroundLayerName, backgroundLayerName string) *Ma
 
 func (m *Map) Update(_ float64) {
 	// TODO: Update animation system.
+}
+
+func (m *Map) Draw(screen *ebiten.Image, camera *camera.Camera, betweenDraw func()) {
+	if m.backgroundImage != nil {
+		background, _ := m.backgroundImage.SubImage(camera.Bounds()).(*ebiten.Image)
+		screen.DrawImage(background, nil)
+	}
+	if betweenDraw != nil {
+		betweenDraw()
+	}
+	if m.foregroundImage != nil {
+		foreground, _ := m.foregroundImage.SubImage(camera.Bounds()).(*ebiten.Image)
+		screen.DrawImage(foreground, nil)
+	}
 }
 
 func (m *Map) FindObjectID(id int) (*tiled.Object, error) {

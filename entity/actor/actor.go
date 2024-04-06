@@ -10,6 +10,7 @@ import (
 	"game/libs/bump"
 	"game/utils"
 	"game/vars"
+	"log"
 )
 
 type Actor interface {
@@ -32,6 +33,22 @@ func NewControl(a Actor) *Control {
 	c.anim, c.body, c.hitbox, c.stats, c.ai = a.Comps()
 
 	return c
+}
+
+func (c *Control) Init() {
+	hurtbox, err := c.anim.FrameSlice(vars.HurtboxSliceName)
+	if err != nil {
+		log.Panicf("actor: no hurtbox found: %s", err)
+	}
+	c.hitbox.PushHitbox(hurtbox, hitbox.Hit, nil)
+	c.hitbox.HitFunc = func(other core.Entity, _ *bump.Collision, damage float64, contactType hitbox.ContactType) {
+		switch contactType {
+		case hitbox.Hit:
+			c.Hurt(other, damage, vars.DefaultReactForce)
+		case hitbox.Block, hitbox.ParryBlock:
+			c.Block(other, damage, vars.DefaultReactForce, contactType)
+		}
+	}
 }
 
 func (c *Control) Hurt(other core.Entity, damage, reactForce float64) {
@@ -143,9 +160,11 @@ func (c *Control) ShieldUp() {
 	prevMaxX, prevStaminaRecoverRate := c.body.MaxX, c.stats.StaminaRecoverRate
 	c.body.MaxX /= 2
 	c.stats.StaminaRecoverRate /= 3
-	// TODO: this does not work, you can cancel the shield up before the ParryBlock is done
 	c.anim.SetState(vars.ParryBlockTag)
-	c.anim.SetExitCallback(func() { c.body.MaxX, c.stats.StaminaRecoverRate = prevMaxX, prevStaminaRecoverRate }, func() bool { return !c.BlockingState() })
+	c.anim.SetExitCallback(func() {
+		c.body.MaxX = prevMaxX
+		c.stats.StaminaRecoverRate = prevStaminaRecoverRate
+	}, func() bool { return !c.BlockingState() })
 	blockSlice, err := c.anim.FrameSlice(vars.BlockSliceName)
 	if err != nil {
 		panic(err)

@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	minTargetRange = 10.0
-	maxTargetRange = 20.0
-	frontViewDist  = 20.0
+	minTargetRange = 20.0
+	maxTargetRange = 30.0
+	frontViewDist  = 60.0
 
 	reactForce = 10.0
 	pushForce  = 10.0
@@ -26,10 +26,17 @@ func IdleAction(a *Control, view *bump.Rect) *ai.Action {
 			}
 			var targets []core.Entity
 			if view == nil {
-				_, _, _, h := a.actor.Rect()
+				_, _, w, h := a.actor.Rect()
 				targets = ext.QueryFront[core.Entity](a.actor, frontViewDist, h, a.anim.FlipX)
+
+				view := &bump.Rect{X: frontViewDist, Y: h, W: frontViewDist, H: h * 2}
+				if a.anim.FlipX {
+					view.X += frontViewDist + w
+				}
+				a.ai.DebugRect = view
 			} else {
 				targets = ext.QueryItems[core.Entity](a.actor, *view, "body")
+				a.ai.DebugRect = view
 			}
 			if len(targets) > 0 {
 				a.ai.Target = targets[0]
@@ -62,7 +69,7 @@ func ApproachAction(a *Control, speed, maxSpeed float64) *ai.Action {
 		Entry: func() { a.body.MaxX = maxSpeed },
 		Exit:  func() { a.body.MaxX = currentMaxSpeed },
 		Next: func(dt float64) bool {
-			if a.ai.Target == nil || a.ai.InTargetRange(minTargetRange, -1) {
+			if a.ai.Target == nil || a.ai.InTargetRange(0, minTargetRange) {
 				return true
 			}
 			if !a.ai.InTargetRange(0, maxTargetRange) {

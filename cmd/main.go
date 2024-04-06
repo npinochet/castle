@@ -25,27 +25,15 @@ import (
 - JUICE UP COMBAT, IM TALKING STOP TIME, PARTICLE EFFECTS, FLASHING BABY
 - Add animation tiles on update for Tiled map.
 - Maybe stop time while camera transition is playing, and move follower entity to border?
-- AI component for enemies.
 - Don't cap max speed when guarding in mid-air.
-- Add slopes.
 - Combos for attacks.
-- Think of a system to manage animations.
-- Make more enemies, make some of them shoot arrows.
-- Make actor default params presets.
 - Change background color and characters outline color.
 - Rethink Poise mechanic, is shouldn't be a bar that increses with time, it should be more like a health that resets.
-- Implement estus flasks.
-- Implement backstepping (kind of life rolling). (think about adding I frames or not, maybe just shrink the hurtbox).
-- Consider scapping core.Entity all together, use interface{} (pointer) as entities and use Actor for everything.
-	Every Comp will have an actor referencing it's owner.
-
+- Experiment implementing a backstepping (kind of life rolling). (think about adding I frames or not, maybe just shrink the hurtbox).
 
 - Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
-- Add a Timeout system for AI states.
-- Clean up AI code, Make a default AI behaviour for actors if none are present. Make it tweekable with other params maybe.
-- Think of movement accion or states the anim component can have.
 - Sometimes the enemy can cut off the stagger animation somehow.
-- Can not jump when going down slope, body.Ground is mostly false, this can be solved with coyote time.
+- Cannot jump when going down slope, body.Ground is mostly false, this can be solved with coyote time.
 
 -- Dark Souls Combat Findings
 - When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.
@@ -59,7 +47,19 @@ import (
 	- If the hitbox gets away from the player hurtbox in one frame and then it overlaps again on the next frame, it should hit again.
 
 - Add teams to actor, the AI should only target player and not other enemies (unless hit by enemy).
-- Maybe replace FSM with behaviour tree (ref: https://github.com/askft/go-behave)
+- Add ability to use a over heal with a consumable to boost attack damage
+- Experiment with partial blocking (a block does not negate all damage) and a system where you can attack back for a short period and
+	gain the lost health
+- Hide enemy health bar.
+
+
+
+- Today's TODO:
+	- Fix AI
+	- Hitbox is not working, can't deal damage to enemies.
+	- Hitbox debug box is flickering.
+
+	- Implement knight, and test a depeer AI.
 */
 
 const (
@@ -100,14 +100,15 @@ func (g *Game) Update() error {
 	if !canRestart {
 		return nil
 	}
-
 	dt := 1.0 / 60
 	vars.World.Update(dt)
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return errors.New("Exited")
 	}
-	debugControls()
+	if vars.Debug {
+		debugControls()
+	}
 
 	if core.Get[*stats.Comp](player).Health <= 0 && canRestart {
 		canRestart = false
@@ -140,7 +141,7 @@ func main() {
 	ebiten.SetWindowSize(vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale)
 	ebiten.SetWindowTitle("Castle")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-	ebiten.SetVsyncEnabled(false)
+	//ebiten.SetVsyncEnabled(false)
 
 	game.init()
 	if err := ebiten.RunGame(game); err != nil {

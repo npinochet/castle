@@ -104,6 +104,15 @@ func (s *Space) Set(item Item, rect Rect, tags ...Tag) {
 		s.Tags[item][tag] = true
 	}
 }
+func (s *Space) Has(item Item, tags ...Tag) bool {
+	for _, tag := range tags {
+		if !s.Tags[item][tag] {
+			return false
+		}
+	}
+
+	return true
+}
 func (s *Space) Remove(item Item) { delete(s.Rects, item); delete(s.Tags, item) }
 func (s *Space) Move(item Item, targetGoal Vec2, filter Filter, tags ...Tag) (Vec2, []*Collision) {
 	goal, cols := s.Check(item, targetGoal, filter, tags...)

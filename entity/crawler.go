@@ -46,12 +46,13 @@ func NewCrawler(x, y, _, _ float64, props *core.Properties) *Crawler {
 		stats:  &stats.Comp{MaxPoise: crawlerDamage, MaxHealth: crawlerHealth},
 		ai:     &ai.Comp{},
 	}
-	crawler.Add(crawler.anim, crawler.body, crawler.hitbox, crawler.stats)
+	crawler.Add(crawler.anim, crawler.body, crawler.hitbox, crawler.stats, crawler.ai)
 	crawler.Control = actor.NewControl(crawler)
 
-	var view bump.Rect
+	var view *bump.Rect
 	if props.View != nil {
-		view = bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
+		viewRect := bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
+		view = &viewRect
 	}
 	crawler.ai.SetAct(func() { crawler.aiScript(view) })
 
@@ -63,17 +64,19 @@ func (c *Crawler) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp
 }
 
 func (c *Crawler) Init() {
-	hurtbox, err := c.anim.FrameSlice(vars.HurtboxSliceName)
-	if err != nil {
-		panic("no hurtbox found")
-	}
-	c.hitbox.PushHitbox(hurtbox, hitbox.Hit, nil)
+	c.Control.Init()
 }
 
-func (c *Crawler) Update(_ float64) {}
+func (c *Crawler) Update(_ float64) {
+	if c.stats.Health <= 0 {
+		c.Remove()
 
-func (c *Crawler) aiScript(view bump.Rect) {
-	c.ai.Add(0, actor.IdleAction(c.Control, &view))
+		return
+	}
+}
+
+func (c *Crawler) aiScript(view *bump.Rect) {
+	c.ai.Add(0, actor.IdleAction(c.Control, view))
 	c.ai.Add(0, actor.ApproachAction(c.Control, crawlerSpeed, vars.DefaultMaxX))
 
 	if fate := rand.Float64(); fate > 0.66 {

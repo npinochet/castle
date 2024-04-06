@@ -58,7 +58,7 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	}
 	_, _, ew, eh := c.entity.Rect()
 	image := ebiten.NewImage(int(ew), int(eh))
-	image.Fill(color.RGBA{255, 0, 0, 100})
+	image.Fill(color.NRGBA{255, 0, 0, 75})
 	screen.DrawImage(image, &ebiten.DrawImageOptions{GeoM: entityPos})
 
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
