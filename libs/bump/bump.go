@@ -10,6 +10,7 @@ import (
 const DELTA = 1e-10 // floating-point margin of error.
 
 type Item any
+type Tag string
 type Slope struct{ L, R float64 } // Rect left and right heights, ([0, 1]) 0 = full height, 1 = zero height.
 type Rect struct {
 	X, Y, W, H float64
@@ -20,7 +21,7 @@ type Vec2 struct{ X, Y float64 }
 
 type Filter func(item, other Item) (response ColType, ok bool)
 type SimpleFilter func(item Item) bool
-type Response func(goal Vec2, col *Collision, filter Filter) (newGoal Vec2, newCols []*Collision)
+type Response func(goal Vec2, col *Collision, filter Filter, tags ...Tag) (newGoal Vec2, newCols []*Collision)
 type Collision struct {
 	Overlaps            bool
 	Intersection        float64
@@ -40,28 +41,29 @@ const (
 	Slide
 )
 
-func NewRect(x, y, w, h float64) Rect         { return Rect{X: x, Y: y, W: w, H: h} }
-func DefaultFilter(_, _ Item) (ColType, bool) { return Slide, true }
-func NilFilter(_, _ Item) (ColType, bool)     { return 0, false }
-
-func DefaultSimpleFilter(_ Item) bool { return true }
+func NewRect(x, y, w, h float64) Rect                 { return Rect{X: x, Y: y, W: w, H: h} }
+func DefaultResponseFilter(_, _ Item) (ColType, bool) { return Slide, true }
+func NilFilter(_, _ Item) (ColType, bool)             { return 0, false }
+func DefaultSimpleFilter(_ Item) bool                 { return true }
 
 type Space struct {
 	Rects     map[Item]Rect
+	Tags      map[Item]map[Tag]bool
 	responses map[ColType]Response
 }
 
 func NewSpace() *Space {
 	space := &Space{}
 	space.Rects = map[Item]Rect{}
+	space.Tags = map[Item]map[Tag]bool{}
 	space.responses = map[ColType]Response{
-		Touch: func(goal Vec2, col *Collision, filter Filter) (Vec2, []*Collision) {
+		Touch: func(_ Vec2, col *Collision, _ Filter, _ ...Tag) (Vec2, []*Collision) {
 			return col.Touch, nil
 		},
-		Cross: func(goal Vec2, col *Collision, filter Filter) (Vec2, []*Collision) {
-			return goal, space.Project(col.Item, col.ItemRect, goal, filter)
+		Cross: func(goal Vec2, col *Collision, filter Filter, tags ...Tag) (Vec2, []*Collision) {
+			return goal, space.Project(col.Item, col.ItemRect, goal, filter, tags...)
 		},
-		PureSlide: func(goal Vec2, col *Collision, filter Filter) (Vec2, []*Collision) {
+		PureSlide: func(goal Vec2, col *Collision, filter Filter, tags ...Tag) (Vec2, []*Collision) {
 			if col.Move.X != 0 || col.Move.Y != 0 {
 				if col.Normal.X != 0 {
 					goal.X = col.Touch.X
@@ -72,11 +74,11 @@ func NewSpace() *Space {
 			col.TypeData = goal
 			rect := Rect{col.Touch.X, col.Touch.Y, col.ItemRect.W, col.ItemRect.H, col.ItemRect.Priority, col.ItemRect.Slope}
 
-			return goal, space.Project(col.Item, rect, goal, filter)
+			return goal, space.Project(col.Item, rect, goal, filter, tags...)
 		},
-		Slide: func(goal Vec2, col *Collision, filter Filter) (Vec2, []*Collision) {
+		Slide: func(goal Vec2, col *Collision, filter Filter, tags ...Tag) (Vec2, []*Collision) {
 			if !col.OtherRect.IsSlope() {
-				return space.responses[PureSlide](goal, col, filter)
+				return space.responses[PureSlide](goal, col, filter, tags...)
 			}
 			col.Normal = Vec2{0, 0}
 			if height := col.OtherRect.slopeY(goal.X + col.ItemRect.W/2); goal.Y > height-col.ItemRect.H {
@@ -93,19 +95,36 @@ func NewSpace() *Space {
 	return space
 }
 
-func (s *Space) Set(item Item, rect Rect) { s.Rects[item] = rect }
-func (s *Space) Remove(item Item)         { delete(s.Rects, item) }
-func (s *Space) Move(item Item, targetGoal Vec2, filter Filter) (goal Vec2, cols []*Collision) {
-	goal, cols = s.Check(item, targetGoal, filter)
+func (s *Space) Set(item Item, rect Rect, tags ...Tag) {
+	s.Rects[item] = rect
+	if s.Tags[item] == nil {
+		s.Tags[item] = map[Tag]bool{}
+	}
+	for _, tag := range tags {
+		s.Tags[item][tag] = true
+	}
+}
+func (s *Space) Has(item Item, tags ...Tag) bool {
+	for _, tag := range tags {
+		if !s.Tags[item][tag] {
+			return false
+		}
+	}
+
+	return true
+}
+func (s *Space) Remove(item Item) { delete(s.Rects, item); delete(s.Tags, item) }
+func (s *Space) Move(item Item, targetGoal Vec2, filter Filter, tags ...Tag) (Vec2, []*Collision) {
+	goal, cols := s.Check(item, targetGoal, filter, tags...)
 	rect := s.Rects[item]
 	s.Set(item, Rect{goal.X, goal.Y, rect.W, rect.H, rect.Priority, rect.Slope})
 
-	return
+	return goal, cols
 }
 
-func (s *Space) Check(item Item, goal Vec2, filter Filter) (Vec2, []*Collision) {
+func (s *Space) Check(item Item, goal Vec2, filter Filter, tags ...Tag) (Vec2, []*Collision) {
 	if filter == nil {
-		filter = DefaultFilter
+		filter = DefaultResponseFilter
 	}
 
 	visited := map[Item]bool{item: true}
@@ -118,33 +137,39 @@ func (s *Space) Check(item Item, goal Vec2, filter Filter) (Vec2, []*Collision) 
 	}
 
 	rect := s.Rects[item]
-	projectedCols := s.Project(item, rect, goal, visitedFilter)
-	sort.Slice(projectedCols, func(i, j int) bool { return projectedCols[i].Normal.Y != 0 })
+	projectedCols := s.Project(item, rect, goal, visitedFilter, tags...)
+	sort.Slice(projectedCols, func(i, _ int) bool { return projectedCols[i].Normal.Y != 0 })
 
 	var cols []*Collision
 	for len(projectedCols) > 0 {
 		col := projectedCols[0]
 		visited[col.Other] = true
-		goal, projectedCols = s.responses[col.Type](goal, col, visitedFilter)
+		goal, projectedCols = s.responses[col.Type](goal, col, visitedFilter, tags...)
 		cols = append(cols, col)
 	}
 
 	return goal, cols
 }
 
-func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter) []*Collision {
+func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter, tags ...Tag) []*Collision {
 	if filter == nil {
-		filter = DefaultFilter
+		filter = DefaultResponseFilter
 	}
 
 	var cols []*Collision
-	visited := map[Item]bool{item: true}
-	// TODO: Optimize using cells.
-	for _, other := range sortPriority(s.Rects) {
-		if visited[other] {
+	// TODO: Optimize using cells
+	items := sortPriority(s.Rects)
+	tagged := map[Item]bool{}
+	for _, tag := range tags {
+		for _, other := range items {
+			tagged[other] = tagged[other] || s.Tags[other][tag]
+		}
+	}
+
+	for _, other := range items {
+		if other == item || (len(tags) > 0 && !tagged[other]) {
 			continue
 		}
-		visited[other] = true
 		if responseName, ok := filter(item, other); ok {
 			otherRect := s.Rects[other]
 			if col, ok := detectCollision(rect, otherRect, goal); ok {
@@ -158,13 +183,13 @@ func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter) []*Colli
 	return cols
 }
 
-func (s *Space) Query(rect Rect, filter SimpleFilter) []*Collision {
+func (s *Space) Query(rect Rect, filter SimpleFilter, tags ...Tag) []*Collision {
 	if filter == nil {
 		filter = DefaultSimpleFilter
 	}
-	projectFilter := func(item, other Item) (ColType, bool) { return 0, filter(other) }
+	projectFilter := func(_, other Item) (ColType, bool) { return 0, filter(other) }
 
-	return s.Project(nil, rect, Vec2{rect.X, rect.Y}, projectFilter)
+	return s.Project(nil, rect, Vec2{rect.X, rect.Y}, projectFilter, tags...)
 }
 
 func Overlaps(r1, r2 Rect) bool {

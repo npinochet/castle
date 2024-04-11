@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"game/assets"
 	"game/comps/ai"
-	"game/comps/basic/anim"
-	"game/comps/basic/body"
-	"game/comps/basic/hitbox"
-	"game/comps/basic/stats"
+	"game/comps/anim"
+	"game/comps/body"
+	"game/comps/hitbox"
+	"game/comps/stats"
 	"game/core"
 	"game/entity"
 	"game/utils"
+	"game/vars"
 	"image/color"
 	"log"
 	"time"
@@ -24,27 +25,15 @@ import (
 - JUICE UP COMBAT, IM TALKING STOP TIME, PARTICLE EFFECTS, FLASHING BABY
 - Add animation tiles on update for Tiled map.
 - Maybe stop time while camera transition is playing, and move follower entity to border?
-- AI component for enemies.
 - Don't cap max speed when guarding in mid-air.
-- Add slopes.
 - Combos for attacks.
-- Think of a system to manage animations.
-- Make more enemies, make some of them shoot arrows.
-- Make actor default params presets.
 - Change background color and characters outline color.
 - Rethink Poise mechanic, is shouldn't be a bar that increses with time, it should be more like a health that resets.
-- Implement estus flasks.
-- Implement backstepping (kind of life rolling). (think about adding I frames or not, maybe just shrink the hurtbox).
-- Consider scapping core.Entity all together, use interface{} (pointer) as entities and use Actor for everything.
-	Every Comp will have an actor referencing it's owner.
-
+- Experiment implementing a backstepping (kind of life rolling). (think about adding I frames or not, maybe just shrink the hurtbox).
 
 - Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
-- Add a Timeout system for AI states.
-- Clean up AI code, Make a default AI behaviour for actors if none are present. Make it tweekable with other params maybe.
-- Think of movement accion or states the anim component can have.
 - Sometimes the enemy can cut off the stagger animation somehow.
-- Can not jump when going down slope, body.Ground is mostly false, this can be solved with coyote time.
+- Cannot jump when going down slope, body.Ground is mostly false, this can be solved with coyote time.
 
 -- Dark Souls Combat Findings
 - When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.
@@ -56,46 +45,60 @@ import (
 - No invinsibility frames after getting hit.
 	- Each enemy can hit the player after being in contact with the hitbox once.
 	- If the hitbox gets away from the player hurtbox in one frame and then it overlaps again on the next frame, it should hit again.
+
 - Add teams to actor, the AI should only target player and not other enemies (unless hit by enemy).
-- Maybe replace FSM with behaviour tree (ref: https://github.com/askft/go-behave)
+- Add enemy that can only be hit from behind.
+- Add enemy that jumps around.
+- Add ability to use a over heal with a consumable to boost attack damage
+- Experiment with partial blocking (a block does not negate all damage) and a system where you can attack back for a short period and
+	gain the lost health
+- Experiment hiding the enemy health bar, even for bosses.
+
+
+- Today's TODO:
+	- Experiment with ideas above.
+
 */
 
 const (
-	scale                     = 4
-	screenWidth, screenHeight = 160, 96 // 320, 240.
-
 	playerID = 25
 )
 
 var (
 	game       = &Game{}
-	player     *core.Entity
+	player     *entity.Player
 	canRestart = true
 )
 
-type Game struct {
-	world *core.World
-}
+type Game struct{}
 
 func (g *Game) init() {
-	g.world = core.NewWorld(screenWidth, screenHeight)
-	g.world.SetMap(core.NewMap("maps/intro/intro.tmx", "foreground", "background"), "rooms")
-
-	obj, err := g.world.Map.FindObjectFromTileID(playerID, "entities")
+	obj, err := vars.World.Map.FindObjectFromTileID(playerID, "entities")
 	if err != nil {
-		log.Println("Error finding player entity:", err)
+		log.Println("main: error finding player entity:", err)
 	}
 	player = entity.NewPlayer(obj.X, obj.Y, nil)
-	g.world.Camera.Follow(player)
-	g.world.AddEntity(player)
+	vars.World.Camera.Follow(player)
+	vars.World.Add(player)
+	entity.PlayerRef = player
 
-	g.world.Map.LoadBumpObjects(g.world.Space, "collisions")
-	g.world.Map.LoadEntityObjects(g.world, "entities", map[uint32]core.EntityContructor{
-		26: entity.NewKnight,
-		27: entity.NewGhoul,
-		28: entity.NewSkeleman,
-		29: entity.NewCrawler,
-		87: entity.NewGram,
+	vars.World.Map.LoadBumpObjects(vars.World.Space, "collisions")
+	vars.World.Map.LoadEntityObjects(vars.World, "entities", map[uint32]core.EntityContructor{
+		26: func(x, y, w, h float64, props *core.Properties) core.Entity {
+			return entity.NewKnight(x, y, w, h, props)
+		},
+		27: func(x, y, w, h float64, props *core.Properties) core.Entity {
+			return entity.NewGhoul(x, y, w, h, props)
+		},
+		28: func(x, y, w, h float64, props *core.Properties) core.Entity {
+			return entity.NewSkeleman(x, y, w, h, props)
+		},
+		29: func(x, y, w, h float64, props *core.Properties) core.Entity {
+			return entity.NewCrawler(x, y, w, h, props)
+		},
+		87: func(x, y, w, h float64, props *core.Properties) core.Entity {
+			return entity.NewGram(x, y, w, h, props)
+		},
 	})
 }
 
@@ -103,16 +106,17 @@ func (g *Game) Update() error {
 	if !canRestart {
 		return nil
 	}
-
 	dt := 1.0 / 60
-	g.world.Update(dt)
+	vars.World.Update(dt)
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return errors.New("Exited")
 	}
-	debugControls()
+	if vars.Debug {
+		debugControls()
+	}
 
-	if core.GetComponent[*stats.Comp](player).Health <= 0 && canRestart {
+	if core.Get[*stats.Comp](player).Health <= 0 && canRestart {
 		canRestart = false
 		time.AfterFunc(2, func() {
 			game.init()
@@ -128,22 +132,22 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if !canRestart {
 		return
 	}
-	g.world.Draw(screen)
+	vars.World.Draw(screen)
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(screenWidth-16, 1)
+	op.GeoM.Translate(float64(vars.ScreenWidth-16), 1)
 	utils.DrawText(screen, fmt.Sprintf(`%0.2f`, ebiten.ActualFPS()), assets.TinyFont, op)
 }
 
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return screenWidth, screenHeight
+func (g *Game) Layout(_, _ int) (int, int) {
+	return vars.ScreenWidth, vars.ScreenHeight
 }
 
 func main() {
-	ebiten.SetWindowSize(screenWidth*scale, screenHeight*scale)
+	ebiten.SetWindowSize(vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale)
 	ebiten.SetWindowTitle("Castle")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-	ebiten.SetFPSMode(ebiten.FPSModeVsyncOffMaximum)
+	// ebiten.SetVsyncEnabled(false)
 
 	game.init()
 	if err := ebiten.RunGame(game); err != nil {

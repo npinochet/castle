@@ -2,69 +2,77 @@ package entity
 
 import (
 	"game/comps/ai"
-	"game/comps/basic/anim"
-	"game/comps/basic/stats"
+	"game/comps/anim"
+	"game/comps/body"
+	"game/comps/hitbox"
+	"game/comps/stats"
 	"game/core"
-	"game/entity/defaults"
+	"game/entity/actor"
 	"game/libs/bump"
+	"game/vars"
 )
 
 const (
 	crawlerAnimFile                                   = "assets/crawler"
 	crawlerWidth, crawlerHeight                       = 11, 8
 	crawlerOffsetX, crawlerOffsetY, crawlerOffsetFlip = -4, -4, 10
-	crawlerSpeed                                      = 100
 	crawlerHealth, crawlerDamage                      = 30, 20
+	crawlerSpeed                                      = 100
 )
 
-type crawler struct{ *defaults.Actor }
+type Crawler struct {
+	*core.BaseEntity
+	*actor.Control
+	anim   *anim.Comp
+	body   *body.Comp
+	hitbox *hitbox.Comp
+	stats  *stats.Comp
+	ai     *ai.Comp
+}
 
-func NewCrawler(x, y, w, h float64, props *core.Property) *core.Entity {
-	crawler := &crawler{Actor: defaults.NewActor(x, y, crawlerWidth, crawlerHeight, []string{"Attack"})}
-	crawler.Anim = &anim.Comp{
-		FilesName: crawlerAnimFile,
-		OX:        crawlerOffsetX,
-		OY:        crawlerOffsetY,
-		OXFlip:    crawlerOffsetFlip,
-		FlipX:     props.FlipX,
+func NewCrawler(x, y, _, _ float64, props *core.Properties) *Crawler {
+	crawler := &Crawler{
+		BaseEntity: &core.BaseEntity{X: x, Y: y, W: crawlerWidth, H: crawlerHeight},
+		anim: &anim.Comp{
+			FilesName: crawlerAnimFile,
+			OX:        crawlerOffsetX, OY: crawlerOffsetY,
+			OXFlip: crawlerOffsetFlip,
+			FlipX:  props.FlipX,
+		},
+		body:   &body.Comp{},
+		hitbox: &hitbox.Comp{},
+		stats:  &stats.Comp{MaxHealth: crawlerHealth, MaxPoise: crawlerDamage},
+		ai:     &ai.Comp{},
 	}
-	crawler.Stats = &stats.Comp{MaxPoise: crawlerDamage, MaxHealth: crawlerHealth}
-	crawler.Control.Speed = crawlerSpeed
+	crawler.Add(crawler.anim, crawler.body, crawler.hitbox, crawler.stats, crawler.ai)
+	crawler.Control = actor.NewControl(crawler)
 
-	var view bump.Rect
+	var view *bump.Rect
 	if props.View != nil {
-		view = bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
+		viewRect := bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
+		view = &viewRect
 	}
-	if props.AI != "none" {
-		crawler.setupAI(view)
-	} else {
-		crawler.Control.Speed = 0
-	}
-	crawler.SetupComponents()
-	crawler.AddComponent(crawler)
+	crawler.ai.SetAct(func() { crawler.aiScript(view) })
 
-	return crawler.Entity
+	return crawler
 }
 
-func (c *crawler) Init(_ *core.Entity) {
-	hurtbox, err := c.Anim.GetFrameHitbox(anim.HurtboxSliceName)
-	if err != nil {
-		panic("no hurtbox found")
-	}
-	c.Hitbox.PushHitbox(hurtbox, false)
+func (c *Crawler) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp, ai *ai.Comp) {
+	return c.anim, c.body, c.hitbox, c.stats, c.ai
 }
 
-func (c *crawler) Update(dt float64) {
-	c.Control.SimpleUpdate(dt, c.AI.Target)
+func (c *Crawler) Update(_ float64) {
+	c.SimpleUpdate()
 }
 
-func (c *crawler) setupAI(view bump.Rect) {
-	config := defaults.DefaultAIConfig()
-	config.ViewRect = view
-	config.PaceReact = []ai.WeightedState{{"Attack", 1}, {"Wait", 0}}
-	config.Attacks = []defaults.Attack{{"Attack", crawlerDamage}}
-	config.CombatOptions = []ai.WeightedState{{"Pursuit", 100}, {"Pace", 2}, {"Wait", 1}, {"RunAttack", 1}, {"Attack", 1}}
+// nolint: nolintlint, gomnd
+func (c *Crawler) aiScript(view *bump.Rect) {
+	c.ai.Add(0, actor.IdleAction(c.Control, view))
+	c.ai.Add(0, actor.ApproachAction(c.Control, crawlerSpeed, vars.DefaultMaxX))
 
-	c.Control.Speed, c.Body.MaxX = ghoulSpeed, ghoulMaxSpeed
-	c.SetDefaultAI(config)
+	ai.Choice{
+		{1, func() { c.ai.Add(5, actor.AttackAction(c.Control, "Attack", crawlerDamage)) }},
+		{1, func() { c.ai.Add(1.5, actor.BackUpAction(c.Control, crawlerSpeed, 0)) }},
+		{1, func() { c.ai.Add(1, actor.WaitAction()) }},
+	}.Play()
 }

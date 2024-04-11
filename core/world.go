@@ -4,42 +4,48 @@ import (
 	"game/libs/bump"
 	"game/libs/camera"
 	"log"
+	"reflect"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var IDCount uint64 = 100
+type Entity interface {
+	Init()
+	Update(dt float64)
+	Components() []Component
+	Component(name string) Component
+	Position() (float64, float64)
+	SetPosition(x, y float64)
+	Rect() (float64, float64, float64, float64)
+	SetSize(w, h float64)
+}
+
+type Component interface {
+	Init(entity Entity)
+	Update(dt float64)
+	Draw(screen *ebiten.Image, entityPos ebiten.GeoM)
+}
 
 type World struct {
-	Space         *bump.Space
-	Camera        *camera.Camera
-	entities      []*Entity
-	entitiesCache map[uint64]*Entity
-	Map           *Map
-	freezeTimer   float64
+	Space       *bump.Space
+	Camera      *camera.Camera
+	entities    []Entity
+	Map         *Map
+	freezeTimer float64
 }
 
 func NewWorld(width, height float64) *World {
-	return &World{bump.NewSpace(), camera.New(width, height), nil, map[uint64]*Entity{}, nil, 0}
+	return &World{bump.NewSpace(), camera.New(width, height), nil, nil, 0}
 }
 
-func (w *World) AddEntity(entity *Entity) *Entity {
-	entity.ID = IDCount
-	w.entitiesCache[IDCount] = entity
-	IDCount++
-	entity.World = w
+func (w *World) Add(entity Entity) Entity {
 	w.entities = append(w.entities, entity)
-	entity.InitComponents()
+	for _, c := range entity.Components() {
+		c.Init(entity)
+	}
+	entity.Init()
 
 	return entity
-}
-
-func (w *World) GetEntityByID(id uint64) *Entity {
-	if ent, ok := w.entitiesCache[id]; ok {
-		return ent
-	}
-
-	return nil
 }
 
 func (w *World) SetMap(tiledMap *Map, roomsLayer string) {
@@ -47,7 +53,7 @@ func (w *World) SetMap(tiledMap *Map, roomsLayer string) {
 
 	rooms, ok := tiledMap.GetObjectsRects(roomsLayer)
 	if !ok {
-		log.Println("Room layer not found")
+		log.Println("world: room layer not found")
 	}
 	w.Camera.SetRooms(rooms)
 }
@@ -57,39 +63,55 @@ func (w *World) Update(dt float64) {
 	if w.freezeTimer -= dt; w.freezeTimer >= 0 {
 		return
 	}
-	if w.Map != nil {
-		w.Map.Update(dt)
-	}
+	w.Map.Update(dt)
 	for _, e := range w.entities {
-		e.UpdateComponents(dt)
+		for _, c := range e.Components() {
+			c.Update(dt)
+		}
+		e.Update(dt)
 	}
 }
 
 func (w *World) Draw(screen *ebiten.Image) {
-	// TODO: Hide BackgroundImage and ForegroundImage draw code on Map package.
-	if w.Map != nil {
-		background, _ := w.Map.backgroundImage.SubImage(w.Camera.Bounds()).(*ebiten.Image)
-		screen.DrawImage(background, nil)
-	}
-	for _, e := range w.entities {
-		e.Draw(screen)
-	}
-	if w.Map != nil {
-		foreground, _ := w.Map.foregroundImage.SubImage(w.Camera.Bounds()).(*ebiten.Image)
-		screen.DrawImage(foreground, nil)
-	}
+	w.Map.Draw(screen, w.Camera, func() {
+		cx, cy := w.Camera.Position()
+		entityPos := ebiten.GeoM{}
+		for _, e := range w.entities {
+			x, y := e.Position()
+			entityPos.Reset()
+			entityPos.Translate(x, y)
+			entityPos.Translate(-cx, -cy)
+			for _, c := range e.Components() {
+				c.Draw(screen, entityPos)
+			}
+		}
+	})
 }
 
-func (w *World) Freeze(time float64) {
-	w.freezeTimer = time
+func Get[T Component](entity Entity) T {
+	var t T
+	tag := reflect.TypeOf(t).String()
+	t, _ = entity.Component(tag).(T)
+
+	return t
 }
 
-func (w *World) RemoveEntity(id uint64) {
+func GetWithTag[T Component](entity Entity, tag string) T {
+	t, _ := entity.Component(tag).(T)
+
+	return t
+}
+
+func (w *World) Remove(entity Entity) {
 	for i, e := range w.entities {
-		if e.ID == id {
+		if entity == e {
 			w.entities = append(w.entities[:i], w.entities[i+1:]...)
 
 			break
 		}
 	}
+}
+
+func (w *World) Freeze(time float64) {
+	w.freezeTimer = time
 }

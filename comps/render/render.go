@@ -18,8 +18,9 @@ type Comp struct {
 	w, h         float64
 }
 
-func (c *Comp) Init(entity *core.Entity) {
-	w, h := c.Image.Size()
+func (c *Comp) Init(_ core.Entity) {
+	is := c.Image.Bounds().Size()
+	w, h := is.X, is.Y
 	c.w, c.h = float64(w), float64(h)
 	if c.RollingTime != 0 {
 		c.rollingTimer = time.AfterFunc(c.RollingTime, func() {
@@ -30,6 +31,8 @@ func (c *Comp) Init(entity *core.Entity) {
 		})
 	}
 }
+
+func (c *Comp) Update(_ float64) {}
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}

@@ -1,38 +1,80 @@
 package entity
 
 import (
-	"game/comps/basic/anim"
-	"game/comps/basic/stats"
+	"game/comps/ai"
+	"game/comps/anim"
+	"game/comps/body"
+	"game/comps/hitbox"
+	"game/comps/stats"
 	"game/core"
-	"game/entity/defaults"
+	"game/entity/actor"
+	"game/libs/bump"
+	"game/vars"
 )
 
-const knightAnimFile = "assets/knight"
+const (
+	knightAnimFile                                 = "assets/knight"
+	knightWidth, knightHeight                      = 8, 11
+	knightOffsetX, knightOffsetY, knightOffsetFlip = -10, -3, 17
+	knightMaxPosie                                 = 25
+)
 
-type Knight struct{ *defaults.Actor }
-
-func NewKnight(x, y, _, _ float64, props *core.Property) *core.Entity {
-	speed := 100.0
-	knight := &Knight{Actor: defaults.NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag})}
-	knight.Anim = &anim.Comp{FilesName: knightAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip, FlipX: props.FlipX}
-	knight.Stats = &stats.Comp{MaxPoise: 25}
-	knight.Control.Speed = speed
-	knight.SetupComponents()
-	knight.AddComponent(knight)
-
-	knight.SetDefaultAI(nil)
-
-	return knight.Entity
+type Knight struct {
+	*core.BaseEntity
+	*actor.Control
+	anim   *anim.Comp
+	body   *body.Comp
+	hitbox *hitbox.Comp
+	stats  *stats.Comp
+	ai     *ai.Comp
 }
 
-func (k *Knight) Init(_ *core.Entity) {
-	hurtbox, err := k.Anim.GetFrameHitbox(anim.HurtboxSliceName)
-	if err != nil {
-		panic("no hurtbox found")
+func NewKnight(x, y, _, _ float64, props *core.Properties) *Knight {
+	knight := &Knight{
+		BaseEntity: &core.BaseEntity{X: x, Y: y, W: knightWidth, H: knightHeight},
+		anim: &anim.Comp{
+			FilesName: knightAnimFile,
+			OX:        knightOffsetX, OY: knightOffsetY,
+			OXFlip: knightOffsetFlip,
+			FlipX:  props.FlipX,
+		},
+		body:   &body.Comp{},
+		hitbox: &hitbox.Comp{},
+		stats:  &stats.Comp{MaxPoise: knightMaxPosie},
+		ai:     &ai.Comp{},
 	}
-	k.Hitbox.PushHitbox(hurtbox, false)
+	knight.Add(knight.anim, knight.body, knight.hitbox, knight.stats, knight.ai)
+	knight.Control = actor.NewControl(knight)
+
+	var view *bump.Rect
+	if props.View != nil {
+		viewRect := bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
+		view = &viewRect
+	}
+	knight.ai.SetAct(func() { knight.aiScript(view) })
+
+	return knight
 }
 
-func (k *Knight) Update(dt float64) {
-	k.Control.SimpleUpdate(dt, k.AI.Target)
+func (k *Knight) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp, ai *ai.Comp) {
+	return k.anim, k.body, k.hitbox, k.stats, k.ai
+}
+
+func (k *Knight) Update(_ float64) {
+	k.SimpleUpdate()
+}
+
+// nolint: nolintlint, gomnd
+func (k *Knight) aiScript(view *bump.Rect) {
+	speed := 100.0
+	k.ai.Add(0, actor.IdleAction(k.Control, view))
+	k.ai.Add(0, actor.ApproachAction(k.Control, speed, vars.DefaultMaxX))
+	k.ai.Add(0.1, actor.WaitAction())
+
+	ai.Choice{
+		{2, func() { k.ai.Add(5, actor.AttackAction(k.Control, "Attack", playerDamage)) }},
+		{0.5, func() { k.ai.Add(1, actor.BackUpAction(k.Control, speed, 0)) }},
+		{1, func() { k.ai.Add(1, actor.WaitAction()) }},
+		{1, func() { k.ai.Add(1, actor.ShieldAction(k.Control)) }},
+	}.Play()
 }

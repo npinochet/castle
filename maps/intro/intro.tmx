@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.0" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="8" tileheight="8" infinite="0" backgroundcolor="#323c39" nextlayerid="8" nextobjectid="291">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="8" tileheight="8" infinite="0" backgroundcolor="#323c39" nextlayerid="8" nextobjectid="292">
  <editorsettings>
   <chunksize width="8" height="8"/>
  </editorsettings>
@@ -1012,7 +1012,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup color="#3fffffff" id="3" name="collisions">
+ <objectgroup color="#3fffffff" id="3" name="collisions" visible="0">
   <object id="5" x="1792" y="1992" width="16" height="96"/>
   <object id="6" x="1808" y="2048" width="200" height="40"/>
   <object id="7" x="2008" y="2024" width="200" height="64"/>
@@ -1071,10 +1071,10 @@
   <object id="80" x="1968" y="2408" width="16" height="16"/>
   <object id="81" x="1936" y="2432" width="8" height="16"/>
   <object id="102" x="1824" y="2496" width="160" height="8"/>
-  <object id="110" class="ladder" x="1864" y="2448" width="16" height="48"/>
-  <object id="125" class="ladder" x="1680" y="2432" width="16" height="200"/>
-  <object id="126" class="ladder" x="1640" y="2400" width="8" height="48"/>
-  <object id="127" class="ladder" x="1584" y="2512" width="8" height="40"/>
+  <object id="110" type="ladder" x="1864" y="2448" width="16" height="48"/>
+  <object id="125" type="ladder" x="1680" y="2432" width="16" height="200"/>
+  <object id="126" type="ladder" x="1640" y="2400" width="8" height="48"/>
+  <object id="127" type="ladder" x="1584" y="2512" width="8" height="40"/>
   <object id="128" x="1472" y="2344" width="240" height="16"/>
   <object id="129" x="1472" y="2360" width="112" height="64"/>
   <object id="130" x="1472" y="2424" width="24" height="32"/>
@@ -1167,15 +1167,15 @@
   <object id="233" x="2248" y="2848" width="120" height="8"/>
   <object id="234" x="2248" y="2856" width="8" height="40"/>
   <object id="235" x="2256" y="2888" width="24" height="8"/>
-  <object id="236" class="ladder" x="2000" y="2800" width="8" height="48"/>
-  <object id="237" class="ladder" x="2048" y="2896" width="8" height="48"/>
-  <object id="238" class="ladder" x="1960" y="2896" width="8" height="48"/>
-  <object id="239" class="ladder" x="1896" y="2848" width="16" height="48"/>
-  <object id="240" class="ladder" x="1680" y="2944" width="16" height="48"/>
-  <object id="241" class="ladder" x="1720" y="2992" width="16" height="48"/>
-  <object id="242" class="ladder" x="2144" y="2992" width="16" height="48"/>
-  <object id="243" class="ladder" x="2232" y="2848" width="16" height="48"/>
-  <object id="244" class="ladder" x="2016" y="2944" width="8" height="48"/>
+  <object id="236" type="ladder" x="2000" y="2800" width="8" height="48"/>
+  <object id="237" type="ladder" x="2048" y="2896" width="8" height="48"/>
+  <object id="238" type="ladder" x="1960" y="2896" width="8" height="48"/>
+  <object id="239" type="ladder" x="1896" y="2848" width="16" height="48"/>
+  <object id="240" type="ladder" x="1680" y="2944" width="16" height="48"/>
+  <object id="241" type="ladder" x="1720" y="2992" width="16" height="48"/>
+  <object id="242" type="ladder" x="2144" y="2992" width="16" height="48"/>
+  <object id="243" type="ladder" x="2232" y="2848" width="16" height="48"/>
+  <object id="244" type="ladder" x="2016" y="2944" width="8" height="48"/>
   <object id="252" x="1768" y="2856" width="56" height="16"/>
   <object id="253" x="1808" y="2904" width="88" height="16"/>
   <object id="254" x="1760" y="2904" width="48" height="8"/>
@@ -1185,7 +1185,7 @@
   <object id="259" x="1840" y="2808" width="48" height="16"/>
  </objectgroup>
  <objectgroup color="#4fa63b" id="4" name="entities">
-  <object id="11" name="Player" gid="26" x="2136" y="2232" width="8" height="8"/>
+  <object id="11" name="Player" gid="26" x="2128" y="2328" width="8" height="8"/>
   <object id="12" name="Knight" gid="27" x="1952" y="2040" width="8" height="8"/>
   <object id="27" name="GhoulWithRocks" gid="2147483676" x="2008" y="2384" width="8" height="8">
    <properties>
@@ -1204,7 +1204,7 @@
   </object>
   <object id="91" name="Gramr" gid="88" x="2144" y="2328" width="8" height="8"/>
   <object id="178" name="Skeleman" gid="29" x="2120" y="2232" width="8" height="8"/>
-  <object id="179" name="Crawler" gid="30" x="1920" y="2232" width="8" height="8"/>
+  <object id="179" name="Crawler" gid="30" x="2048" y="2232" width="8" height="8"/>
   <object id="181" name="Ghoul" gid="2147483676" x="1856" y="2392" width="8" height="8">
    <properties>
     <property name="rocks" type="int" value="1"/>
@@ -1285,6 +1285,7 @@
     <property name="view" type="object" value="289"/>
    </properties>
   </object>
+  <object id="291" name="Knight" gid="27" x="1928" y="2232" width="8" height="8"/>
  </objectgroup>
  <objectgroup color="#fffb00" id="5" name="rooms" visible="0">
   <object id="3" x="1792" y="1992" width="160" height="96"/>

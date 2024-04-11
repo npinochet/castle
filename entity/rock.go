@@ -1,12 +1,13 @@
 package entity
 
 import (
-	"game/comps/basic/body"
-	"game/comps/basic/hitbox"
-	"game/comps/basic/render"
+	"game/comps/body"
+	"game/comps/hitbox"
+	"game/comps/render"
 	"game/core"
-	"game/entity/defaults"
+	"game/entity/actor"
 	"game/libs/bump"
+	"game/vars"
 	"math"
 	"time"
 
@@ -28,11 +29,12 @@ var (
 )
 
 type Rock struct {
-	*core.Entity
-	render *render.Comp
-	body   *body.Comp
-	hitbox *hitbox.Comp
-	owner  *defaults.Actor
+	*core.BaseEntity
+	render      *render.Comp
+	body        *body.Comp
+	hitbox      *hitbox.Comp
+	owner       actor.Actor
+	ownerHitbox *hitbox.Comp
 }
 
 func init() {
@@ -43,66 +45,67 @@ func init() {
 	}
 }
 
-func NewRock(x, y float64, owner *defaults.Actor) *core.Entity {
+func NewRock(x, y float64, owner actor.Actor) *Rock {
+	_, _, ownerHitbox, _, ownerAI := owner.Comps()
 	vx, vy := rockMaxVel, 60.0
-	if target := owner.AI.Target; target != nil {
+	if target := ownerAI.Target; target != nil {
 		tx, ty := target.Position()
 		vx = calculateVx(x, y, tx, ty, vy)
 	}
 
-	body := &body.Comp{
-		Weight: rockWeight,
-		Vx:     vx, Vy: -vy,
-		MaxX:      rockMaxVel,
-		FilterOut: []*body.Comp{owner.Body},
-	}
 	rock := &Rock{
-		Entity: &core.Entity{X: x, Y: y, W: rockSize, H: rockSize},
-		render: &render.Comp{Image: rockImage, RollingTime: rockRollingTime},
-		body:   body,
-		hitbox: &hitbox.Comp{},
-		owner:  owner,
+		BaseEntity: &core.BaseEntity{X: x, Y: y, W: rockSize, H: rockSize},
+		render:     &render.Comp{Image: rockImage, RollingTime: rockRollingTime},
+		body: &body.Comp{
+			Weight: rockWeight,
+			Vx:     vx, Vy: -vy,
+			MaxX:      rockMaxVel,
+			FilterOut: []core.Entity{owner},
+		},
+		hitbox:      &hitbox.Comp{},
+		owner:       owner,
+		ownerHitbox: ownerHitbox,
 	}
-	rock.AddComponent(rock.render, body, rock.hitbox, rock)
+	rock.Add(rock.render, rock.body, rock.hitbox)
 
-	return rock.Entity
+	return rock
 }
 
-func (r *Rock) Init(_ *core.Entity) {
+func (r *Rock) Init() {
 	r.body.Friction = false
-	r.hitbox.HurtFunc, r.hitbox.BlockFunc = r.RockHurt, r.RockHurt
-	r.hitbox.PushHitbox(bump.Rect{X: r.X, Y: r.X, W: rockSize, H: rockSize}, false)
+	r.hitbox.HitFunc = r.RockHurt
+	r.hitbox.PushHitbox(bump.Rect{X: r.X, Y: r.X, W: rockSize, H: rockSize}, hitbox.Hit, nil)
 }
 
 func (r *Rock) Update(_ float64) {
-	_, contacted := r.hitbox.HitFromHitBox(bump.Rect{H: rockSize, W: rockSize}, rockDamage, []*hitbox.Comp{r.owner.Hitbox})
+	_, contacted := r.hitbox.HitFromHitBox(bump.Rect{H: rockSize, W: rockSize}, rockDamage, []*hitbox.Comp{r.ownerHitbox})
 	if len(contacted) > 1 || r.body.Ground {
 		r.Remove()
 	}
 }
 
-func (r *Rock) RockHurt(other *core.Entity, _ *bump.Collision, _ float64) {
-	if other != r.owner.Control.Entity {
+func (r *Rock) RockHurt(other core.Entity, _ *bump.Collision, _ float64, _ hitbox.ContactType) {
+	if other != r.owner {
 		r.Remove()
 	}
 }
 
 func (r *Rock) Remove() {
 	if r.body != nil {
-		r.World.Space.Remove(r.body)
+		vars.World.Space.Remove(r)
 	}
 	if r.hitbox != nil {
-		for r.hitbox.PopHitbox() != nil {
+		for r.hitbox.PopHitbox() != nil { //nolint: revive
 		}
 	}
-	r.World.RemoveEntity(r.ID)
+	vars.World.Remove(r)
 }
 
 func calculateVx(x, y, tx, ty, vy float64) float64 {
 	widthBuffer := 10.0
 	dx := math.Abs(x - tx - widthBuffer)
 	dy := math.Max(ty-y, 0)
-	a := body.Gravity * (rockWeight + 1)
+	a := vars.Gravity * (rockWeight + 1)
 	t := vy / a
 	t += dy / vy
 	vx := math.Max(dx/(2*t), rockMinVel)

@@ -1,11 +1,14 @@
 package entity
 
 import (
-	"game/comps/basic/anim"
-	"game/comps/basic/body"
-	"game/comps/basic/textbox"
+	"game/comps/ai"
+	"game/comps/anim"
+	"game/comps/body"
+	"game/comps/hitbox"
+	"game/comps/stats"
+	"game/comps/textbox"
 	"game/core"
-	"game/entity/defaults"
+	"game/entity/actor"
 	"game/libs/bump"
 )
 
@@ -15,28 +18,39 @@ const (
 	gramOffsetX, gramOffsetY, gramOffsetFlip = -1, -2, 0
 )
 
-type gram struct{ *defaults.Actor }
+type Gram struct {
+	*core.BaseEntity
+	*actor.Control
+	anim   *anim.Comp
+	body   *body.Comp
+	hitbox *hitbox.Comp
+	stats  *stats.Comp
+}
 
-func NewGram(x, y, _, _ float64, props *core.Property) *core.Entity {
-	gram := &gram{Actor: defaults.NewActor(x, y, gramWidth, gramHeight, nil)}
-	gram.Anim = &anim.Comp{FilesName: gramAnimFile, OX: gramOffsetX, OY: gramOffsetY, OXFlip: gramOffsetFlip, FlipX: props.FlipX}
-	gram.Body = &body.Comp{Unmovable: true}
+func NewGram(x, y, _, _ float64, props *core.Properties) *Gram {
+	gram := &Gram{
+		BaseEntity: &core.BaseEntity{X: x, Y: y, W: gramWidth, H: gramHeight},
+		anim:       &anim.Comp{FilesName: gramAnimFile, OX: gramOffsetX, OY: gramOffsetY, OXFlip: gramOffsetFlip, FlipX: props.FlipX},
+		body:       &body.Comp{Unmovable: true},
+		hitbox:     &hitbox.Comp{},
+		stats:      &stats.Comp{},
+	}
 	textbox := &textbox.Comp{
 		Text: "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr",
-		Body: gram.Body,
-		Area: func() bump.Rect { return bump.NewRect(gram.X-10, gram.Y, gramWidth+20, gramHeight) },
+		Area: func() bump.Rect {
+			return bump.NewRect(gram.X-gramWidth*2, gram.Y-gramHeight, gramWidth*4, gramHeight*2)
+		},
+		Indicator: true,
 	}
-	gram.Stats.MaxPoise, gram.Stats.Poise = 100, 100
-	gram.SetupComponents()
-	gram.AddComponent(textbox, gram)
+	gram.stats.MaxPoise, gram.stats.Poise = 100, 100
+	gram.Add(gram.anim, gram.body, gram.hitbox, gram.stats, textbox)
+	gram.Control = actor.NewControl(gram)
 
-	return gram.Entity
+	return gram
 }
 
-func (g *gram) Init(entity *core.Entity) {
-	hurtbox, err := g.Anim.GetFrameHitbox(anim.HurtboxSliceName)
-	if err != nil {
-		panic("no hurtbox found")
-	}
-	g.Hitbox.PushHitbox(hurtbox, false)
+func (g *Gram) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp, ai *ai.Comp) {
+	return g.anim, g.body, g.hitbox, g.stats, nil
 }
+
+func (g *Gram) Update(_ float64) {}

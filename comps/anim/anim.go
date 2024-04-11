@@ -6,6 +6,7 @@ import (
 	"game/core"
 	"game/libs/bump"
 	"game/utils"
+	"game/vars"
 	"log"
 	"math"
 
@@ -14,21 +15,18 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-const (
-	HurtboxSliceName = "hurtbox"
-	HitboxSliceName  = "hitbox"
-	BlockSliceName   = "blockbox"
-)
-
 var DebugDraw = false
-
-type HitboxCallback func(hitbox bump.Rect, once bool)
 
 type Fsm struct {
 	Initial     string
 	Transitions map[string]string
-	Entry       map[string]func(*Comp)
-	Exit        map[string]func(*Comp)
+}
+
+type SliceCallback func(slice bump.Rect, segmented bool)
+
+type stateExitCallback struct {
+	exited   func() bool
+	callback func()
 }
 
 type Comp struct {
@@ -36,23 +34,28 @@ type Comp struct {
 	OX, OY         float64
 	OXFlip, OYFlip float64
 	FlipX, FlipY   bool
-	w, h           float64
+	Fsm            *Fsm
+
 	State          string
 	Image          *ebiten.Image
 	Data           *aseprite.File
-	Fsm            *Fsm
-	hitboxCallback func()
-	frameCallbacks map[int]func()
+	w, h           float64
 	slices         map[string]map[int]bump.Rect
+	exitCallback   *stateExitCallback
+	sliceCallback  func()
+	frameCallbacks map[int]func()
 }
 
-func (c *Comp) Init(_ *core.Entity) {
+func (c *Comp) Init(_ core.Entity) {
 	var err error
-	if c.Image, _, err = ebitenutil.NewImageFromFile(fmt.Sprintf("%s.png", c.FilesName)); err != nil {
+	if c.Image, _, err = ebitenutil.NewImageFromFile(c.FilesName + ".png"); err != nil {
 		log.Fatal(err)
 	}
-	if c.Data, err = aseprite.Open(fmt.Sprintf("%s.json", c.FilesName)); err != nil {
+	if c.Data, err = aseprite.Open(c.FilesName + ".json"); err != nil {
 		log.Fatal(err)
+	}
+	if c.Fsm == nil {
+		c.Fsm = DefaultFsm()
 	}
 
 	c.SetState(c.Data.Meta.Animations[0].Name)
@@ -60,7 +63,7 @@ func (c *Comp) Init(_ *core.Entity) {
 	rect := c.Data.Frames.FrameAtIndex(c.Data.CurrentFrame).SpriteSourceSize
 	c.w, c.h = float64(rect.Width), float64(rect.Height)
 
-	if err := c.allocateHitboxSlices(); err != nil {
+	if err := c.allocateSlices(); err != nil {
 		log.Println(err)
 	}
 }
@@ -71,25 +74,23 @@ func (c *Comp) SetState(state string) {
 	}
 	c.State = state
 	if err := c.Data.Play(state); err != nil {
-		panic(err)
+		log.Panicf("anim: %s", err)
 	}
-	// c.Data.AnimationInfo.frameCounter = 0 // TODO: This needs to happen. opened a PR: https://github.com/damienfamed75/aseprite/pull/4
-	c.hitboxCallback = nil
+	if c.exitCallback != nil && c.exitCallback.exited() {
+		c.exitCallback.callback()
+		c.exitCallback = nil
+	}
+	c.sliceCallback = nil
 	c.frameCallbacks = map[int]func(){}
-	if callback := c.Fsm.Entry[c.State]; callback != nil {
-		callback(c)
-	}
+	// c.Data.AnimationInfo.frameCounter = 0 // TODO: This needs to happen. opened a PR: https://github.com/damienfamed75/aseprite/pull/4
 }
 
 func (c *Comp) Update(dt float64) {
 	c.Data.Update(float32(dt))
 	if c.Data.AnimationFinished() {
-		if callback := c.Fsm.Exit[c.State]; callback != nil {
-			callback(c)
-		}
 		nextState, ok := c.Fsm.Transitions[c.State]
 		if !ok {
-			nextState = IdleTag
+			nextState = c.Fsm.Initial
 		}
 		if nextState != "" {
 			c.SetState(nextState)
@@ -100,8 +101,8 @@ func (c *Comp) Update(dt float64) {
 		frameCallback()
 		delete(c.frameCallbacks, currentAnimFrame)
 	}
-	if c.hitboxCallback != nil {
-		c.hitboxCallback()
+	if c.sliceCallback != nil {
+		c.sliceCallback()
 	}
 }
 
@@ -125,23 +126,23 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	}
 }
 
-func (c *Comp) OnHitboxUpdate(sliceName string, callback HitboxCallback) {
-	newHitbox := true
-	c.hitboxCallback = func() {
-		hitbox, err := c.GetFrameHitbox(sliceName)
+func (c *Comp) OnSlicePresent(sliceName string, callback SliceCallback) {
+	newSlice := true
+	c.sliceCallback = func() {
+		slice, err := c.FrameSlice(sliceName)
 		if err != nil {
-			newHitbox = true
+			newSlice = true
 
 			return
 		}
-		callback(hitbox, newHitbox)
-		newHitbox = false
+		callback(slice, newSlice)
+		newSlice = false
 	}
 }
 
 func (c *Comp) OnFrame(frame int, callback func()) { c.frameCallbacks[frame] = callback }
 
-func (c *Comp) GetFrameHitbox(sliceName string) (bump.Rect, error) {
+func (c *Comp) FrameSlice(sliceName string) (bump.Rect, error) {
 	keys := c.slices[sliceName]
 	if keys == nil {
 		return bump.Rect{}, fmt.Errorf("slice name %s not found", sliceName)
@@ -167,10 +168,18 @@ func (c *Comp) GetFrameHitbox(sliceName string) (bump.Rect, error) {
 	return rect, nil
 }
 
-func (c *Comp) allocateHitboxSlices() error {
+func (c *Comp) SetExitCallback(callback func(), exited func() bool) {
+	if exited == nil {
+		currentState := c.State
+		exited = func() bool { return currentState != c.State }
+	}
+	c.exitCallback = &stateExitCallback{exited, callback}
+}
+
+func (c *Comp) allocateSlices() error {
 	c.slices = map[string]map[int]bump.Rect{}
 
-	for _, sliceName := range []string{HurtboxSliceName, HitboxSliceName, BlockSliceName} {
+	for _, sliceName := range []string{vars.HurtboxSliceName, vars.HitboxSliceName, vars.BlockSliceName} {
 		slices := c.Data.Slice(sliceName)
 		if slices == nil {
 			return fmt.Errorf("slice name %s not found", sliceName)
@@ -194,5 +203,5 @@ func (c *Comp) allocateHitboxSlices() error {
 func (c *Comp) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -22)
-	utils.DrawText(screen, fmt.Sprintf(`ANIM:%s`, c.State), assets.TinyFont, op)
+	utils.DrawText(screen, "ANIM:"+c.State, assets.TinyFont, op)
 }

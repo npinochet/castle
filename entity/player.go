@@ -1,13 +1,17 @@
 package entity
 
 import (
-	"game/comps/basic/anim"
-	"game/comps/basic/body"
-	"game/comps/basic/stats"
+	"game/comps/ai"
+	"game/comps/anim"
+	"game/comps/body"
+	"game/comps/hitbox"
+	"game/comps/stats"
 	"game/core"
-	"game/entity/defaults"
+	"game/entity/actor"
 	"game/libs/bump"
 	"game/utils"
+	"game/vars"
+	"log"
 	"math"
 	"time"
 
@@ -16,12 +20,9 @@ import (
 )
 
 const (
-	playerAnimFile                                 = "assets/knight"
-	playerWidth, playerHeight                      = 8, 11
-	playerOffsetX, playerOffsetY, playerOffsetFlip = -10, -3, 17
-	playerMaxX, playerSpeed, playerJumpSpeed       = 60, 350, 110
-	playerDamage, playerHeal                       = 20, 20
-	playerHealFrame                                = 3
+	playerMaxX, playerSpeed, playerJumpSpeed = 60, 350, 110
+	playerDamage, playerHeal                 = 20, 20
+	playerHealFrame                          = 3
 
 	keyBufferDuration = 500 * time.Millisecond
 )
@@ -29,125 +30,138 @@ const (
 var PlayerRef *Player
 
 type Player struct {
-	*defaults.Actor
-	pad              utils.ControlPack
-	speed, jumpSpeed float64
+	*core.BaseEntity
+	*actor.Control
+	anim   *anim.Comp
+	body   *body.Comp
+	hitbox *hitbox.Comp
+	stats  *stats.Comp
+	ai     *ai.Comp
+
+	actionTags                  []string
+	speed, jumpSpeed            float64
+	reactForce, attackPushForce float64
+
+	pad utils.ControlPack
 }
 
-func NewPlayer(x, y float64, _ map[string]any) *core.Entity {
-	player := &Player{
-		Actor: defaults.NewActor(x, y, playerWidth, playerHeight, []string{anim.AttackTag}),
-		pad:   utils.NewControlPack(),
-		speed: playerSpeed, jumpSpeed: playerJumpSpeed,
+func NewPlayer(x, y float64, actionTags []string) *Player {
+	p := &Player{
+		BaseEntity: &core.BaseEntity{X: x, Y: y, W: knightWidth, H: knightHeight},
+		anim:       &anim.Comp{FilesName: knightAnimFile, OX: knightOffsetX, OY: knightOffsetY, OXFlip: knightOffsetFlip},
+		body:       &body.Comp{MaxX: playerMaxX},
+		hitbox:     &hitbox.Comp{},
+		stats:      &stats.Comp{Hud: true, NoDebug: true, Stamina: 65},
+		ai:         &ai.Comp{},
+
+		attackPushForce: vars.DefaultAttackPushForce,
+		reactForce:      vars.DefaultReactForce,
+		actionTags:      actionTags,
+		speed:           playerSpeed, jumpSpeed: playerJumpSpeed,
+
+		pad: utils.NewControlPack(),
 	}
-	player.Anim = &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip}
-	player.Body = &body.Comp{MaxX: playerMaxX, Team: body.PlayerTeam}
-	player.Stats = &stats.Comp{Hud: true, NoDebug: true, Stamina: 65}
-	player.SetupComponents()
-	player.AddComponent(player)
-	PlayerRef = player
+	p.Add(p.anim, p.body, p.hitbox, p.stats)
+	p.Control = actor.NewControl(p)
 
-	return player.Entity
+	return p
 }
 
-func (p *Player) Init(_ *core.Entity) {
-	p.Hitbox.HurtFunc = p.OnHurt
-	hurtbox, err := p.Anim.GetFrameHitbox(anim.HurtboxSliceName)
+func (p *Player) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp, ai *ai.Comp) {
+	return p.anim, p.body, p.hitbox, p.stats, p.ai
+}
+
+func (p *Player) Init() {
+	hurtbox, err := p.anim.FrameSlice(vars.HurtboxSliceName)
 	if err != nil {
-		panic(err)
+		log.Panicf("player: %s", err)
 	}
-	p.Hitbox.PushHitbox(hurtbox, false)
+	p.hitbox.PushHitbox(hurtbox, hitbox.Hit, nil)
+	p.hitbox.HitFunc = func(other core.Entity, _ *bump.Collision, damage float64, contactType hitbox.ContactType) {
+		switch contactType {
+		case hitbox.Hit:
+			p.Hurt(other, damage, p.reactForce)
+			vars.World.Camera.Shake(0.5, 1)
+			vars.World.Freeze(0.1)
+		case hitbox.Block, hitbox.ParryBlock:
+			p.Block(other, damage, p.reactForce, contactType)
+		}
+	}
 }
 
 func (p *Player) Update(dt float64) {
 	p.input(dt)
-	p.Control.ManageAnim()
-	if moving := p.pad.KeyDown(utils.KeyLeft) || p.pad.KeyDown(utils.KeyRight); p.Anim.State == anim.WalkTag && !moving {
-		p.Anim.SetState(anim.IdleTag)
+	p.SimpleUpdate()
+	if moving := p.pad.KeyDown(utils.KeyLeft) || p.pad.KeyDown(utils.KeyRight); !moving && p.anim.State == vars.WalkTag {
+		p.anim.SetState(vars.IdleTag)
 	}
 }
 
 func (p *Player) input(dt float64) { // TODO: refactor this
 	actionPressed := p.pad.KeyPressedBuffered(utils.KeyAction, keyBufferDuration)
 	healPressed := p.pad.KeyPressedBuffered(utils.KeyHeal, keyBufferDuration)
-	if p.Control.PausedState() && p.Anim.State != anim.ConsumeTag {
+	if p.PausingState() && p.anim.State != vars.ConsumeTag {
 		return
 	}
 	if actionPressed {
-		p.Control.Attack(anim.AttackTag, playerDamage, playerDamage)
+		p.Attack(vars.AttackTag, playerDamage, playerDamage, p.reactForce, p.attackPushForce)
 	}
 	if healPressed {
-		p.Control.Heal(playerHealFrame, playerHeal)
+		p.Heal(playerHealFrame, playerHeal)
 	}
-	p.inputBlocking()
+	if p.pad.KeyDown(utils.KeyGuard) {
+		p.ShieldUp()
+	}
+	if p.pad.KeyReleased(utils.KeyGuard) {
+		p.ShieldDown()
+	}
 	p.inputClimbing(dt)
 
-	flip := p.Anim.FlipX
+	flip := p.anim.FlipX
 	if p.pad.KeyDown(utils.KeyLeft) {
-		if math.Abs(p.Body.Vx) <= p.Body.MaxX {
-			p.Body.Vx -= p.speed * dt
+		if math.Abs(p.body.Vx) <= p.body.MaxX {
+			p.body.Vx -= p.speed * dt
 		}
 		flip = false
 	}
 	if p.pad.KeyDown(utils.KeyRight) {
-		if math.Abs(p.Body.Vx) <= p.Body.MaxX {
-			p.Body.Vx += p.speed * dt
+		if math.Abs(p.body.Vx) <= p.body.MaxX {
+			p.body.Vx += p.speed * dt
 		}
 		flip = true
 	}
 
-	if p.Anim.State != anim.BlockTag && p.Anim.State != anim.ParryBlockTag {
-		p.Anim.FlipX = flip
+	if !p.BlockingState() {
+		p.anim.FlipX = flip
 	}
-	if p.pad.KeyPressed(utils.KeyJump) && p.canJump() {
-		p.Control.ClimbOff()
-		p.Body.Vy = -p.jumpSpeed
+	if p.pad.KeyPressed(utils.KeyJump) && p.CanJump() {
+		p.ClimbOff()
+		p.body.Vy = -p.jumpSpeed
 	}
 
-	// TODO: Debug, remove later.
-	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
-		p.Stats.Heal = p.Stats.MaxHeal
+	if vars.Debug {
+		if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+			p.stats.Heal = p.stats.MaxHeal
+		}
 	}
-}
-
-func (p *Player) canJump() bool {
-	return (p.Anim.State == anim.ClimbTag || p.Body.Ground) &&
-		p.Anim.State != anim.BlockTag &&
-		p.Anim.State != anim.ParryBlockTag &&
-		p.Anim.State != anim.ConsumeTag
 }
 
 func (p *Player) inputClimbing(dt float64) {
 	if p.pad.KeyDown(utils.KeyUp) || p.pad.KeyDown(utils.KeyDown) {
-		p.Control.ClimbOn(p.pad.KeyDown(utils.KeyDown))
+		p.ClimbOn(p.pad.KeyDown(utils.KeyDown))
 	}
-	if p.Anim.State != anim.ClimbTag {
+	if p.anim.State != vars.ClimbTag {
 		return
 	}
-	if !p.Body.OnLadder {
+	/*if !p.body.OnLadder {
 		p.Control.ClimbOff()
-	}
-	p.Body.Vy = 0
+	}*/
+	p.body.Vy = 0
 	speed := p.speed * 5 * dt
 	if p.pad.KeyDown(utils.KeyUp) {
-		p.Body.Vy = -speed
+		p.body.Vy = -speed
 	}
 	if p.pad.KeyDown(utils.KeyDown) {
-		p.Body.Vy = speed
+		p.body.Vy = speed
 	}
-}
-
-func (p *Player) inputBlocking() {
-	if p.pad.KeyDown(utils.KeyGuard) {
-		p.Control.ShieldUp()
-	}
-	if p.pad.KeyReleased(utils.KeyGuard) {
-		p.Control.ShieldDown()
-	}
-}
-
-func (p *Player) OnHurt(other *core.Entity, _ *bump.Collision, damage float64) {
-	defaults.Hurt(p.Entity, other, damage, nil)
-	p.World.Camera.Shake(0.5, 1)
-	p.World.Freeze(0.1)
 }

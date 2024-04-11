@@ -2,11 +2,12 @@ package textbox
 
 import (
 	"game/assets"
-	"game/comps/basic/body"
 	"game/core"
+	"game/ext"
 	"game/libs/bump"
 	"game/libs/camera"
 	"game/utils"
+	"game/vars"
 	"image/color"
 	"math"
 	"strings"
@@ -15,45 +16,38 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-const (
-	boxX, defaultBoxY            = 6.0, 30.0
-	boxMarginY, boxMinY, boxMaxY = 5, 25, 96 - boxH - boxMarginY
-	boxInnerW                    = 160
-	boxW, boxH                   = boxInnerW - boxX*2, 15.0
-	lineSize                     = (boxW - 4) / 4
-)
-
 var (
 	indicatorImage, _, _ = ebitenutil.NewImageFromFile("assets/textboxindicator.png")
 	backgroundColor      = color.RGBA{34, 32, 52, 255}
 )
 
 type Comp struct {
-	Text   string
-	Body   *body.Comp
-	Area   func() bump.Rect
-	entity *core.Entity
-	active bool
-	camera *camera.Camera
+	Text      string
+	Area      func() bump.Rect
+	Indicator bool
+	active    bool
+	entity    core.Entity
+	camera    *camera.Camera
+	lines     int
 }
 
-func (c *Comp) Init(entity *core.Entity) {
+func (c *Comp) Init(entity core.Entity) {
 	c.entity = entity
-	c.camera = entity.World.Camera
+	c.camera = vars.World.Camera
 	words := strings.Split(c.Text, " ")
 	c.Text = ""
-	i := 1
+	c.lines = 1
 	for _, word := range words {
-		if len(c.Text+word)+1 > (i*lineSize)-(i-1) {
+		if len(c.Text+word)+1 > (c.lines*vars.LineWidth)-(c.lines-1) {
 			c.Text += "\n"
-			i++
+			c.lines++
 		}
 		c.Text += " " + word
 	}
 }
 
-func (c *Comp) Update(dt float64) {
-	c.active = len(c.Body.QueryEntites(c.Area(), true)) > 0
+func (c *Comp) Update(_ float64) {
+	c.active = len(ext.QueryItems(c.entity, c.Area(), "body")) > 0
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
@@ -61,31 +55,30 @@ func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
 		return
 	}
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(boxX, 0)
-	boxY := defaultBoxY
-	if c.Body != nil {
+	op.GeoM.Translate(vars.BoxX, 0)
+	boxY := vars.DefaultBoxY
+	if c.Indicator {
+		boxH := vars.BoxH + float64(c.lines)*vars.LineHeight
 		cx, cy := c.camera.Position()
 		x, y, w, _ := c.entity.Rect()
-		boxY = y - cy - boxH - boxMarginY
-
+		boxY = y - cy - vars.BoxMarginY - boxH
 		iop := &ebiten.DrawImageOptions{}
-		iw, _ := indicatorImage.Size()
+		iw := indicatorImage.Bounds().Dx()
 		px, py := x+w/2-float64(iw)/2, boxH
-		ix := math.Max(math.Min(px-cx, boxW+boxX-float64(iw)), boxX)
+		ix := math.Max(math.Min(px-cx, vars.BoxW+vars.BoxX-float64(iw)), vars.BoxX)
 		iop.GeoM.Translate(ix, boxY+py)
 		screen.DrawImage(indicatorImage, iop)
 	}
 
-	op.GeoM.Translate(0, math.Max(math.Min(boxY, boxMaxY), boxMinY))
+	op.GeoM.Translate(0, math.Max(math.Min(boxY, vars.BoxMaxY), vars.BoxMinY))
 	screen.DrawImage(c.drawBackground(), op)
 
 	op.GeoM.Translate(2, 2)
-	// TODO: wrap text if falls out side text box
 	utils.DrawText(screen, c.Text, assets.TinyFont, op)
 }
 
 func (c *Comp) drawBackground() *ebiten.Image {
-	bg := ebiten.NewImage(boxW, boxH)
+	bg := ebiten.NewImage(vars.BoxW, vars.BoxH+c.lines*vars.LineHeight)
 	bg.Fill(backgroundColor)
 
 	return bg
