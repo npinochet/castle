@@ -18,7 +18,7 @@ type Block struct {
 	hitbox *hitbox.Comp
 }
 
-func NewBlock(x, y, w, h float64, props *core.Properties) *Block {
+func NewBlock(x, y, w, h float64, _ *core.Properties) *Block {
 	image := ebiten.NewImage(int(w), int(h))
 	image.Fill(color.White)
 
@@ -33,7 +33,7 @@ func NewBlock(x, y, w, h float64, props *core.Properties) *Block {
 }
 
 func (b *Block) Init() {
-	b.hitbox.HitFunc = func(other core.Entity, col *bump.Collision, damage float64, contactType hitbox.ContactType) {
+	b.hitbox.HitFunc = func(_ core.Entity, col *bump.Collision, _ float64, contactType hitbox.ContactType) {
 		if contactType == hitbox.Hit {
 			b.body.Vy -= 30
 		}

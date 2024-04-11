@@ -180,7 +180,7 @@ func (c *Comp) AddExp(amount int) {
 }
 
 func (c *Comp) drawHud() *ebiten.Image {
-	_, h := hudImage.Size()
+	h := hudImage.Bounds().Dy()
 	w, _ := ebiten.WindowSize()
 	hud := ebiten.NewImage(w, h)
 	icons, _ := hudImage.SubImage(image.Rect(0, 0, vars.HudIconsX, h)).(*ebiten.Image)
@@ -188,7 +188,7 @@ func (c *Comp) drawHud() *ebiten.Image {
 
 	c.drawSegment(hud, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
 	c.drawSegment(hud, 1, c.Stamina, c.MaxStamina, c.staminaLag, staminaColor)
-	////c.drawSegment(hud, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
+	// c.drawSegment(hud, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
 	c.drawCount(hud, 2, 128, 0) // c.Exp, 0) //nolint: gomnd
 	c.drawCount(hud, 3, c.Heal, 2)
 

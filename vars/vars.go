@@ -1,3 +1,4 @@
+// nolint:nolintlint, golint, revive
 package vars
 
 import (
@@ -34,7 +35,7 @@ const (
 	DefaultStamina        = 80
 	DefaultPoise          = 30
 	DefaultHeal           = 3
-	DefaultRecoverRate    = 20
+	DefaultRecoverRate    = 30
 	DefaultRecoverSeconds = 3
 
 	// HUD consts.
@@ -50,8 +51,8 @@ const (
 	BoxX, DefaultBoxY            = 6.0, 30.0
 	BoxMarginY, BoxMinY, BoxMaxY = 5, 25, 96 - BoxH - BoxMarginY
 	BoxInnerW                    = 160
-	BoxW, BoxH                   = BoxInnerW - BoxX*2, 15.0
-	LineSize                     = (BoxW - 4) / 4
+	BoxW, BoxH                   = BoxInnerW - BoxX*2, 3.0
+	LineWidth, LineHeight        = (BoxW - 4) / 4, 5 + 1
 )
 
 var (

@@ -42,6 +42,9 @@ func (c *Comp) Add(timeout float64, action *Action) {
 	if timeout <= 0 {
 		timeout = math.MaxFloat64
 	}
+	if action.Next == nil {
+		action.Next = func(_ float64) bool { return false }
+	}
 	c.actionQueue = append(c.actionQueue, actionItem{action, timeout})
 	if len(c.actionQueue) == 1 && action.Entry != nil {
 		action.Entry()

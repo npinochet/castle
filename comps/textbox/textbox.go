@@ -28,6 +28,7 @@ type Comp struct {
 	active    bool
 	entity    core.Entity
 	camera    *camera.Camera
+	lines     int
 }
 
 func (c *Comp) Init(entity core.Entity) {
@@ -35,11 +36,11 @@ func (c *Comp) Init(entity core.Entity) {
 	c.camera = vars.World.Camera
 	words := strings.Split(c.Text, " ")
 	c.Text = ""
-	i := 1
+	c.lines = 1
 	for _, word := range words {
-		if len(c.Text+word)+1 > (i*vars.LineSize)-(i-1) {
+		if len(c.Text+word)+1 > (c.lines*vars.LineWidth)-(c.lines-1) {
 			c.Text += "\n"
-			i++
+			c.lines++
 		}
 		c.Text += " " + word
 	}
@@ -57,13 +58,13 @@ func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
 	op.GeoM.Translate(vars.BoxX, 0)
 	boxY := vars.DefaultBoxY
 	if c.Indicator {
+		boxH := vars.BoxH + float64(c.lines)*vars.LineHeight
 		cx, cy := c.camera.Position()
 		x, y, w, _ := c.entity.Rect()
-		boxY = y - cy - vars.BoxH - vars.BoxMarginY
-
+		boxY = y - cy - vars.BoxMarginY - boxH
 		iop := &ebiten.DrawImageOptions{}
 		iw := indicatorImage.Bounds().Dx()
-		px, py := x+w/2-float64(iw)/2, vars.BoxH
+		px, py := x+w/2-float64(iw)/2, boxH
 		ix := math.Max(math.Min(px-cx, vars.BoxW+vars.BoxX-float64(iw)), vars.BoxX)
 		iop.GeoM.Translate(ix, boxY+py)
 		screen.DrawImage(indicatorImage, iop)
@@ -73,12 +74,11 @@ func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
 	screen.DrawImage(c.drawBackground(), op)
 
 	op.GeoM.Translate(2, 2)
-	// TODO: wrap text if falls out side text box
 	utils.DrawText(screen, c.Text, assets.TinyFont, op)
 }
 
 func (c *Comp) drawBackground() *ebiten.Image {
-	bg := ebiten.NewImage(vars.BoxW, vars.BoxH)
+	bg := ebiten.NewImage(vars.BoxW, vars.BoxH+c.lines*vars.LineHeight)
 	bg.Fill(backgroundColor)
 
 	return bg

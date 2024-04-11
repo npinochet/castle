@@ -10,7 +10,6 @@ import (
 	"game/entity/actor"
 	"game/libs/bump"
 	"game/vars"
-	"math/rand"
 )
 
 const (
@@ -36,14 +35,13 @@ func NewCrawler(x, y, _, _ float64, props *core.Properties) *Crawler {
 		BaseEntity: &core.BaseEntity{X: x, Y: y, W: crawlerWidth, H: crawlerHeight},
 		anim: &anim.Comp{
 			FilesName: crawlerAnimFile,
-			OX:        crawlerOffsetX,
-			OY:        crawlerOffsetY,
-			OXFlip:    crawlerOffsetFlip,
-			FlipX:     props.FlipX,
+			OX:        crawlerOffsetX, OY: crawlerOffsetY,
+			OXFlip: crawlerOffsetFlip,
+			FlipX:  props.FlipX,
 		},
 		body:   &body.Comp{},
 		hitbox: &hitbox.Comp{},
-		stats:  &stats.Comp{MaxPoise: crawlerDamage, MaxHealth: crawlerHealth},
+		stats:  &stats.Comp{MaxHealth: crawlerHealth, MaxPoise: crawlerDamage},
 		ai:     &ai.Comp{},
 	}
 	crawler.Add(crawler.anim, crawler.body, crawler.hitbox, crawler.stats, crawler.ai)
@@ -63,27 +61,18 @@ func (c *Crawler) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp
 	return c.anim, c.body, c.hitbox, c.stats, c.ai
 }
 
-func (c *Crawler) Init() {
-	c.Control.Init()
-}
-
 func (c *Crawler) Update(_ float64) {
-	if c.stats.Health <= 0 {
-		c.Remove()
-
-		return
-	}
+	c.SimpleUpdate()
 }
 
+// nolint: nolintlint, gomnd
 func (c *Crawler) aiScript(view *bump.Rect) {
 	c.ai.Add(0, actor.IdleAction(c.Control, view))
 	c.ai.Add(0, actor.ApproachAction(c.Control, crawlerSpeed, vars.DefaultMaxX))
 
-	if fate := rand.Float64(); fate > 0.66 {
-		c.ai.Add(5, actor.AttackAction(c.Control, "Attack", crawlerDamage))
-	} else if fate > 0.33 {
-		c.ai.Add(1.5, actor.BackUpAction(c.Control, crawlerSpeed, 0))
-	} else {
-		c.ai.Add(1, actor.WaitAction())
-	}
+	ai.Choice{
+		{1, func() { c.ai.Add(5, actor.AttackAction(c.Control, "Attack", crawlerDamage)) }},
+		{1, func() { c.ai.Add(1.5, actor.BackUpAction(c.Control, crawlerSpeed, 0)) }},
+		{1, func() { c.ai.Add(1, actor.WaitAction()) }},
+	}.Play()
 }

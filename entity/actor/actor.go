@@ -51,6 +51,22 @@ func (c *Control) Init() {
 	}
 }
 
+func (c *Control) SimpleUpdate() {
+	if c.stats.Health <= 0 {
+		c.Remove()
+
+		return
+	}
+	c.stats.Pause = c.PausingState()
+	if state := c.anim.State; state == vars.IdleTag || state == vars.WalkTag {
+		nextState := vars.IdleTag
+		if c.body.Vx != 0 {
+			nextState = vars.WalkTag
+		}
+		c.anim.SetState(nextState)
+	}
+}
+
 func (c *Control) Hurt(other core.Entity, damage, reactForce float64) {
 	// TODO: Figure out force stuff here. For Block() too.
 	c.ShieldDown()
@@ -224,7 +240,7 @@ func (c *Control) ClimbOff() {
 
 func (c *Control) Remove() {
 	if c.body != nil {
-		vars.World.Space.Remove(c.body)
+		vars.World.Space.Remove(c.actor)
 	}
 	if c.hitbox != nil {
 		for c.hitbox.PopHitbox() != nil { //nolint: revive

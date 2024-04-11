@@ -18,7 +18,7 @@ type Comp struct {
 	w, h         float64
 }
 
-func (c *Comp) Init(_ *core.Entity) {
+func (c *Comp) Init(_ core.Entity) {
 	is := c.Image.Bounds().Size()
 	w, h := is.X, is.Y
 	c.w, c.h = float64(w), float64(h)
@@ -31,6 +31,8 @@ func (c *Comp) Init(_ *core.Entity) {
 		})
 	}
 }
+
+func (c *Comp) Update(_ float64) {}
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}

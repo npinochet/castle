@@ -20,12 +20,9 @@ import (
 )
 
 const (
-	playerAnimFile                                 = "assets/knight"
-	playerWidth, playerHeight                      = 8, 11
-	playerOffsetX, playerOffsetY, playerOffsetFlip = -10, -3, 17
-	playerMaxX, playerSpeed, playerJumpSpeed       = 60, 350, 110
-	playerDamage, playerHeal                       = 20, 20
-	playerHealFrame                                = 3
+	playerMaxX, playerSpeed, playerJumpSpeed = 60, 350, 110
+	playerDamage, playerHeal                 = 20, 20
+	playerHealFrame                          = 3
 
 	keyBufferDuration = 500 * time.Millisecond
 )
@@ -50,8 +47,8 @@ type Player struct {
 
 func NewPlayer(x, y float64, actionTags []string) *Player {
 	p := &Player{
-		BaseEntity: &core.BaseEntity{X: x, Y: y, W: playerWidth, H: playerHeight},
-		anim:       &anim.Comp{FilesName: playerAnimFile, OX: playerOffsetX, OY: playerOffsetY, OXFlip: playerOffsetFlip},
+		BaseEntity: &core.BaseEntity{X: x, Y: y, W: knightWidth, H: knightHeight},
+		anim:       &anim.Comp{FilesName: knightAnimFile, OX: knightOffsetX, OY: knightOffsetY, OXFlip: knightOffsetFlip},
 		body:       &body.Comp{MaxX: playerMaxX},
 		hitbox:     &hitbox.Comp{},
 		stats:      &stats.Comp{Hud: true, NoDebug: true, Stamina: 65},
@@ -93,20 +90,8 @@ func (p *Player) Init() {
 }
 
 func (p *Player) Update(dt float64) {
-	if p.stats.Health <= 0 {
-		p.Remove()
-
-		return
-	}
 	p.input(dt)
-	p.stats.Pause = p.PausingState()
-	if state := p.anim.State; state == vars.IdleTag || state == vars.WalkTag {
-		nextState := vars.IdleTag
-		if p.body.Vx != 0 {
-			nextState = vars.WalkTag
-		}
-		p.anim.SetState(nextState)
-	}
+	p.SimpleUpdate()
 	if moving := p.pad.KeyDown(utils.KeyLeft) || p.pad.KeyDown(utils.KeyRight); !moving && p.anim.State == vars.WalkTag {
 		p.anim.SetState(vars.IdleTag)
 	}

@@ -47,19 +47,17 @@ import (
 	- If the hitbox gets away from the player hurtbox in one frame and then it overlaps again on the next frame, it should hit again.
 
 - Add teams to actor, the AI should only target player and not other enemies (unless hit by enemy).
+- Add enemy that can only be hit from behind.
+- Add enemy that jumps around.
 - Add ability to use a over heal with a consumable to boost attack damage
 - Experiment with partial blocking (a block does not negate all damage) and a system where you can attack back for a short period and
 	gain the lost health
-- Hide enemy health bar.
-
+- Experiment hiding the enemy health bar, even for bosses.
 
 
 - Today's TODO:
-	- Fix AI
-	- Hitbox is not working, can't deal damage to enemies.
-	- Hitbox debug box is flickering.
+	- Experiment with ideas above.
 
-	- Implement knight, and test a depeer AI.
 */
 
 const (
@@ -86,13 +84,21 @@ func (g *Game) init() {
 
 	vars.World.Map.LoadBumpObjects(vars.World.Space, "collisions")
 	vars.World.Map.LoadEntityObjects(vars.World, "entities", map[uint32]core.EntityContructor{
-		//26: entity.NewKnight,
-		//27: entity.NewGhoul,
-		//28: entity.NewSkeleman,
+		26: func(x, y, w, h float64, props *core.Properties) core.Entity {
+			return entity.NewKnight(x, y, w, h, props)
+		},
+		27: func(x, y, w, h float64, props *core.Properties) core.Entity {
+			return entity.NewGhoul(x, y, w, h, props)
+		},
+		28: func(x, y, w, h float64, props *core.Properties) core.Entity {
+			return entity.NewSkeleman(x, y, w, h, props)
+		},
 		29: func(x, y, w, h float64, props *core.Properties) core.Entity {
 			return entity.NewCrawler(x, y, w, h, props)
 		},
-		//87: entity.NewGram,
+		87: func(x, y, w, h float64, props *core.Properties) core.Entity {
+			return entity.NewGram(x, y, w, h, props)
+		},
 	})
 }
 
@@ -141,7 +147,7 @@ func main() {
 	ebiten.SetWindowSize(vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale)
 	ebiten.SetWindowTitle("Castle")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-	//ebiten.SetVsyncEnabled(false)
+	// ebiten.SetVsyncEnabled(false)
 
 	game.init()
 	if err := ebiten.RunGame(game); err != nil {

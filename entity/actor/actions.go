@@ -50,7 +50,15 @@ func IdleAction(a *Control, view *bump.Rect) *ai.Action {
 }
 
 func WaitAction() *ai.Action {
-	return &ai.Action{Name: "Wait", Next: func(_ float64) bool { return false }}
+	return &ai.Action{Name: "Wait"}
+}
+
+func AnimAction(a *Control, tag string, entry func()) *ai.Action {
+	return &ai.Action{
+		Name:  tag,
+		Entry: entry,
+		Next:  func(_ float64) bool { return a.anim.State != tag },
+	}
 }
 
 func AttackAction(a *Control, tag string, damage float64) *ai.Action {
@@ -58,6 +66,49 @@ func AttackAction(a *Control, tag string, damage float64) *ai.Action {
 		Name:  tag,
 		Entry: func() { a.Attack(tag, damage, damage, reactForce, pushForce) },
 		Next:  func(_ float64) bool { return a.anim.State != tag },
+	}
+}
+
+func ShieldAction(a *Control) *ai.Action {
+	return &ai.Action{
+		Name:  "Shield",
+		Entry: func() { a.ShieldUp() },
+		Exit:  func() { a.ShieldDown() },
+	}
+}
+
+func ShieldBackUpAction(a *Control, speed, maxSpeed float64) *ai.Action {
+	currentMaxSpeed := a.body.MaxX
+
+	return &ai.Action{
+		Name: "ShieldBackUp",
+		Entry: func() {
+			a.body.MaxX = maxSpeed
+			a.ShieldUp()
+		},
+		Exit: func() {
+			a.body.MaxX = currentMaxSpeed
+			a.ShieldDown()
+		},
+		Next: func(dt float64) bool {
+			if a.ai.Target == nil || !a.ai.InTargetRange(0, maxTargetRange) {
+				return true
+			}
+			if a.anim.State == anim.WalkTag || a.anim.State == anim.IdleTag {
+				x, _ := a.actor.Position()
+				tx, _ := a.ai.Target.Position()
+				a.anim.FlipX = tx > x
+			}
+			if !a.PausingState() {
+				if a.anim.FlipX {
+					a.body.Vx -= speed * dt
+				} else {
+					a.body.Vx += speed * dt
+				}
+			}
+
+			return false
+		},
 	}
 }
 

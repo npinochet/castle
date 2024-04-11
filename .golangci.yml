@@ -21,6 +21,10 @@ linters:
     - wsl
 
 linters-settings:
+  dupl:
+    threshold: 200
+  cyclop:
+    max-complexity: 12
   funlen:
     lines: 80
     statements: 50
@@ -28,23 +32,21 @@ linters-settings:
     scope: all
   gomnd:
     ignored-numbers:
-      - '2'
-      - '4'
-      - '5'
-      - '8'
-      - '10'
-      - '16'
-      - '32'
-      - '60'
-      - '64'
-      - '100'
+      - "2"
+      - "4"
+      - "5"
+      - "8"
+      - "10"
+      - "16"
+      - "32"
+      - "60"
+      - "64"
+      - "100"
   gosec:
     excludes:
       - G404
-  lll:
-    line-length: 140
-  cyclop:
-    max-complexity: 12
   govet:
     disable:
       - composites
+  lll:
+    line-length: 140
