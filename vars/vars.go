@@ -1,9 +1,7 @@
 // nolint:nolintlint, golint, revive
 package vars
 
-import (
-	"game/core"
-)
+import "game/core"
 
 const (
 	// Config.
@@ -61,7 +59,8 @@ const (
 
 var (
 	// Global.
-	World *core.World
+	World  *core.World
+	Player core.Entity
 
 	// Body.
 	Gravity                     = 300.0

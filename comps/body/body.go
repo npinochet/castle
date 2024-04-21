@@ -21,6 +21,7 @@ type Comp struct {
 	Vx, Vy                     float64
 	MaxX, MaxY                 float64
 	Weight                     float64
+	Tags, QueryTags            []bump.Tag
 	FilterOut                  []core.Entity
 	entity                     core.Entity
 	space                      *bump.Space
@@ -38,9 +39,15 @@ func (c *Comp) Init(entity core.Entity) {
 	if c.Weight == 0 {
 		c.Weight = 1
 	}
+	if c.Tags == nil {
+		c.Tags = []bump.Tag{"body"}
+	}
+	if c.QueryTags == nil {
+		c.QueryTags = []bump.Tag{"body", "map"}
+	}
 	c.Friction = true
 	c.space = vars.World.Space
-	c.space.Set(entity, bump.NewRect(entity.Rect()), "body")
+	c.space.Set(entity, bump.NewRect(entity.Rect()), c.Tags...)
 }
 
 func (c *Comp) Update(dt float64) {
@@ -85,12 +92,9 @@ func (c *Comp) updateMovement(dt float64, noForceApplied bool) {
 
 	ex, ey := c.entity.Position()
 	t := bump.Vec2{X: ex + c.Vx*dt, Y: ey + c.Vy*dt}
-	goal, cols := c.space.Move(c.entity, t, c.bodyFilter(), "body", "map")
+	goal, cols := c.space.Move(c.entity, t, c.bodyFilter(), c.QueryTags...)
 	c.entity.SetPosition(goal.X, goal.Y)
 
-	if c.Unmovable {
-		return
-	}
 	c.Ground = false
 	for _, col := range cols {
 		if col.Type == bump.Slide {
@@ -101,6 +105,9 @@ func (c *Comp) updateMovement(dt float64, noForceApplied bool) {
 				c.Vy = 0
 			}
 			c.Ground = c.Ground || col.Normal.Y < 0
+		}
+		if c.Unmovable {
+			continue
 		}
 		if _, ok := col.Other.(core.Entity); ok && col.Type == bump.Cross && col.Overlaps {
 			c.applyOverlapForce(col)

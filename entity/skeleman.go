@@ -20,6 +20,7 @@ const (
 	skelemanSpeed, skelemanMaxSpeed                      = 100, 35
 	skelemanHealth                                       = 110
 	skelemanDamage                                       = 20
+	skelemanExp                                          = 25
 	skelemanPoise                                        = 30
 )
 
@@ -44,7 +45,7 @@ func NewSkeleman(x, y, _, _ float64, props *core.Properties) *Skeleman {
 		},
 		body:   &body.Comp{},
 		hitbox: &hitbox.Comp{},
-		stats:  &stats.Comp{MaxHealth: skelemanHealth, MaxPoise: skelemanPoise},
+		stats:  &stats.Comp{MaxHealth: skelemanHealth, MaxPoise: skelemanPoise, Exp: skelemanExp},
 		ai:     &ai.Comp{},
 	}
 	skeleman.Add(skeleman.anim, skeleman.body, skeleman.hitbox, skeleman.stats, skeleman.ai)

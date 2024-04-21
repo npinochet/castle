@@ -189,8 +189,8 @@ func (c *Comp) drawHud() *ebiten.Image {
 	c.drawSegment(hud, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
 	c.drawSegment(hud, 1, c.Stamina, c.MaxStamina, c.staminaLag, staminaColor)
 	// c.drawSegment(hud, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
-	c.drawCount(hud, 2, 128, 0) // c.Exp, 0) //nolint: gomnd
-	c.drawCount(hud, 3, c.Heal, 2)
+	c.drawCount(hud, 2, c.Heal, 0)
+	c.drawCount(hud, 3, c.Exp, 2)
 
 	return hud
 }

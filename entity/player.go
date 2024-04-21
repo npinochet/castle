@@ -27,8 +27,6 @@ const (
 	keyBufferDuration = 500 * time.Millisecond
 )
 
-var PlayerRef *Player
-
 type Player struct {
 	*core.BaseEntity
 	*actor.Control

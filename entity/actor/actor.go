@@ -7,6 +7,7 @@ import (
 	"game/comps/hitbox"
 	"game/comps/stats"
 	"game/core"
+	"game/entity/particle"
 	"game/libs/bump"
 	"game/utils"
 	"game/vars"
@@ -54,6 +55,10 @@ func (c *Control) Init() {
 func (c *Control) SimpleUpdate() {
 	if c.stats.Health <= 0 {
 		c.Remove()
+		x, y, w, h := c.actor.Rect()
+		for i := 0; i < c.stats.Exp; i++ {
+			vars.World.Add(particle.NewFlake(x+w/2, y+h/2)) // TODO: keep actor package isolated somehow, move Flake to entity package.
+		}
 
 		return
 	}
@@ -137,7 +142,7 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 			contacted = nil
 		}
 		contactType, contacted = c.hitbox.HitFromHitBox(slice, damage, contacted)
-		/*if len(contacted) > 0 && c.Entity == entity.PlayerRef.Entity && !freezeOnce {
+		/*if len(contacted) > 0 && c.Entity == vars.Player && !freezeOnce {
 			freezeOnce = true
 			c.World.Freeze(0.1)
 			c.World.Camera.Shake(0.1, 1)

@@ -18,6 +18,7 @@ const (
 	crawlerOffsetX, crawlerOffsetY, crawlerOffsetFlip = -4, -4, 10
 	crawlerHealth, crawlerDamage                      = 30, 20
 	crawlerSpeed                                      = 100
+	crawlerExp                                        = 10
 )
 
 type Crawler struct {
@@ -41,7 +42,7 @@ func NewCrawler(x, y, _, _ float64, props *core.Properties) *Crawler {
 		},
 		body:   &body.Comp{},
 		hitbox: &hitbox.Comp{},
-		stats:  &stats.Comp{MaxHealth: crawlerHealth, MaxPoise: crawlerDamage},
+		stats:  &stats.Comp{MaxHealth: crawlerHealth, MaxPoise: crawlerDamage, Exp: crawlerExp},
 		ai:     &ai.Comp{},
 	}
 	crawler.Add(crawler.anim, crawler.body, crawler.hitbox, crawler.stats, crawler.ai)

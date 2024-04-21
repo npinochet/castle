@@ -23,7 +23,7 @@ func NewBlock(x, y, w, h float64, _ *core.Properties) *Block {
 	image.Fill(color.White)
 
 	block := &Block{
-		BaseEntity: &core.BaseEntity{X: x, Y: y, W: 8, H: 8},
+		BaseEntity: &core.BaseEntity{X: x, Y: y, W: blockSize, H: blockSize},
 		body:       &body.Comp{},
 		hitbox:     &hitbox.Comp{},
 	}

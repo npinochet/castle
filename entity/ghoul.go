@@ -20,6 +20,7 @@ const (
 	ghoulSpeed, ghoulMaxSpeed                   = 100, 30
 	ghoulHealth                                 = 70
 	ghoulDamage                                 = 18
+	ghoulExp                                    = 20
 	ghoulThrowFrame                             = 2
 )
 
@@ -41,7 +42,7 @@ func NewGhoul(x, y, _, _ float64, props *core.Properties) *Ghoul {
 		anim:       &anim.Comp{FilesName: ghoulAnimFile, OX: ghoulOffsetX, OY: ghoulOffsetY, OXFlip: ghoulOffsetFlip, FlipX: props.FlipX},
 		body:       &body.Comp{MaxX: ghoulMaxSpeed},
 		hitbox:     &hitbox.Comp{},
-		stats:      &stats.Comp{MaxPoise: ghoulDamage, MaxHealth: ghoulHealth},
+		stats:      &stats.Comp{MaxPoise: ghoulDamage, MaxHealth: ghoulHealth, Exp: ghoulExp},
 		ai:         &ai.Comp{},
 		rocks:      rocks,
 	}

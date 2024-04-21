@@ -55,6 +55,7 @@ import (
 - Experiment hiding the enemy health bar, even for bosses.
 
 
+
 - Today's TODO:
 	- Experiment with ideas above.
 		- Double time
@@ -63,13 +64,13 @@ import (
 
 
 - Demo MVP Steps:
-	- Add Intro Screen
-	- Add Menu Screen
-	- Add Collectibles
+	- Fix Ladders
 	- Add Mage Enemy
-	- Add Game Over Screen
-	- Add Checkpoint?
+	- Add a proper Game Over Screen
+	- Build Map
 	- Add Boss
+	- Add some polish
+	- Add Checkpoint, at least a checkpoint altar?
 */
 
 const (
@@ -92,7 +93,7 @@ func (g *Game) init() {
 	player = entity.NewPlayer(obj.X, obj.Y)
 	vars.World.Camera.Follow(player)
 	vars.World.Add(player)
-	entity.PlayerRef = player
+	vars.Player = player
 
 	vars.World.Map.LoadBumpObjects(vars.World.Space, "collisions")
 	vars.World.Map.LoadEntityObjects(vars.World, "entities", map[uint32]core.EntityContructor{

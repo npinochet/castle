@@ -1,6 +1,8 @@
 package core
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type BaseEntity struct {
 	X, Y, H, W     float64

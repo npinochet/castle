@@ -17,6 +17,7 @@ const (
 	knightWidth, knightHeight                      = 8, 11
 	knightOffsetX, knightOffsetY, knightOffsetFlip = -10, -3, 17
 	knightMaxPosie                                 = 25
+	knightExp                                      = 20
 )
 
 type Knight struct {
@@ -40,7 +41,7 @@ func NewKnight(x, y, _, _ float64, props *core.Properties) *Knight {
 		},
 		body:   &body.Comp{},
 		hitbox: &hitbox.Comp{},
-		stats:  &stats.Comp{MaxPoise: knightMaxPosie},
+		stats:  &stats.Comp{MaxPoise: knightMaxPosie, Exp: knightExp},
 		ai:     &ai.Comp{},
 	}
 	knight.Add(knight.anim, knight.body, knight.hitbox, knight.stats, knight.ai)
