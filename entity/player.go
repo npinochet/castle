@@ -20,9 +20,9 @@ import (
 )
 
 const (
-	playerMaxX, playerSpeed, playerJumpSpeed = 60, 350, 110
-	playerDamage, playerHeal                 = 20, 20
-	playerHealFrame                          = 3
+	playerMaxX, playerSpeed, playerJumpSpeed, playerClimbSpeed = 60, 350, 110, 5
+	playerDamage, playerHeal                                   = 20, 20
+	playerHealFrame                                            = 3
 
 	keyBufferDuration = 500 * time.Millisecond
 )
@@ -156,11 +156,13 @@ func (p *Player) inputClimbing(dt float64) {
 	if p.anim.State != vars.ClimbTag {
 		return
 	}
-	/*if !p.body.OnLadder {
+	if !p.body.InsidePassThrough {
 		p.Control.ClimbOff()
-	}*/
+
+		return
+	}
 	p.body.Vy = 0
-	speed := p.speed * 5 * dt
+	speed := p.speed * playerClimbSpeed * dt
 	if p.pad.KeyDown(utils.KeyUp) {
 		p.body.Vy = -speed
 	}

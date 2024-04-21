@@ -17,7 +17,8 @@ var DebugDraw = false
 
 type Comp struct {
 	Solid, Unmovable, Friction bool
-	Ground                     bool
+	Ground, InsidePassThrough  bool
+	droppingThrough            bool
 	Vx, Vy                     float64
 	MaxX, MaxY                 float64
 	Weight                     float64
@@ -76,6 +77,16 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	utils.DrawText(screen, fmt.Sprintf(`MAX:%v`, c.MaxX), assets.TinyFont, op)
 }
 
+func (c *Comp) DropThrough() bool {
+	x, y, w, h := c.entity.Rect()
+	onPassThrough := len(c.space.Query(bump.NewRect(x, y+h, w, 1), nil, "passthrough")) > 0
+	if onPassThrough {
+		c.droppingThrough = true
+	}
+
+	return onPassThrough
+}
+
 func (c *Comp) updateMovement(dt float64, noForceApplied bool) {
 	if (c.Friction && noForceApplied) || math.Abs(c.Vx) > c.MaxX {
 		fric := vars.GroundFriction
@@ -96,6 +107,7 @@ func (c *Comp) updateMovement(dt float64, noForceApplied bool) {
 	c.entity.SetPosition(goal.X, goal.Y)
 
 	c.Ground = false
+	c.InsidePassThrough = false
 	for _, col := range cols {
 		if col.Type == bump.Slide {
 			if col.Normal.X != 0 {
@@ -112,6 +124,10 @@ func (c *Comp) updateMovement(dt float64, noForceApplied bool) {
 		if _, ok := col.Other.(core.Entity); ok && col.Type == bump.Cross && col.Overlaps {
 			c.applyOverlapForce(col)
 		}
+		c.InsidePassThrough = c.InsidePassThrough || (c.space.Has(col.Other, "passthrough") && col.Overlaps)
+	}
+	if !c.InsidePassThrough {
+		c.droppingThrough = false
 	}
 }
 
@@ -124,10 +140,18 @@ func (c *Comp) applyOverlapForce(col *bump.Collision) {
 }
 
 func (c *Comp) bodyFilter() func(bump.Item, bump.Item) (bump.ColType, bool) {
-	return func(_, other bump.Item) (bump.ColType, bool) {
+	return func(item, other bump.Item) (bump.ColType, bool) {
 		if entity, ok := other.(core.Entity); ok {
 			if utils.Contains(c.FilterOut, entity) {
 				return 0, false
+			}
+
+			return bump.Cross, true
+		}
+		if c.space.Has(other, "passthrough") {
+			itemRect, otherRect := c.space.Rects[item], c.space.Rects[other]
+			if !c.droppingThrough && itemRect.Y+itemRect.H <= otherRect.Y {
+				return bump.Slide, true
 			}
 
 			return bump.Cross, true

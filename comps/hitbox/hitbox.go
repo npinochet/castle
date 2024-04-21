@@ -153,15 +153,10 @@ func (c *Comp) hitFilter() bump.SimpleFilter {
 		if box, ok := item.(*Hitbox); ok {
 			return box.comp != c
 		}
+		if c.space.Has(item, "slope") || c.space.Has(item, "passthrough") {
+			return false
+		}
 
-		// TODO: Review
-		/*if obj, ok := item.(*tiled.Object); ok {
-			itemRect := c.space.Rects[item]
-			if obj.Class == core.LadderClass || itemRect.IsSlope() {
-				return false
-			}
-		}*/
-		// TODO: If a slope is hit, maybe it shouldn't return true
 		return true
 	}
 }

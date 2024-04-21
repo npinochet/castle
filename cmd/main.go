@@ -64,7 +64,6 @@ import (
 
 
 - Demo MVP Steps:
-	- Fix Ladders
 	- Add Mage Enemy
 	- Add a proper Game Over Screen
 	- Build Map

@@ -79,11 +79,13 @@ func (f *Flake) Update(dt float64) {
 	f.X = f.startX + float64(path)*distX
 	f.Y = f.startY + float64(path)*distY
 	if done {
+		f.Remove()
 		f.captureTween = nil
-		if f.body != nil {
-			vars.World.Space.Remove(f)
-		}
-		vars.World.Remove(f)
 		core.Get[*stats.Comp](f.target).AddExp(1)
 	}
+}
+
+func (f *Flake) Remove() {
+	vars.World.Space.Remove(f)
+	vars.World.Remove(f)
 }

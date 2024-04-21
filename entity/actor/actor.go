@@ -142,7 +142,7 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 			contacted = nil
 		}
 		contactType, contacted = c.hitbox.HitFromHitBox(slice, damage, contacted)
-		/*if len(contacted) > 0 && c.Entity == vars.Player && !freezeOnce {
+		/*if len(contacted) > 0 && c.Entity == vars.Player && !freezeOnce { // TODO: This is a mess...
 			freezeOnce = true
 			c.World.Freeze(0.1)
 			c.World.Camera.Shake(0.1, 1)
@@ -225,17 +225,18 @@ func (c *Control) CanJump() bool {
 		!c.BlockingState() && c.anim.State != vars.ConsumeTag
 }
 
-func (c *Control) ClimbOn(goingDown bool) {
-	if c.PausingState() {
+func (c *Control) ClimbOn(pressedDown bool) {
+	if c.PausingState() || c.anim.State == vars.ClimbTag {
 		return
 	}
-	/*c.body.ClipLadder = c.body.ClipLadder || goingDown
-	if !c.body.OnLadder || c.anim.State == anim.ClimbTag {
-		return
+	if pressedDown {
+		if (c.body.Ground && c.body.InsidePassThrough) || !c.body.DropThrough() {
+			return
+		}
 	}
-	*/
+	c.ShieldDown()
 	prevWeight := c.body.Weight
-	c.body.Weight = -1
+	c.body.Weight = 0
 	c.anim.SetState(vars.ClimbTag)
 	c.anim.SetExitCallback(func() { c.body.Weight = prevWeight }, nil)
 }
@@ -244,7 +245,6 @@ func (c *Control) ClimbOff() {
 	if c.anim.State != vars.ClimbTag {
 		return
 	}
-	//c.body.ClipLadder = false
 	c.anim.SetState(vars.IdleTag)
 }
 
