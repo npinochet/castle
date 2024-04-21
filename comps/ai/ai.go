@@ -71,7 +71,6 @@ func (c *Comp) Update(dt float64) {
 				nextItem.action.Entry()
 			}
 		}
-		c.Update(dt)
 	}
 }
 

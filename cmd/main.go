@@ -36,15 +36,15 @@ import (
 - Cannot jump when going down slope, body.Ground is mostly false, this can be solved with coyote time.
 
 -- Dark Souls Combat Findings
-- When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.
-- Poise break are really small, just to interrupt animation.
-- When using a big shield (stability high) and guarding, an enemy attack can be deflect.
-- When blocking an attack, a little stagger animation is played.
-- Stagger animation can be reset if hit again.
-	- Only the player can be stun locked. -> poise is reset only after stagger animation finishes.
-- No invinsibility frames after getting hit.
-	- Each enemy can hit the player after being in contact with the hitbox once.
-	- If the hitbox gets away from the player hurtbox in one frame and then it overlaps again on the next frame, it should hit again.
+	- When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.
+	- Poise break are really small, just to interrupt animation.
+	- When using a big shield (stability high) and guarding, an enemy attack can be deflect.
+	- When blocking an attack, a little stagger animation is played.
+	- Stagger animation can be reset if hit again.
+		- Only the player can be stun locked. -> poise is reset only after stagger animation finishes.
+	- No invinsibility frames after getting hit.
+		- Each enemy can hit the player after being in contact with the hitbox once.
+		- If the hitbox gets away from the player hurtbox in one frame and then it overlaps again on the next frame, it should hit again.
 
 - Add teams to actor, the AI should only target player and not other enemies (unless hit by enemy).
 - Add enemy that can only be hit from behind.
@@ -57,7 +57,19 @@ import (
 
 - Today's TODO:
 	- Experiment with ideas above.
+		- Double time
+		- Implement dash
+	- Add charge attack
 
+
+- Demo MVP Steps:
+	- Add Intro Screen
+	- Add Menu Screen
+	- Add Collectibles
+	- Add Mage Enemy
+	- Add Game Over Screen
+	- Add Checkpoint?
+	- Add Boss
 */
 
 const (
@@ -77,7 +89,7 @@ func (g *Game) init() {
 	if err != nil {
 		log.Println("main: error finding player entity:", err)
 	}
-	player = entity.NewPlayer(obj.X, obj.Y, nil)
+	player = entity.NewPlayer(obj.X, obj.Y)
 	vars.World.Camera.Follow(player)
 	vars.World.Add(player)
 	entity.PlayerRef = player

@@ -162,6 +162,9 @@ func (m *Map) LoadBumpObjects(space *bump.Space, objectGroupName string) {
 
 			continue
 		}
+		if obj.Class == "ladder" || obj.Type == "ladder" { // TODO: remove this
+			continue
+		}
 		space.Set(obj, bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height, Priority: defaultCollisionPriority}, "map")
 	}
 }

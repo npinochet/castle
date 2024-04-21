@@ -47,7 +47,15 @@ func (c *Comp) Init(entity core.Entity) {
 }
 
 func (c *Comp) Update(_ float64) {
-	c.active = len(ext.QueryItems(c.entity, c.Area(), "body")) > 0
+	active := false
+	for _, e := range ext.QueryItems(c.entity, c.Area(), "body") {
+		if core.GetFlag(e, vars.PlayerTeamFlag) {
+			active = true
+
+			break
+		}
+	}
+	c.active = active
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {

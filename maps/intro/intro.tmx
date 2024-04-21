@@ -1185,7 +1185,7 @@
   <object id="259" x="1840" y="2808" width="48" height="16"/>
  </objectgroup>
  <objectgroup color="#4fa63b" id="4" name="entities">
-  <object id="11" name="Player" gid="26" x="2128" y="2328" width="8" height="8"/>
+  <object id="11" name="Player" gid="26" x="1940" y="2778" width="8" height="8"/>
   <object id="12" name="Knight" gid="27" x="1952" y="2040" width="8" height="8"/>
   <object id="27" name="GhoulWithRocks" gid="2147483676" x="2008" y="2384" width="8" height="8">
    <properties>
@@ -1195,7 +1195,7 @@
    </properties>
   </object>
   <object id="33" name="Bonfire" x="2072" y="2328" width="8" height="8"/>
-  <object id="83" name="Ghoul" gid="28" x="1992" y="2024" width="8" height="8"/>
+  <object id="83" name="Ghoul" gid="28" x="2064" y="2016" width="8" height="8"/>
   <object id="84" name="Ghoul" gid="2147483676" x="2120" y="2424" width="8" height="8">
    <properties>
     <property name="rocks" type="int" value="1"/>

@@ -5,7 +5,6 @@ import (
 	"game/core"
 	"game/ext"
 	"game/libs/bump"
-	"game/old/comps/basic/anim"
 )
 
 var (
@@ -25,6 +24,7 @@ func IdleAction(a *Control, view *bump.Rect) *ai.Action {
 				return true
 			}
 			var targets []core.Entity
+			// TODO: maybe check both views
 			if view == nil {
 				_, _, w, h := a.actor.Rect()
 				targets = ext.QueryFront[core.Entity](a.actor, frontViewDist, h, a.anim.FlipX)
@@ -94,11 +94,6 @@ func ShieldBackUpAction(a *Control, speed, maxSpeed float64) *ai.Action {
 			if a.ai.Target == nil || !a.ai.InTargetRange(0, maxTargetRange) {
 				return true
 			}
-			if a.anim.State == anim.WalkTag || a.anim.State == anim.IdleTag {
-				x, _ := a.actor.Position()
-				tx, _ := a.ai.Target.Position()
-				a.anim.FlipX = tx > x
-			}
 			if !a.PausingState() {
 				if a.anim.FlipX {
 					a.body.Vx -= speed * dt
@@ -126,11 +121,6 @@ func ApproachAction(a *Control, speed, maxSpeed float64) *ai.Action {
 			if !a.ai.InTargetRange(0, maxTargetRange) {
 				// TODO: switch to running, up the speed somehow
 			}
-			if a.anim.State == anim.WalkTag || a.anim.State == anim.IdleTag {
-				x, _ := a.actor.Position()
-				tx, _ := a.ai.Target.Position()
-				a.anim.FlipX = tx > x
-			}
 			if !a.PausingState() {
 				if a.anim.FlipX {
 					a.body.Vx += speed * dt
@@ -154,11 +144,6 @@ func BackUpAction(a *Control, speed, maxSpeed float64) *ai.Action {
 		Next: func(dt float64) bool {
 			if a.ai.Target == nil || !a.ai.InTargetRange(0, maxTargetRange) {
 				return true
-			}
-			if a.anim.State == anim.WalkTag || a.anim.State == anim.IdleTag {
-				x, _ := a.actor.Position()
-				tx, _ := a.ai.Target.Position()
-				a.anim.FlipX = tx > x
 			}
 			if !a.PausingState() {
 				if a.anim.FlipX {

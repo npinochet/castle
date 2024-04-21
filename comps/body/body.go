@@ -47,8 +47,8 @@ func (c *Comp) Update(dt float64) {
 	if c.Solid {
 		return
 	}
-	c.Friction = !c.Ground || c.prevVx == c.Vx
-	c.updateMovement(dt)
+	noForceApplied := !c.Ground || c.prevVx == c.Vx
+	c.updateMovement(dt, noForceApplied)
 	c.prevVx = c.Vx
 }
 
@@ -56,6 +56,7 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	if !DebugDraw {
 		return
 	}
+	friction := (c.Friction && !c.Ground || c.prevVx == c.Vx) || math.Abs(c.Vx) > c.MaxX
 	_, _, ew, eh := c.entity.Rect()
 	image := ebiten.NewImage(int(ew), int(eh))
 	image.Fill(color.NRGBA{255, 0, 0, 75})
@@ -63,13 +64,13 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -22)
-	utils.DrawText(screen, fmt.Sprintf(`FRIC:%v`, c.Friction), assets.TinyFont, op)
+	utils.DrawText(screen, fmt.Sprintf(`FRIC:%v`, friction), assets.TinyFont, op)
 	op.GeoM.Translate(0, 4)
 	utils.DrawText(screen, fmt.Sprintf(`MAX:%v`, c.MaxX), assets.TinyFont, op)
 }
 
-func (c *Comp) updateMovement(dt float64) {
-	if c.Friction || math.Abs(c.Vx) > c.MaxX {
+func (c *Comp) updateMovement(dt float64, noForceApplied bool) {
+	if (c.Friction && noForceApplied) || math.Abs(c.Vx) > c.MaxX {
 		fric := vars.GroundFriction
 		if !c.Ground {
 			fric = vars.AirFriction

@@ -74,11 +74,11 @@ func (s *Skeleman) jumpAttackAction() *ai.Action {
 	return &ai.Action{
 		Name: "JumpAttack",
 		Entry: func() {
+			if s.PausingState() {
+				return
+			}
 			s.body.MaxX = skelemanMaxSpeed * 2
-			go func() {
-				time.Sleep(1 * time.Millisecond)
-				s.Control.Attack("AttackShort", skelemanDamage, 0, 10, 10)
-			}()
+			time.AfterFunc(1*time.Millisecond, func() { s.Control.Attack("AttackShort", skelemanDamage, 0, 10, 10) })
 			s.body.Vy = -skelemanSpeed
 			s.body.Ground = false
 			if s.anim.FlipX {

@@ -36,39 +36,36 @@ type Player struct {
 	body   *body.Comp
 	hitbox *hitbox.Comp
 	stats  *stats.Comp
-	ai     *ai.Comp
 
-	actionTags                  []string
 	speed, jumpSpeed            float64
 	reactForce, attackPushForce float64
 
 	pad utils.ControlPack
 }
 
-func NewPlayer(x, y float64, actionTags []string) *Player {
+func NewPlayer(x, y float64) *Player {
 	p := &Player{
 		BaseEntity: &core.BaseEntity{X: x, Y: y, W: knightWidth, H: knightHeight},
 		anim:       &anim.Comp{FilesName: knightAnimFile, OX: knightOffsetX, OY: knightOffsetY, OXFlip: knightOffsetFlip},
 		body:       &body.Comp{MaxX: playerMaxX},
 		hitbox:     &hitbox.Comp{},
 		stats:      &stats.Comp{Hud: true, NoDebug: true, Stamina: 65},
-		ai:         &ai.Comp{},
 
 		attackPushForce: vars.DefaultAttackPushForce,
 		reactForce:      vars.DefaultReactForce,
-		actionTags:      actionTags,
 		speed:           playerSpeed, jumpSpeed: playerJumpSpeed,
 
 		pad: utils.NewControlPack(),
 	}
 	p.Add(p.anim, p.body, p.hitbox, p.stats)
 	p.Control = actor.NewControl(p)
+	core.SetFlag(p, vars.PlayerTeamFlag, true)
 
 	return p
 }
 
 func (p *Player) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp, ai *ai.Comp) {
-	return p.anim, p.body, p.hitbox, p.stats, p.ai
+	return p.anim, p.body, p.hitbox, p.stats, nil
 }
 
 func (p *Player) Init() {
@@ -97,17 +94,25 @@ func (p *Player) Update(dt float64) {
 	}
 }
 
-func (p *Player) input(dt float64) { // TODO: refactor this
+func (p *Player) input(dt float64) {
 	actionPressed := p.pad.KeyPressedBuffered(utils.KeyAction, keyBufferDuration)
 	healPressed := p.pad.KeyPressedBuffered(utils.KeyHeal, keyBufferDuration)
+	dashPressed := p.pad.KeyPressedBuffered(utils.KeyDash, keyBufferDuration)
 	if p.PausingState() && p.anim.State != vars.ConsumeTag {
 		return
 	}
-	if actionPressed {
+	if actionPressed() {
 		p.Attack(vars.AttackTag, playerDamage, playerDamage, p.reactForce, p.attackPushForce)
 	}
-	if healPressed {
+	if healPressed() {
 		p.Heal(playerHealFrame, playerHeal)
+	}
+	if dashPressed() {
+		speed := p.body.MaxX * 4
+		if (!p.anim.FlipX && !p.pad.KeyDown(utils.KeyRight)) || p.pad.KeyDown(utils.KeyLeft) {
+			speed *= -1
+		}
+		p.body.Vx = speed
 	}
 	if p.pad.KeyDown(utils.KeyGuard) {
 		p.ShieldUp()

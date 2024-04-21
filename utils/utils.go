@@ -10,9 +10,7 @@ import (
 	"golang.org/x/image/font"
 )
 
-const PlayerUID = 100
-
-type ControlPack [8]ebiten.Key
+type ControlPack [9]ebiten.Key
 type ControlKey int
 
 const (
@@ -24,6 +22,7 @@ const (
 	KeyAction
 	KeyGuard
 	KeyHeal
+	KeyDash
 )
 
 var buffer = map[ControlKey]bool{}
@@ -39,6 +38,7 @@ func NewControlPack() ControlPack {
 		KeyAction: ebiten.KeyX,
 		KeyGuard:  ebiten.KeyC,
 		KeyHeal:   ebiten.KeyV,
+		KeyDash:   ebiten.KeySpace, // TODO: Reconsider dash mechanic
 	}
 }
 
@@ -50,7 +50,7 @@ func (cp ControlPack) KeyPressed(key ControlKey) bool {
 	return inpututil.IsKeyJustPressed(cp[key])
 }
 
-func (cp ControlPack) KeyPressedBuffered(key ControlKey, timeBuffer time.Duration) bool {
+func (cp ControlPack) KeyPressedBuffered(key ControlKey, timeBuffer time.Duration) func() bool {
 	pressed := inpututil.IsKeyJustPressed(cp[key])
 	if pressed {
 		buffer[key] = true
@@ -60,7 +60,15 @@ func (cp ControlPack) KeyPressedBuffered(key ControlKey, timeBuffer time.Duratio
 		bufferTimers[key] = time.AfterFunc(timeBuffer, func() { buffer[key] = false })
 	}
 
-	return pressed || buffer[key]
+	return func() bool {
+		pressed := buffer[key]
+		buffer[key] = false
+		if bufferTimers[key] != nil {
+			bufferTimers[key].Stop()
+		}
+
+		return pressed
+	}
 }
 
 func (cp ControlPack) KeyReleased(key ControlKey) bool {
@@ -85,9 +93,10 @@ func DrawText(dst *ebiten.Image, txt string, face font.Face, op *ebiten.DrawImag
 	if op == nil {
 		op = &ebiten.DrawImageOptions{}
 	}
-	size := text.BoundString(face, txt)
-	op.GeoM.Translate(0, float64(-size.Min.Y))
+	size, _ := font.BoundString(face, txt)
+	w, h := size.Max.X.Ceil(), -size.Min.Y.Floor()
+	op.GeoM.Translate(0, float64(h))
 	text.DrawWithOptions(dst, txt, face, op)
 
-	return size.Max.X, -size.Min.Y
+	return w, h
 }

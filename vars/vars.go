@@ -11,6 +11,10 @@ const (
 	ScreenWidth, ScreenHeight = 160, 96 // 320, 240.
 	Debug                     = true
 
+	// Entity Flags.
+	PlayerTeamFlag = iota
+	EnemyTeamFlag
+
 	// Anim.
 	IdleTag       = "Idle"
 	WalkTag       = "Walk"

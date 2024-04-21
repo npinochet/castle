@@ -64,6 +64,11 @@ func (c *Control) SimpleUpdate() {
 			nextState = vars.WalkTag
 		}
 		c.anim.SetState(nextState)
+		if c.ai != nil && c.ai.Target != nil {
+			tx, _, tw, _ := c.ai.Target.Rect()
+			x, _, w, _ := c.actor.Rect()
+			c.anim.FlipX = tx+tw/2 > x+w/2
+		}
 	}
 }
 

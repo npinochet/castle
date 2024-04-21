@@ -18,7 +18,7 @@ import (
 const (
 	rockSize               = 5
 	rockDamage             = 5
-	rockWeight             = -0.4
+	rockWeight             = 0.6
 	rockMinVel, rockMaxVel = 50.0, 100.0
 	rockRollingTime        = 200 * time.Millisecond
 )
@@ -105,7 +105,7 @@ func calculateVx(x, y, tx, ty, vy float64) float64 {
 	widthBuffer := 10.0
 	dx := math.Abs(x - tx - widthBuffer)
 	dy := math.Max(ty-y, 0)
-	a := vars.Gravity * (rockWeight + 1)
+	a := vars.Gravity * rockWeight
 	t := vy / a
 	t += dy / vy
 	vx := math.Max(dx/(2*t), rockMinVel)
