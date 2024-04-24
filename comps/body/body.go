@@ -51,6 +51,8 @@ func (c *Comp) Init(entity core.Entity) {
 	c.space.Set(entity, bump.NewRect(entity.Rect()), c.Tags...)
 }
 
+func (c *Comp) Remove() { c.space.Remove(c.entity) }
+
 func (c *Comp) Update(dt float64) {
 	if c.Solid {
 		return

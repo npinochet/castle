@@ -45,6 +45,11 @@ func (c *Comp) Init(entity core.Entity) {
 	c.space = vars.World.Space
 }
 
+func (c *Comp) Remove() {
+	for c.PopHitbox() != nil { //nolint: revive
+	}
+}
+
 func (c *Comp) Update(_ float64) {
 	ex, ey := c.entity.Position()
 	for _, box := range c.hurtBoxes {

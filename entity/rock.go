@@ -80,25 +80,14 @@ func (r *Rock) Init() {
 func (r *Rock) Update(_ float64) {
 	_, contacted := r.hitbox.HitFromHitBox(bump.Rect{H: rockSize, W: rockSize}, rockDamage, []*hitbox.Comp{r.ownerHitbox})
 	if len(contacted) > 1 || r.body.Ground {
-		r.Remove()
+		vars.World.Remove(r)
 	}
 }
 
 func (r *Rock) RockHurt(other core.Entity, _ *bump.Collision, _ float64, _ hitbox.ContactType) {
 	if other != r.owner {
-		r.Remove()
+		vars.World.Remove(r)
 	}
-}
-
-func (r *Rock) Remove() {
-	if r.body != nil {
-		vars.World.Space.Remove(r)
-	}
-	if r.hitbox != nil {
-		for r.hitbox.PopHitbox() != nil { //nolint: revive
-		}
-	}
-	vars.World.Remove(r)
 }
 
 func calculateVx(x, y, tx, ty, vy float64) float64 {

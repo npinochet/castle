@@ -54,7 +54,7 @@ func (c *Control) Init() {
 
 func (c *Control) SimpleUpdate() {
 	if c.stats.Health <= 0 {
-		c.Remove()
+		vars.World.Remove(c.actor)
 		x, y, w, h := c.actor.Rect()
 		for i := 0; i < c.stats.Exp; i++ {
 			vars.World.Add(particle.NewFlake(x+w/2, y+h/2)) // TODO: keep actor package isolated somehow, move Flake to entity package.
@@ -246,17 +246,6 @@ func (c *Control) ClimbOff() {
 		return
 	}
 	c.anim.SetState(vars.IdleTag)
-}
-
-func (c *Control) Remove() {
-	if c.body != nil {
-		vars.World.Space.Remove(c.actor)
-	}
-	if c.hitbox != nil {
-		for c.hitbox.PopHitbox() != nil { //nolint: revive
-		}
-	}
-	vars.World.Remove(c.actor)
 }
 
 func (c *Control) Heal(effectFrame int, amount float64) {

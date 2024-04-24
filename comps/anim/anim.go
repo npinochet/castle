@@ -49,10 +49,10 @@ type Comp struct {
 func (c *Comp) Init(_ core.Entity) {
 	var err error
 	if c.Image, _, err = ebitenutil.NewImageFromFile(c.FilesName + ".png"); err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	if c.Data, err = aseprite.Open(c.FilesName + ".json"); err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	if c.Fsm == nil {
 		c.Fsm = DefaultFsm()
@@ -67,6 +67,8 @@ func (c *Comp) Init(_ core.Entity) {
 		log.Println(err)
 	}
 }
+
+func (c *Comp) Remove() {}
 
 func (c *Comp) SetState(state string) {
 	if c.State == state {

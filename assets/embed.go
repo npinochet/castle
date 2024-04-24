@@ -33,13 +33,13 @@ func init() {
 func loadFont(data []byte, target *font.Face, opt *opentype.FaceOptions) {
 	tt, err := opentype.Parse(data)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	if opt == nil {
 		opt = &opentype.FaceOptions{Size: defaultSize, DPI: defaultDPI}
 	}
 	*target, err = opentype.NewFace(tt, opt)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 }

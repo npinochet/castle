@@ -69,8 +69,3 @@ var (
 	CollisionStiffness          = 1.0
 	FrictionEpsilon             = 0.05
 )
-
-func init() {
-	World = core.NewWorld(float64(ScreenWidth), float64(ScreenHeight))
-	World.SetMap(core.NewMap("maps/intro/intro.tmx", "foreground", "background"), "rooms")
-}

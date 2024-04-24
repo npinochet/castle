@@ -32,6 +32,12 @@ func (c *Comp) Init(_ core.Entity) {
 	}
 }
 
+func (c *Comp) Remove() {
+	if c.rollingTimer != nil {
+		c.rollingTimer.Stop()
+	}
+}
+
 func (c *Comp) Update(_ float64) {}
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {

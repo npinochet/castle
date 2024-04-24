@@ -14,6 +14,7 @@ import (
 
 const (
 	viewPropName = "view"
+	idPropName   = "id"
 )
 
 const defaultCollisionPriority = -2
@@ -21,6 +22,7 @@ const defaultCollisionPriority = -2
 type Properties struct {
 	FlipX, FlipY bool
 	View         *tiled.Object
+	CustomID     string
 	Custom       map[string]string
 }
 
@@ -200,9 +202,11 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 					id, _ := strconv.Atoi(prop.Value)
 					obj, err := m.FindObjectID(id)
 					if err != nil {
-						panic("tiled: cannot find object with id " + prop.Value)
+						panic("tiled: cannot find view object with id " + prop.Value)
 					}
 					props.View = obj
+				case idPropName:
+					props.CustomID = prop.Value
 				default:
 					props.Custom[prop.Name] = prop.Value
 				}

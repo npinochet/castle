@@ -36,6 +36,8 @@ func (c *Comp) Init(entity core.Entity) {
 	c.Entity = entity
 }
 
+func (c *Comp) Remove() {}
+
 func (c *Comp) SetAct(act func()) { c.act = act }
 
 func (c *Comp) Add(timeout float64, action *Action) {

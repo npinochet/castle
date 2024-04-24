@@ -1,24 +1,11 @@
 package main
 
 import (
-	"errors"
-	"fmt"
-	"game/assets"
-	"game/comps/ai"
-	"game/comps/anim"
-	"game/comps/body"
-	"game/comps/hitbox"
-	"game/comps/stats"
-	"game/core"
-	"game/entity"
-	"game/utils"
+	"game/game"
 	"game/vars"
-	"image/color"
 	"log"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 /* TODO
@@ -34,6 +21,7 @@ import (
 - Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
 - Sometimes the enemy can cut off the stagger animation somehow.
 - Cannot jump when going down slope, body.Ground is mostly false, this can be solved with coyote time.
+- Add Remove method to components and entites?
 
 -- Dark Souls Combat Findings
 	- When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.
@@ -66,121 +54,25 @@ import (
 - Demo MVP Steps:
 	- Add Mage Enemy
 	- Add a proper Game Over Screen
+		- World .Reset() method
+		- Peg tile objects to reusable IDs so it can be saved and references without problem
+		- Save data?
 	- Build Map
 	- Add Boss
 	- Add some polish
 	- Add Checkpoint, at least a checkpoint altar?
 */
 
-const (
-	playerID = 25
-)
-
-var (
-	game       = &Game{}
-	player     *entity.Player
-	canRestart = true
-)
-
-type Game struct{}
-
-func (g *Game) init() {
-	obj, err := vars.World.Map.FindObjectFromTileID(playerID, "entities")
-	if err != nil {
-		log.Println("main: error finding player entity:", err)
-	}
-	player = entity.NewPlayer(obj.X, obj.Y)
-	vars.World.Camera.Follow(player)
-	vars.World.Add(player)
-	vars.Player = player
-
-	vars.World.Map.LoadBumpObjects(vars.World.Space, "collisions")
-	vars.World.Map.LoadEntityObjects(vars.World, "entities", map[uint32]core.EntityContructor{
-		26: func(x, y, w, h float64, props *core.Properties) core.Entity {
-			return entity.NewKnight(x, y, w, h, props)
-		},
-		27: func(x, y, w, h float64, props *core.Properties) core.Entity {
-			return entity.NewGhoul(x, y, w, h, props)
-		},
-		28: func(x, y, w, h float64, props *core.Properties) core.Entity {
-			return entity.NewSkeleman(x, y, w, h, props)
-		},
-		29: func(x, y, w, h float64, props *core.Properties) core.Entity {
-			return entity.NewCrawler(x, y, w, h, props)
-		},
-		87: func(x, y, w, h float64, props *core.Properties) core.Entity {
-			return entity.NewGram(x, y, w, h, props)
-		},
-	})
-}
-
-func (g *Game) Update() error {
-	if !canRestart {
-		return nil
-	}
-	dt := 1.0 / 60
-	vars.World.Update(dt)
-
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		return errors.New("Exited")
-	}
-	if vars.Debug {
-		debugControls()
-	}
-
-	if core.Get[*stats.Comp](player).Health <= 0 && canRestart {
-		canRestart = false
-		time.AfterFunc(2, func() {
-			game.init()
-			canRestart = true
-		})
-	}
-
-	return nil
-}
-
-func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{50, 60, 57, 255}) // default background color.
-	if !canRestart {
-		return
-	}
-	vars.World.Draw(screen)
-
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(vars.ScreenWidth-16), 1)
-	utils.DrawText(screen, fmt.Sprintf(`%0.2f`, ebiten.ActualFPS()), assets.TinyFont, op)
-}
-
-func (g *Game) Layout(_, _ int) (int, int) {
-	return vars.ScreenWidth, vars.ScreenHeight
-}
-
 func main() {
 	ebiten.SetWindowSize(vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale)
 	ebiten.SetWindowTitle("Castle")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-	// ebiten.SetVsyncEnabled(false)
+	ebiten.SetVsyncEnabled(false)
 
-	game.init()
-	if err := ebiten.RunGame(game); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func debugControls() {
-	if inpututil.IsKeyJustPressed(ebiten.Key1) {
-		body.DebugDraw = !body.DebugDraw
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key2) {
-		hitbox.DebugDraw = !hitbox.DebugDraw
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key3) {
-		ai.DebugDraw = !ai.DebugDraw
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key4) {
-		stats.DebugDraw = !stats.DebugDraw
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key5) {
-		anim.DebugDraw = !anim.DebugDraw
+	g := &game.Game{}
+	g.Load()
+	g.Reset()
+	if err := ebiten.RunGame(g); err != nil {
+		log.Panic(err)
 	}
 }

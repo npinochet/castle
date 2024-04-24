@@ -46,6 +46,8 @@ func (c *Comp) Init(entity core.Entity) {
 	}
 }
 
+func (c *Comp) Remove() {}
+
 func (c *Comp) Update(_ float64) {
 	active := false
 	for _, e := range ext.QueryItems(c.entity, c.Area(), "body") {

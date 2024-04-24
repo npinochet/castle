@@ -24,6 +24,7 @@ type Component interface {
 	Init(entity Entity)
 	Update(dt float64)
 	Draw(screen *ebiten.Image, entityPos ebiten.GeoM)
+	Remove()
 }
 
 type World struct {
@@ -105,11 +106,23 @@ func GetWithTag[T Component](entity Entity, tag string) T {
 func (w *World) Remove(entity Entity) {
 	for i, e := range w.entities {
 		if entity == e {
+			for _, c := range e.Components() {
+				c.Remove()
+			}
 			w.entities = append(w.entities[:i], w.entities[i+1:]...)
 
 			break
 		}
 	}
+}
+
+func (w *World) RemoveAllEntities() {
+	for _, e := range w.entities {
+		for _, c := range e.Components() {
+			c.Remove()
+		}
+	}
+	w.entities = []Entity{}
 }
 
 func (w *World) Freeze(time float64) {

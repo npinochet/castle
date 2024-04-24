@@ -81,6 +81,12 @@ func (c *Comp) Init(_ core.Entity) {
 	c.poiseLag = c.Poise
 }
 
+func (c *Comp) Remove() {
+	if c.poiseTimer != nil {
+		c.poiseTimer.Stop()
+	}
+}
+
 func (c *Comp) Update(dt float64) {
 	if c.healthTween != nil {
 		if lag, done := c.healthTween.Update(float32(dt)); done {
