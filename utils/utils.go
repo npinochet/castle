@@ -89,14 +89,19 @@ func Contains[T comparable](slice []T, item T) bool {
 	return false
 }
 
-func DrawText(dst *ebiten.Image, txt string, face font.Face, op *ebiten.DrawImageOptions) (int, int) {
+func TextSize(text string, face font.Face) (int, int) {
+	size, _ := font.BoundString(face, text)
+
+	return size.Max.X.Ceil(), -size.Min.Y.Floor()
+}
+
+func DrawText(img *ebiten.Image, txt string, face font.Face, op *ebiten.DrawImageOptions) (int, int) {
 	if op == nil {
 		op = &ebiten.DrawImageOptions{}
 	}
-	size, _ := font.BoundString(face, txt)
-	w, h := size.Max.X.Ceil(), -size.Min.Y.Floor()
+	w, h := TextSize(txt, face)
 	op.GeoM.Translate(0, float64(h))
-	text.DrawWithOptions(dst, txt, face, op)
+	text.DrawWithOptions(img, txt, face, op)
 
 	return w, h
 }

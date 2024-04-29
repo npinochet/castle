@@ -9,7 +9,6 @@ import (
 )
 
 /* TODO
-- JUICE UP COMBAT, IM TALKING STOP TIME, PARTICLE EFFECTS, FLASHING BABY
 - Add animation tiles on update for Tiled map.
 - Maybe stop time while camera transition is playing, and move follower entity to border?
 - Don't cap max speed when guarding in mid-air.
@@ -45,22 +44,15 @@ import (
 
 
 - Today's TODO:
-	- Experiment with ideas above.
-		- Double time
-		- Implement dash
-	- Add charge attack
-
-
 - Demo MVP Steps:
 	- Add Mage Enemy
 	- Add a proper Game Over Screen
-		- World .Reset() method
 		- Peg tile objects to reusable IDs so it can be saved and references without problem
-		- Save data?
 	- Build Map
 	- Add Boss
 	- Add some polish
-	- Add Checkpoint, at least a checkpoint altar?
+		- JUICE UP COMBAT, IM TALKING STOP TIME, PARTICLE EFFECTS, FLASHING BABY
+	- Add Checkpoint, at least one checkpoint altar?
 */
 
 func main() {
@@ -70,9 +62,11 @@ func main() {
 	ebiten.SetVsyncEnabled(false)
 
 	g := &game.Game{}
-	g.Load()
-	g.Reset()
-	if err := ebiten.RunGame(g); err != nil {
-		log.Panic(err)
+	game.Load()
+
+	// TODO: Prevent macOS from using Metal API and panic.
+	// if err := ebiten.RunGame(g); err != nil {
+	if err := ebiten.RunGameWithOptions(g, &ebiten.RunGameOptions{GraphicsLibrary: ebiten.GraphicsLibraryOpenGL}); err != nil {
+		log.Fatal(err)
 	}
 }

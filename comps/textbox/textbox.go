@@ -73,7 +73,7 @@ func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
 		x, y, w, _ := c.entity.Rect()
 		boxY = y - cy - vars.BoxMarginY - boxH
 		iop := &ebiten.DrawImageOptions{}
-		iw := indicatorImage.Bounds().Dx()
+		iw := indicatorImage.Bounds().Size().X
 		px, py := x+w/2-float64(iw)/2, boxH
 		ix := math.Max(math.Min(px-cx, vars.BoxW+vars.BoxX-float64(iw)), vars.BoxX)
 		iop.GeoM.Translate(ix, boxY+py)

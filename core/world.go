@@ -30,13 +30,14 @@ type Component interface {
 type World struct {
 	Space       *bump.Space
 	Camera      *camera.Camera
+	Speed       float64
 	entities    []Entity
 	Map         *Map
 	freezeTimer float64
 }
 
 func NewWorld(width, height float64) *World {
-	return &World{bump.NewSpace(), camera.New(width, height), nil, nil, 0}
+	return &World{bump.NewSpace(), camera.New(width, height), 1, nil, nil, 0}
 }
 
 func (w *World) Add(entity Entity) Entity {
@@ -60,6 +61,7 @@ func (w *World) SetMap(tiledMap *Map, roomsLayer string) {
 }
 
 func (w *World) Update(dt float64) {
+	dt = dt * w.Speed
 	w.Camera.Update(dt)
 	if w.freezeTimer -= dt; w.freezeTimer >= 0 {
 		return

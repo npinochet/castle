@@ -38,7 +38,7 @@ type Player struct {
 	speed, jumpSpeed            float64
 	reactForce, attackPushForce float64
 
-	pad utils.ControlPack
+	Pad utils.ControlPack
 }
 
 func NewPlayer(x, y float64) *Player {
@@ -53,7 +53,7 @@ func NewPlayer(x, y float64) *Player {
 		reactForce:      vars.DefaultReactForce,
 		speed:           playerSpeed, jumpSpeed: playerJumpSpeed,
 
-		pad: utils.NewControlPack(),
+		Pad: utils.NewControlPack(),
 	}
 	p.Add(p.anim, p.body, p.hitbox, p.stats)
 	p.Control = actor.NewControl(p)
@@ -85,17 +85,20 @@ func (p *Player) Init() {
 }
 
 func (p *Player) Update(dt float64) {
+	if p.stats.Health <= 0 {
+		return
+	}
 	p.input(dt)
 	p.SimpleUpdate()
-	if moving := p.pad.KeyDown(utils.KeyLeft) || p.pad.KeyDown(utils.KeyRight); !moving && p.anim.State == vars.WalkTag {
+	if moving := p.Pad.KeyDown(utils.KeyLeft) || p.Pad.KeyDown(utils.KeyRight); !moving && p.anim.State == vars.WalkTag {
 		p.anim.SetState(vars.IdleTag)
 	}
 }
 
 func (p *Player) input(dt float64) {
-	actionPressed := p.pad.KeyPressedBuffered(utils.KeyAction, keyBufferDuration)
-	healPressed := p.pad.KeyPressedBuffered(utils.KeyHeal, keyBufferDuration)
-	dashPressed := p.pad.KeyPressedBuffered(utils.KeyDash, keyBufferDuration)
+	actionPressed := p.Pad.KeyPressedBuffered(utils.KeyAction, keyBufferDuration)
+	healPressed := p.Pad.KeyPressedBuffered(utils.KeyHeal, keyBufferDuration)
+	dashPressed := p.Pad.KeyPressedBuffered(utils.KeyDash, keyBufferDuration)
 	if p.PausingState() && p.anim.State != vars.ConsumeTag {
 		return
 	}
@@ -107,27 +110,27 @@ func (p *Player) input(dt float64) {
 	}
 	if dashPressed() {
 		speed := p.body.MaxX * 4
-		if (!p.anim.FlipX && !p.pad.KeyDown(utils.KeyRight)) || p.pad.KeyDown(utils.KeyLeft) {
+		if (!p.anim.FlipX && !p.Pad.KeyDown(utils.KeyRight)) || p.Pad.KeyDown(utils.KeyLeft) {
 			speed *= -1
 		}
 		p.body.Vx = speed
 	}
-	if p.pad.KeyDown(utils.KeyGuard) {
+	if p.Pad.KeyDown(utils.KeyGuard) {
 		p.ShieldUp()
 	}
-	if p.pad.KeyReleased(utils.KeyGuard) {
+	if p.Pad.KeyReleased(utils.KeyGuard) {
 		p.ShieldDown()
 	}
 	p.inputClimbing(dt)
 
 	flip := p.anim.FlipX
-	if p.pad.KeyDown(utils.KeyLeft) {
+	if p.Pad.KeyDown(utils.KeyLeft) {
 		if math.Abs(p.body.Vx) <= p.body.MaxX {
 			p.body.Vx -= p.speed * dt
 		}
 		flip = false
 	}
-	if p.pad.KeyDown(utils.KeyRight) {
+	if p.Pad.KeyDown(utils.KeyRight) {
 		if math.Abs(p.body.Vx) <= p.body.MaxX {
 			p.body.Vx += p.speed * dt
 		}
@@ -137,7 +140,7 @@ func (p *Player) input(dt float64) {
 	if !p.BlockingState() {
 		p.anim.FlipX = flip
 	}
-	if p.pad.KeyPressed(utils.KeyJump) && p.CanJump() {
+	if p.Pad.KeyPressed(utils.KeyJump) && p.CanJump() {
 		p.ClimbOff()
 		p.body.Vy = -p.jumpSpeed
 	}
@@ -150,8 +153,8 @@ func (p *Player) input(dt float64) {
 }
 
 func (p *Player) inputClimbing(dt float64) {
-	if p.pad.KeyDown(utils.KeyUp) || p.pad.KeyDown(utils.KeyDown) {
-		p.ClimbOn(p.pad.KeyDown(utils.KeyDown))
+	if p.Pad.KeyDown(utils.KeyUp) || p.Pad.KeyDown(utils.KeyDown) {
+		p.ClimbOn(p.Pad.KeyDown(utils.KeyDown))
 	}
 	if p.anim.State != vars.ClimbTag {
 		return
@@ -163,10 +166,10 @@ func (p *Player) inputClimbing(dt float64) {
 	}
 	p.body.Vy = 0
 	speed := p.speed * playerClimbSpeed * dt
-	if p.pad.KeyDown(utils.KeyUp) {
+	if p.Pad.KeyDown(utils.KeyUp) {
 		p.body.Vy = -speed
 	}
-	if p.pad.KeyDown(utils.KeyDown) {
+	if p.Pad.KeyDown(utils.KeyDown) {
 		p.body.Vy = speed
 	}
 }

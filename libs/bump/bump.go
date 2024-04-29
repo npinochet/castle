@@ -113,7 +113,13 @@ func (s *Space) Has(item Item, tags ...Tag) bool {
 
 	return true
 }
-func (s *Space) Remove(item Item) { delete(s.Rects, item); delete(s.Tags, item) }
+func (s *Space) Remove(item Item) {
+	if item == nil {
+		return
+	}
+	delete(s.Rects, item)
+	delete(s.Tags, item)
+}
 func (s *Space) Move(item Item, targetGoal Vec2, filter Filter, tags ...Tag) (Vec2, []*Collision) {
 	goal, cols := s.Check(item, targetGoal, filter, tags...)
 	rect := s.Rects[item]

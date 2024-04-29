@@ -13,14 +13,15 @@ const (
 	fileMode = 0666
 )
 
-var saveFileCache []byte
+var saveDataCache []byte
 
 type PlayerData struct {
-	X, Y float64
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
 }
 
 type SaveData struct {
-	PlayerData PlayerData
+	PlayerData PlayerData `json:"player_data"`
 }
 
 func NewSaveData() *SaveData {
@@ -34,8 +35,8 @@ func NewSaveData() *SaveData {
 
 func Save() error {
 	var saveData *SaveData
-	if len(saveFileCache) != 0 {
-		if err := json.Unmarshal(saveFileCache, saveData); err != nil {
+	if len(saveDataCache) != 0 {
+		if err := json.Unmarshal(saveDataCache, saveData); err != nil {
 			return err
 		}
 	} else {
@@ -45,27 +46,23 @@ func Save() error {
 		}
 	}
 
-	if saveData == nil {
-		saveData = NewSaveData()
-	} else {
-		updateSaveData(saveData)
-	}
+	updateSaveData(saveData)
 
 	saveFile, err := os.OpenFile(SavePath, os.O_WRONLY, fileMode) //nolint: nosnakecase
 	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
 		if saveFile, err = os.Create(SavePath); err != nil {
 			return err
 		}
 	}
 	defer saveFile.Close()
 
-	data, err := json.Marshal(saveData)
-	if err != nil {
+	if saveDataCache, err = json.Marshal(saveData); err != nil {
 		return err
 	}
-	saveFileCache = data
-
-	if _, err := saveFile.Write(data); err != nil {
+	if _, err := saveFile.Write(saveDataCache); err != nil {
 		return err
 	}
 
@@ -75,18 +72,20 @@ func Save() error {
 func LoadSave() (*SaveData, error) {
 	saveFile, err := os.Open(SavePath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return NewSaveData(), nil
+		}
+
 		return nil, err
 	}
 	defer saveFile.Close()
 
-	saveBuffer, err := io.ReadAll(saveFile)
-	if err != nil {
+	if saveDataCache, err = io.ReadAll(saveFile); err != nil {
 		return nil, err
 	}
-	saveFileCache = saveBuffer
 
-	saveData := &SaveData{}
-	if err := json.Unmarshal(saveBuffer, &saveData); err != nil {
+	var saveData *SaveData
+	if err := json.Unmarshal(saveDataCache, &saveData); err != nil {
 		return nil, err
 	}
 

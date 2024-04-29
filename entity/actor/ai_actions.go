@@ -2,7 +2,6 @@ package actor
 
 import (
 	"game/comps/ai"
-	"game/core"
 	"game/ext"
 	"game/libs/bump"
 )
@@ -23,19 +22,19 @@ func IdleAction(a *Control, view *bump.Rect) *ai.Action {
 			if a.ai.Target != nil {
 				return true
 			}
-			var targets []core.Entity
+			var targets []Actor
 			// TODO: maybe check both views
 			if view == nil {
 				_, _, w, h := a.actor.Rect()
-				targets = ext.QueryFront[core.Entity](a.actor, frontViewDist, h, a.anim.FlipX)
+				targets = ext.QueryFront(a.actor, frontViewDist, h, a.anim.FlipX)
 
-				view := &bump.Rect{X: frontViewDist, Y: h, W: frontViewDist, H: h * 2}
+				view := &bump.Rect{X: -frontViewDist, Y: -h, W: frontViewDist, H: h * 2}
 				if a.anim.FlipX {
 					view.X += frontViewDist + w
 				}
 				a.ai.DebugRect = view
 			} else {
-				targets = ext.QueryItems[core.Entity](a.actor, *view, "body")
+				targets = ext.QueryItems(a.actor, *view, "body")
 				a.ai.DebugRect = view
 			}
 			if len(targets) > 0 {

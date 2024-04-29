@@ -2,6 +2,7 @@ package ai
 
 import (
 	"game/assets"
+	"game/comps/stats"
 	"game/core"
 	"game/libs/bump"
 	"game/utils"
@@ -54,6 +55,11 @@ func (c *Comp) Add(timeout float64, action *Action) {
 }
 
 func (c *Comp) Update(dt float64) {
+	if c.Target != nil {
+		if stats := core.Get[*stats.Comp](c.Target); stats != nil && stats.Health <= 0 {
+			c.Target = nil
+		}
+	}
 	if len(c.actionQueue) == 0 {
 		if c.act != nil {
 			c.act()
@@ -87,7 +93,7 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 		image := ebiten.NewImage(int(c.DebugRect.W), int(c.DebugRect.H))
 		image.Fill(color.NRGBA{255, 255, 0, 75})
 		op := &ebiten.DrawImageOptions{GeoM: entityPos}
-		op.GeoM.Translate(-c.DebugRect.X, -c.DebugRect.Y)
+		op.GeoM.Translate(c.DebugRect.X, c.DebugRect.Y)
 		screen.DrawImage(image, op)
 	}
 }

@@ -288,7 +288,7 @@ Level design steps [How to Design Great Metroidvania Levels | Game Design](https
 - Map out each room
 - Test, Review, Adapt
 
-## NOTHING WORKS
+## NOTHING WORKS, IT'S NOT FUN
 
 ### What feels wrong
 

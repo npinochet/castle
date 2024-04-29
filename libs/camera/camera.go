@@ -42,6 +42,8 @@ func (c *Camera) Position() (float64, float64) { return c.x, c.y }
 func (c *Camera) SetPosition(x, y float64)     { c.x, c.y = x, y }
 func (c *Camera) SetRooms(rooms []bump.Rect)   { c.rooms = rooms }
 func (c *Camera) Follow(e Recter) {
+	c.shakeTween = nil
+	c.transitionTween = nil
 	c.following = e
 	c.SetRoomBorders(false)
 }

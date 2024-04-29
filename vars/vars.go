@@ -33,7 +33,7 @@ const (
 	DefaultMaxXDiv, DefaultMaxXRecoverRateDiv = 2, 3
 
 	// Stats.
-	DefaultHealth         = 100
+	DefaultHealth         = 20 //100
 	DefaultStamina        = 80
 	DefaultPoise          = 30
 	DefaultHeal           = 3
