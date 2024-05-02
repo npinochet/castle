@@ -11,8 +11,11 @@ import (
 	"game/libs/bump"
 	"game/utils"
 	"game/vars"
+	"image/color"
 	"log"
 )
+
+const dieSeconds = 1
 
 type Actor interface {
 	core.Entity
@@ -20,17 +23,18 @@ type Actor interface {
 }
 
 type Control struct {
-	actor  Actor
-	anim   *anim.Comp
-	body   *body.Comp
-	hitbox *hitbox.Comp
-	stats  *stats.Comp
-	ai     *ai.Comp
-	paused bool
+	actor    Actor
+	anim     *anim.Comp
+	body     *body.Comp
+	hitbox   *hitbox.Comp
+	stats    *stats.Comp
+	ai       *ai.Comp
+	paused   bool
+	dieTimer float64
 }
 
 func NewControl(a Actor) *Control {
-	c := &Control{actor: a}
+	c := &Control{actor: a, dieTimer: dieSeconds}
 	c.anim, c.body, c.hitbox, c.stats, c.ai = a.Comps()
 
 	return c
@@ -52,13 +56,9 @@ func (c *Control) Init() {
 	}
 }
 
-func (c *Control) SimpleUpdate() {
+func (c *Control) SimpleUpdate(dt float64) {
 	if c.stats.Health <= 0 {
-		vars.World.Remove(c.actor)
-		x, y, w, h := c.actor.Rect()
-		for i := 0; i < c.stats.Exp; i++ {
-			vars.World.Add(particle.NewFlake(x+w/2, y+h/2)) // TODO: keep actor package isolated somehow, move Flake to entity package.
-		}
+		c.Die(dt)
 
 		return
 	}
@@ -101,6 +101,23 @@ func (c *Control) Hurt(other core.Entity, damage, reactForce float64) {
 	}
 }
 
+func (c *Control) Die(dt float64) {
+	c.paused = true
+	c.anim.SetState(vars.StaggerTag)
+	if c.dieTimer -= dt; c.dieTimer > 0 {
+		alpha := uint8(50 + 205*float32(c.dieTimer)/dieSeconds)
+		c.anim.ColorScale = color.RGBA{alpha, alpha, alpha, alpha}
+
+		return
+	}
+
+	vars.World.Remove(c.actor)
+	x, y, w, h := c.actor.Rect()
+	for i := 0; i < c.stats.Exp; i++ {
+		vars.World.Add(particle.NewFlake(x+w/2, y+h/2, c.actor)) // TODO: keep actor package isolated somehow, move Flake to entity package.
+	}
+}
+
 func (c *Control) Block(other core.Entity, damage, reactForce float64, contactType hitbox.ContactType) {
 	c.stats.AddStamina(-damage)
 	if contactType == hitbox.ParryBlock {
@@ -130,6 +147,7 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 	if c.PausingState() || c.stats.Stamina <= 0 {
 		return
 	}
+	damage *= 1 + c.stats.AttackMult
 	c.paused = true
 	c.anim.SetState(attackTag)
 	c.anim.SetExitCallback(func() { c.paused = false }, nil)
@@ -248,7 +266,7 @@ func (c *Control) ClimbOff() {
 	c.anim.SetState(vars.IdleTag)
 }
 
-func (c *Control) Heal(effectFrame int, amount float64) {
+func (c *Control) Heal(effectFrame int) {
 	if c.PausingState() || c.stats.Heal <= 0 || !c.body.Ground {
 		return
 	}
@@ -258,6 +276,5 @@ func (c *Control) Heal(effectFrame int, amount float64) {
 	c.anim.SetExitCallback(func() { c.body.MaxX = prevMaxX }, nil)
 	c.anim.OnFrame(effectFrame, func() { // TODO: Can be replaced with OnSlicePresent.
 		c.stats.AddHeal(-1)
-		c.stats.AddHealth(amount)
 	})
 }

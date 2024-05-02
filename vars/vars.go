@@ -37,6 +37,8 @@ const (
 	DefaultStamina        = 80
 	DefaultPoise          = 30
 	DefaultHeal           = 3
+	DefaultHealAmount     = 20
+	AttackMultPerHeal     = 0.2
 	DefaultRecoverRate    = 30
 	DefaultRecoverSeconds = 3
 

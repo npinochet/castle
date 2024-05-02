@@ -39,16 +39,17 @@ type Flake struct {
 	body                     *body.Comp
 	render                   *render.Comp
 	captureTween             *gween.Tween
-	target                   core.Entity
+	from, target             core.Entity
 	startX, startY           float64
 	randTargetW, randTargetH float64
 }
 
-func NewFlake(x, y float64) *Flake {
+func NewFlake(x, y float64, from core.Entity) *Flake {
 	flake := &Flake{
 		BaseEntity:  &core.BaseEntity{X: x, Y: y, W: flakeSize, H: flakeSize},
 		body:        &body.Comp{Tags: []bump.Tag{}, QueryTags: []bump.Tag{"map"}},
 		render:      &render.Comp{Image: flakeImage},
+		from:        from,
 		target:      vars.Player,
 		randTargetW: rand.Float64(), randTargetH: rand.Float64(),
 	}
@@ -62,10 +63,12 @@ func (f *Flake) Init() {
 	vy := flakeSpawnMinY + rand.Float64()*(flakeSpawnMaxY-flakeSpawnMinY)
 	f.body.Vx, f.body.Vy = vx, vy
 	captureTime := float64(flakeSpawnMinTime) + rand.Float64()*float64(flakeSpawnMaxTime-flakeSpawnMinTime)
-	time.AfterFunc(time.Duration(captureTime), func() {
-		f.captureTween = gween.New(0, 1, 0.8, ease.InQuad)
-		f.startX, f.startY = f.X, f.Y
-	})
+	if f.from != f.target {
+		time.AfterFunc(time.Duration(captureTime), func() {
+			f.captureTween = gween.New(0, 1, 0.8, ease.InQuad)
+			f.startX, f.startY = f.X, f.Y
+		})
+	}
 }
 
 func (f *Flake) Update(dt float64) {

@@ -33,19 +33,21 @@ var (
 var DebugDraw = false
 
 type Comp struct {
-	Hud, Pause, NoDebug                     bool
-	MaxHealth, Health                       float64
-	MaxStamina, Stamina                     float64
-	MaxPoise, Poise                         float64
-	MaxHeal, Heal                           int
-	Exp                                     int
-	StaminaRecoverRate, PoiseRecoverSeconds float64
-	healthTween, staminaTween, poiseTween   *gween.Tween
-	healthLag, staminaLag, poiseLag         float64
-	poiseTimer                              *time.Timer
+	Hud, Pause, NoDebug                                    bool
+	MaxHealth, Health                                      float64
+	MaxStamina, Stamina                                    float64
+	MaxPoise, Poise                                        float64
+	MaxHeal, Heal                                          int
+	HealAmount                                             float64
+	AttackMultPerHeal, AttackMult                          float64
+	Exp                                                    int
+	StaminaRecoverRate, PoiseRecoverSeconds                float64
+	healthTween, staminaTween, poiseTween, attackMultTween *gween.Tween
+	healthLag, staminaLag, poiseLag                        float64
+	poiseTimer                                             *time.Timer
 }
 
-func (c *Comp) Init(_ core.Entity) {
+func (c *Comp) Init(_ core.Entity) { //nolint: cyclop
 	if c.MaxHealth == 0 {
 		c.MaxHealth = vars.DefaultHealth
 	}
@@ -57,6 +59,12 @@ func (c *Comp) Init(_ core.Entity) {
 	}
 	if c.MaxHeal == 0 {
 		c.MaxHeal = vars.DefaultHeal
+	}
+	if c.HealAmount == 0 {
+		c.HealAmount = vars.DefaultHealAmount
+	}
+	if c.AttackMultPerHeal == 0 {
+		c.AttackMultPerHeal = vars.AttackMultPerHeal
 	}
 	if c.Health < c.MaxHealth {
 		c.Health = c.MaxHealth
@@ -121,6 +129,13 @@ func (c *Comp) Update(dt float64) {
 			c.poiseLag = float64(lag)
 		}
 	}
+	if c.attackMultTween != nil {
+		if attackMult, done := c.attackMultTween.Update(float32(dt)); done {
+			c.attackMultTween = nil
+		} else {
+			c.AttackMult = float64(attackMult)
+		}
+	}
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
@@ -132,7 +147,7 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 
 		return
 	}
-	if c.Health >= c.MaxHealth {
+	if c.Health >= c.MaxHealth || c.Health < 0 {
 		return
 	}
 
@@ -147,6 +162,14 @@ func (c *Comp) StaminaPercent() float64 { return c.Stamina / c.MaxStamina }
 func (c *Comp) PoisePercent() float64   { return c.Poise / c.MaxPoise }
 
 func (c *Comp) AddHealth(amount float64) {
+	if overHealth := c.Health - c.MaxHealth + amount; overHealth > 0 {
+		attackMult := (overHealth / c.HealAmount) * c.AttackMultPerHeal
+		if c.attackMultTween != nil {
+			newAttackMult, _ := c.attackMultTween.Set(math.MaxFloat32)
+			c.AttackMult = float64(newAttackMult)
+		}
+		c.attackMultTween = gween.New(float32(c.AttackMult), float32(c.AttackMult+attackMult), 1, ease.OutCubic)
+	}
 	c.healthLag = math.Max(c.Health, c.healthLag)
 	c.Health = math.Min(c.Health+amount, c.MaxHealth)
 	c.healthTween = gween.New(float32(c.healthLag), float32(c.Health), 1, ease.Linear)
@@ -180,6 +203,10 @@ func (c *Comp) AddHeal(amount int) {
 	if c.Heal += amount; c.Heal > c.MaxHeal {
 		c.Heal = c.MaxHeal
 	}
+	if amount < 0 {
+		healthAmount := float64(-amount) * c.HealAmount
+		c.AddHealth(healthAmount)
+	}
 }
 func (c *Comp) AddExp(amount int) {
 	c.Exp += amount
@@ -187,13 +214,13 @@ func (c *Comp) AddExp(amount int) {
 
 func (c *Comp) drawHud() *ebiten.Image {
 	h := hudImage.Bounds().Dy()
-	w, _ := ebiten.WindowSize()
-	hud := ebiten.NewImage(w, h)
+	hud := ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
 	icons, _ := hudImage.SubImage(image.Rect(0, 0, vars.HudIconsX, h)).(*ebiten.Image)
 	hud.DrawImage(icons, nil)
 
 	c.drawSegment(hud, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
 	c.drawSegment(hud, 1, c.Stamina, c.MaxStamina, c.staminaLag, staminaColor)
+	c.drawAttackMult(hud)
 	// c.drawSegment(hud, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
 	c.drawCount(hud, 2, c.Heal, 0)
 	c.drawCount(hud, 3, c.Exp, 2)
@@ -241,6 +268,23 @@ func (c *Comp) drawCount(hud *ebiten.Image, y float64, count int, offset float64
 	op.GeoM.Reset()
 	op.GeoM.Translate(0, -2)
 	op.GeoM.Translate(vars.HudIconsX, vars.BarMiddleH*y+2+offset)
+	hud.DrawImage(fullBar, op)
+}
+
+func (c *Comp) drawAttackMult(hud *ebiten.Image) {
+	if c.AttackMult == 0 {
+		return
+	}
+	fullBar := ebiten.NewImage(vars.MaxTextWidth, vars.BarH)
+	fullBar.Fill(borderColor)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(0, 1)
+	w, _ := utils.DrawText(fullBar, fmt.Sprintf("x%.1fATK", 1+c.AttackMult), assets.TinyFont, op)
+	fullBar, _ = fullBar.SubImage(image.Rect(0, 0, w+2, vars.BarH+2)).(*ebiten.Image)
+
+	endImgW := float64(barEndImage.Bounds().Dx())
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(c.MaxHealth+vars.BarMiddleH+endImgW, 0)
 	hud.DrawImage(fullBar, op)
 }
 

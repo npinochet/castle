@@ -21,7 +21,7 @@ import (
 
 const (
 	playerMaxX, playerSpeed, playerJumpSpeed, playerClimbSpeed = 60, 350, 110, 5
-	playerDamage, playerHeal                                   = 20, 20
+	playerDamage                                               = 20
 	playerHealFrame                                            = 3
 
 	keyBufferDuration = 500 * time.Millisecond
@@ -85,13 +85,14 @@ func (p *Player) Init() {
 }
 
 func (p *Player) Update(dt float64) {
-	if p.stats.Health <= 0 {
-		return
+	if p.stats.Health > 0 {
+		p.input(dt)
 	}
-	p.input(dt)
-	p.SimpleUpdate()
-	if moving := p.Pad.KeyDown(utils.KeyLeft) || p.Pad.KeyDown(utils.KeyRight); !moving && p.anim.State == vars.WalkTag {
-		p.anim.SetState(vars.IdleTag)
+	p.SimpleUpdate(dt)
+	if p.stats.Health > 0 {
+		if moving := p.Pad.KeyDown(utils.KeyLeft) || p.Pad.KeyDown(utils.KeyRight); !moving && p.anim.State == vars.WalkTag {
+			p.anim.SetState(vars.IdleTag)
+		}
 	}
 }
 
@@ -106,7 +107,7 @@ func (p *Player) input(dt float64) {
 		p.Attack(vars.AttackTag, playerDamage, playerDamage, p.reactForce, p.attackPushForce)
 	}
 	if healPressed() {
-		p.Heal(playerHealFrame, playerHeal)
+		p.Heal(playerHealFrame)
 	}
 	if dashPressed() {
 		speed := p.body.MaxX * 4

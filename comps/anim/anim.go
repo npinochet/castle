@@ -7,6 +7,7 @@ import (
 	"game/libs/bump"
 	"game/utils"
 	"game/vars"
+	"image/color"
 	"log"
 	"math"
 
@@ -34,6 +35,7 @@ type Comp struct {
 	OX, OY         float64
 	OXFlip, OYFlip float64
 	FlipX, FlipY   bool
+	ColorScale     color.Color
 	Fsm            *Fsm
 
 	State          string
@@ -58,14 +60,13 @@ func (c *Comp) Init(_ core.Entity) {
 		c.Fsm = DefaultFsm()
 	}
 
+	c.ColorScale = color.White
 	c.SetState(c.Data.Meta.Animations[0].Name)
 	c.frameCallbacks = map[int]func(){}
 	rect := c.Data.Frames.FrameAtIndex(c.Data.CurrentFrame).SpriteSourceSize
 	c.w, c.h = float64(rect.Width), float64(rect.Height)
 
-	if err := c.allocateSlices(); err != nil {
-		log.Println(err)
-	}
+	c.allocateSlices()
 }
 
 func (c *Comp) Remove() {}
@@ -121,6 +122,7 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op.GeoM.Translate(x, y)
 	op.GeoM.Translate(dx, dy)
 	op.GeoM.Concat(entityPos)
+	op.ColorScale.ScaleWithColor(c.ColorScale)
 	sprite, _ := c.Image.SubImage(c.Data.FrameBoundaries().Rectangle()).(*ebiten.Image)
 	screen.DrawImage(sprite, op)
 	if DebugDraw {
@@ -178,13 +180,13 @@ func (c *Comp) SetExitCallback(callback func(), exited func() bool) {
 	c.exitCallback = &stateExitCallback{exited, callback}
 }
 
-func (c *Comp) allocateSlices() error {
+func (c *Comp) allocateSlices() {
 	c.slices = map[string]map[int]bump.Rect{}
 
 	for _, sliceName := range []string{vars.HurtboxSliceName, vars.HitboxSliceName, vars.BlockSliceName} {
 		slices := c.Data.Slice(sliceName)
 		if slices == nil {
-			return fmt.Errorf("slice name %s not found", sliceName)
+			continue
 		}
 
 		c.slices[sliceName] = map[int]bump.Rect{}
@@ -198,8 +200,6 @@ func (c *Comp) allocateSlices() error {
 			}
 		}
 	}
-
-	return nil
 }
 
 func (c *Comp) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {

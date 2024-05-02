@@ -63,8 +63,8 @@ func (g *Ghoul) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, 
 	return g.anim, g.body, g.hitbox, g.stats, g.ai
 }
 
-func (g *Ghoul) Update(_ float64) {
-	g.SimpleUpdate()
+func (g *Ghoul) Update(dt float64) {
+	g.SimpleUpdate(dt)
 }
 
 func (g *Ghoul) ThrowRock() {

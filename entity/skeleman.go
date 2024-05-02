@@ -65,8 +65,8 @@ func (s *Skeleman) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Com
 	return s.anim, s.body, s.hitbox, s.stats, s.ai
 }
 
-func (s *Skeleman) Update(_ float64) {
-	s.SimpleUpdate()
+func (s *Skeleman) Update(dt float64) {
+	s.SimpleUpdate(dt)
 }
 
 func (s *Skeleman) jumpAttackAction() *ai.Action {

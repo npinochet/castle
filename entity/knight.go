@@ -61,8 +61,8 @@ func (k *Knight) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp,
 	return k.anim, k.body, k.hitbox, k.stats, k.ai
 }
 
-func (k *Knight) Update(_ float64) {
-	k.SimpleUpdate()
+func (k *Knight) Update(dt float64) {
+	k.SimpleUpdate(dt)
 }
 
 // nolint: nolintlint, gomnd

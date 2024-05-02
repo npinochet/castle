@@ -20,7 +20,6 @@ import (
 - Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
 - Sometimes the enemy can cut off the stagger animation somehow.
 - Cannot jump when going down slope, body.Ground is mostly false, this can be solved with coyote time.
-- Add Remove method to components and entites?
 
 -- Dark Souls Combat Findings
 	- When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.
@@ -46,13 +45,13 @@ import (
 - Today's TODO:
 - Demo MVP Steps:
 	- Add Mage Enemy
-	- Add a proper Game Over Screen
-		- Peg tile objects to reusable IDs so it can be saved and references without problem
+	- Show controls on start screen
 	- Build Map
 	- Add Boss
 	- Add some polish
 		- JUICE UP COMBAT, IM TALKING STOP TIME, PARTICLE EFFECTS, FLASHING BABY
 	- Add Checkpoint, at least one checkpoint altar?
+	- Make enemies respawn when yo get back to the room before after
 */
 
 func main() {

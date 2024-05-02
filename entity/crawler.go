@@ -62,8 +62,8 @@ func (c *Crawler) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp
 	return c.anim, c.body, c.hitbox, c.stats, c.ai
 }
 
-func (c *Crawler) Update(_ float64) {
-	c.SimpleUpdate()
+func (c *Crawler) Update(dt float64) {
+	c.SimpleUpdate(dt)
 }
 
 // nolint: nolintlint, gomnd
