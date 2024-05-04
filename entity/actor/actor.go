@@ -112,9 +112,8 @@ func (c *Control) Die(dt float64) {
 	}
 
 	vars.World.Remove(c.actor)
-	x, y, w, h := c.actor.Rect()
 	for i := 0; i < c.stats.Exp; i++ {
-		vars.World.Add(particle.NewFlake(x+w/2, y+h/2, c.actor)) // TODO: keep actor package isolated somehow, move Flake to entity package.
+		vars.World.Add(particle.NewFlake(c.actor)) // TODO: keep actor package isolated somehow, move Flake to entity package.
 	}
 }
 

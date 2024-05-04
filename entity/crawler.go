@@ -53,7 +53,9 @@ func NewCrawler(x, y, _, _ float64, props *core.Properties) *Crawler {
 		viewRect := bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
 		view = &viewRect
 	}
-	crawler.ai.SetAct(func() { crawler.aiScript(view) })
+	if aiProp, ok := props.Custom["ai"]; !ok || (aiProp != "" && aiProp != "none") {
+		crawler.ai.SetAct(func() { crawler.aiScript(view) })
+	}
 
 	return crawler
 }

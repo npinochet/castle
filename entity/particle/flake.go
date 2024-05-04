@@ -44,9 +44,10 @@ type Flake struct {
 	randTargetW, randTargetH float64
 }
 
-func NewFlake(x, y float64, from core.Entity) *Flake {
+func NewFlake(from core.Entity) *Flake {
+	x, y, w, h := from.Rect()
 	flake := &Flake{
-		BaseEntity:  &core.BaseEntity{X: x, Y: y, W: flakeSize, H: flakeSize},
+		BaseEntity:  &core.BaseEntity{X: x + w/2, Y: y + h/2, W: flakeSize, H: flakeSize},
 		body:        &body.Comp{Tags: []bump.Tag{}, QueryTags: []bump.Tag{"map"}},
 		render:      &render.Comp{Image: flakeImage},
 		from:        from,

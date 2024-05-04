@@ -47,10 +47,13 @@ import (
 	- Add Mage Enemy
 	- Show controls on start screen
 	- Build Map
+		- Implement Stairs
+		- Add Chests
+		- Add Checkpoint, at least one checkpoint altar?
 	- Add Boss
+	- End message
 	- Add some polish
 		- JUICE UP COMBAT, IM TALKING STOP TIME, PARTICLE EFFECTS, FLASHING BABY
-	- Add Checkpoint, at least one checkpoint altar?
 	- Make enemies respawn when yo get back to the room before after
 */
 
