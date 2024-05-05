@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ghoulAnimFile                               = "assets/ghoul"
+	ghoulAnimFile                               = "ghoul"
 	ghoulWidth, ghoulHeight                     = 9, 13
 	ghoulOffsetX, ghoulOffsetY, ghoulOffsetFlip = -6.5, -4, 14
 	ghoulSpeed, ghoulMaxSpeed                   = 100, 30

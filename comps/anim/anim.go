@@ -50,10 +50,14 @@ type Comp struct {
 
 func (c *Comp) Init(_ core.Entity) {
 	var err error
-	if c.Image, _, err = ebitenutil.NewImageFromFile(c.FilesName + ".png"); err != nil {
+	if c.Image, _, err = ebitenutil.NewImageFromFileSystem(assets.FS, c.FilesName+".png"); err != nil {
 		log.Panic(err)
 	}
-	if c.Data, err = aseprite.Open(c.FilesName + ".json"); err != nil {
+	animData, err := assets.FS.ReadFile(c.FilesName + ".json")
+	if err != nil {
+		log.Panic(err)
+	}
+	if c.Data, err = aseprite.NewFile(animData); err != nil {
 		log.Panic(err)
 	}
 	if c.Fsm == nil {

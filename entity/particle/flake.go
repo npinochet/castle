@@ -1,6 +1,7 @@
 package particle
 
 import (
+	"game/assets"
 	"game/comps/body"
 	"game/comps/render"
 	"game/comps/stats"
@@ -10,29 +11,19 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/tanema/gween"
 	"github.com/tanema/gween/ease"
 )
 
 const (
-	flakeImageFile                       = "assets/flake.png"
 	flakeSize                            = 3
 	flakeSpawnMinTime, flakeSpawnMaxTime = 500 * time.Millisecond, 1000 * time.Millisecond
 	flakeSpawnMinX, flakeSpawnMaxX       = -100, 100
 	flakeSpawnMinY, flakeSpawnMaxY       = -50, -100
 )
 
-var flakeImage *ebiten.Image
-
-func init() {
-	var err error
-	flakeImage, _, err = ebitenutil.NewImageFromFile(flakeImageFile)
-	if err != nil {
-		panic(err)
-	}
-}
+var flakeImage, _, _ = ebitenutil.NewImageFromFileSystem(assets.FS, "flake.png")
 
 type Flake struct {
 	*core.BaseEntity

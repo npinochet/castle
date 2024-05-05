@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	knightAnimFile                                 = "assets/knight"
+	knightAnimFile                                 = "knight"
 	knightWidth, knightHeight                      = 8, 11
 	knightOffsetX, knightOffsetY, knightOffsetFlip = -10, -3, 17
 	knightMaxPosie                                 = 25

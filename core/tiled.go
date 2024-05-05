@@ -3,6 +3,7 @@ package core
 import (
 	"game/libs/bump"
 	"game/libs/camera"
+	"io/fs"
 	"log"
 	"math"
 	"strconv"
@@ -33,13 +34,13 @@ type Map struct {
 	foregroundImage, backgroundImage *ebiten.Image
 }
 
-func NewMap(mapPath string, foregroundLayerName, backgroundLayerName string) *Map {
-	data, err := tiled.LoadFile(mapPath)
+func NewMap(mapPath string, foregroundLayerName, backgroundLayerName string, fs fs.FS) *Map {
+	data, err := tiled.LoadFile(mapPath, tiled.WithFileSystem(fs))
 	if err != nil {
 		log.Println("Error parsing Tiled map:", err)
 	}
 
-	renderer, err := render.NewRenderer(data)
+	renderer, err := render.NewRendererWithFileSystem(data, fs)
 	if err != nil {
 		log.Println("Tiled map unsupported for rendering:", err)
 	}

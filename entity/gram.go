@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	gramAnimFile                             = "assets/gram"
+	gramAnimFile                             = "gram"
 	gramWidth, gramHeight                    = 10, 12
 	gramOffsetX, gramOffsetY, gramOffsetFlip = -1, -2, 0
 )

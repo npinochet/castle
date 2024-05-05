@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	indicatorImage, _, _ = ebitenutil.NewImageFromFile("assets/textboxindicator.png")
+	indicatorImage, _, _ = ebitenutil.NewImageFromFileSystem(assets.FS, "textboxindicator.png")
 	backgroundColor      = color.RGBA{34, 32, 52, 255}
 )
 

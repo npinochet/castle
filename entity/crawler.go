@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	crawlerAnimFile                                   = "assets/crawler"
+	crawlerAnimFile                                   = "crawler"
 	crawlerWidth, crawlerHeight                       = 11, 8
 	crawlerOffsetX, crawlerOffsetY, crawlerOffsetFlip = -4, -4, 10
 	crawlerHealth, crawlerDamage                      = 30, 20

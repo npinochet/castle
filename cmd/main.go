@@ -41,20 +41,21 @@ import (
 - Experiment hiding the enemy health bar, even for bosses.
 
 
-
 - Today's TODO:
 - Demo MVP Steps:
-	- Add Mage Enemy
-	- Show controls on start screen
+	- (Optional) Show controls on start screen
 	- Build Map
-		- Implement Stairs
+		- Add one way doors
 		- Add Chests
 		- Add Checkpoint, at least one checkpoint altar?
+		- Death drop
 	- Add Boss
-	- End message
+		- Red knight with second phase where it speeds up, heals and block
+	- Add end room message
 	- Add some polish
 		- JUICE UP COMBAT, IM TALKING STOP TIME, PARTICLE EFFECTS, FLASHING BABY
 	- Make enemies respawn when yo get back to the room before after
+	- Add Mage Enemy
 */
 
 func main() {

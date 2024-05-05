@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"game/assets"
 	"game/comps/body"
 	"game/comps/hitbox"
 	"game/comps/render"
@@ -11,7 +12,6 @@ import (
 	"math"
 	"time"
 
-	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
@@ -24,8 +24,7 @@ const (
 )
 
 var (
-	rockImageFile = "assets/rock.png"
-	rockImage     *ebiten.Image
+	rockImage, _, _ = ebitenutil.NewImageFromFileSystem(assets.FS, "rock.png")
 )
 
 type Rock struct {
@@ -35,14 +34,6 @@ type Rock struct {
 	hitbox      *hitbox.Comp
 	owner       actor.Actor
 	ownerHitbox *hitbox.Comp
-}
-
-func init() {
-	var err error
-	rockImage, _, err = ebitenutil.NewImageFromFile(rockImageFile)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func NewRock(x, y float64, owner actor.Actor) *Rock {

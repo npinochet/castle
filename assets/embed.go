@@ -1,7 +1,7 @@
 package assets
 
 import (
-	_ "embed" // For embedding assets.
+	embed "embed"
 	"log"
 
 	"golang.org/x/image/font"
@@ -9,13 +9,17 @@ import (
 )
 
 var (
+	// FS is the embedded file system for all assets.
+	//go:embed *.png *.json
+	FS embed.FS
+
 	//go:embed m5x7.ttf
 	m5x7File []byte
 	//go:embed m6x11.ttf
 	m6x11File []byte
-	//go:embed Bitty.ttf
+	//go:embed bitty.ttf
 	bittyFile []byte
-	//go:embed TeenyTiny.otf
+	//go:embed teeny_tiny.otf
 	tinyFile []byte
 )
 

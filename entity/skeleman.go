@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	skelemanAnimFile                                     = "assets/skeleman"
+	skelemanAnimFile                                     = "skeleman"
 	skelemanWidth, skelemanHeight                        = 8, 12
 	skelemanOffsetX, skelemanOffsetY, skelemanOffsetFlip = -12, -5, 20
 	skelemanSpeed, skelemanMaxSpeed                      = 100, 35

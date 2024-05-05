@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	hudImage, _, _    = ebitenutil.NewImageFromFile("assets/hud.png")
+	hudImage, _, _    = ebitenutil.NewImageFromFileSystem(assets.FS, "hud.png")
 	barEndImage, _    = hudImage.SubImage(image.Rect(vars.BarEndX1, 0, vars.BarEndX2, vars.BarH)).(*ebiten.Image)
 	middleBarImage, _ = hudImage.SubImage(image.Rect(vars.MiddleBarX1, 0, vars.MiddleBarX2, vars.BarH)).(*ebiten.Image)
 	healthColor       = color.RGBA{172, 50, 50, 255}

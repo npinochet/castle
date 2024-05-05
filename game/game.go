@@ -11,6 +11,7 @@ import (
 	"game/comps/stats"
 	"game/core"
 	"game/entity"
+	"game/maps"
 	"game/utils"
 	"game/vars"
 	"image/color"
@@ -46,7 +47,7 @@ func toEntityContructor[T core.Entity](contructor func(float64, float64, float64
 }
 
 func Load() {
-	worldMap := core.NewMap("maps/intro/intro.tmx", "foreground", "background")
+	worldMap := core.NewMap("intro/intro.tmx", "foreground", "background", maps.IntroFS)
 	vars.World = core.NewWorld(float64(vars.ScreenWidth), float64(vars.ScreenHeight))
 	vars.World.SetMap(worldMap, "rooms")
 	worldMap.LoadBumpObjects(vars.World.Space, "collisions")
