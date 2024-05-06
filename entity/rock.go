@@ -65,7 +65,7 @@ func NewRock(x, y float64, owner actor.Actor) *Rock {
 func (r *Rock) Init() {
 	r.body.Friction = false
 	r.hitbox.HitFunc = r.RockHurt
-	r.hitbox.PushHitbox(bump.Rect{X: r.X, Y: r.X, W: rockSize, H: rockSize}, hitbox.Hit, nil)
+	r.hitbox.PushHitbox(bump.Rect{W: rockSize, H: rockSize}, hitbox.Hit, nil)
 }
 
 func (r *Rock) Update(_ float64) {

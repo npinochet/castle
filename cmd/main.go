@@ -45,7 +45,6 @@ import (
 - Demo MVP Steps:
 	- (Optional) Show controls on start screen
 	- Build Map
-		- Add one way doors
 		- Add Chests
 		- Add Checkpoint, at least one checkpoint altar?
 		- Death drop

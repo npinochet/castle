@@ -44,7 +44,7 @@ func (c *Comp) Init(entity core.Entity) {
 		c.Tags = []bump.Tag{"body"}
 	}
 	if c.QueryTags == nil {
-		c.QueryTags = []bump.Tag{"body", "map"}
+		c.QueryTags = []bump.Tag{"body", "map", "solid"}
 	}
 	c.Friction = true
 	c.space = vars.World.Space
@@ -146,6 +146,9 @@ func (c *Comp) bodyFilter() func(bump.Item, bump.Item) (bump.ColType, bool) {
 		if entity, ok := other.(core.Entity); ok {
 			if utils.Contains(c.FilterOut, entity) {
 				return 0, false
+			}
+			if c.space.Has(entity, "solid") {
+				return bump.Slide, true
 			}
 
 			return bump.Cross, true

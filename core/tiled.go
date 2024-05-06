@@ -212,7 +212,7 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 					props.Custom[prop.Name] = prop.Value
 				}
 			}
-			world.Add(construct(obj.X, obj.Y-obj.Height, obj.Width, obj.Height, props))
+			world.Add(construct(obj.X, obj.Y, obj.Width, obj.Height, props))
 		}
 	}
 }

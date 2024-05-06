@@ -5,6 +5,7 @@ import (
 	"game/libs/camera"
 	"log"
 	"reflect"
+	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -27,6 +28,8 @@ type Component interface {
 	Remove()
 }
 
+type Sortable interface{ Priority() int }
+
 type World struct {
 	Space       *bump.Space
 	Camera      *camera.Camera
@@ -41,7 +44,19 @@ func NewWorld(width, height float64) *World {
 }
 
 func (w *World) Add(entity Entity) Entity {
-	w.entities = append(w.entities, entity)
+	i, _ := slices.BinarySearchFunc(w.entities, entity, func(o, e Entity) int {
+		oz, ez := 0, 0
+		if s, ok := o.(Sortable); ok {
+			oz = s.Priority()
+		}
+		if s, ok := e.(Sortable); ok {
+			ez = s.Priority()
+		}
+
+		return oz - ez
+	})
+	w.entities = slices.Insert(w.entities, i, entity)
+
 	for _, c := range entity.Components() {
 		c.Init(entity)
 	}
@@ -61,7 +76,7 @@ func (w *World) SetMap(tiledMap *Map, roomsLayer string) {
 }
 
 func (w *World) Update(dt float64) {
-	dt = dt * w.Speed
+	dt *= w.Speed
 	w.Camera.Update(dt)
 	if w.freezeTimer -= dt; w.freezeTimer >= 0 {
 		return

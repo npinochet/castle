@@ -27,11 +27,12 @@ const playerID = 25
 var (
 	backgroundColor = color.RGBA{50, 60, 57, 255}
 	entityBinds     = map[uint32]core.EntityContructor{
-		26: toEntityContructor(entity.NewKnight),
-		27: toEntityContructor(entity.NewGhoul),
-		28: toEntityContructor(entity.NewSkeleman),
-		29: toEntityContructor(entity.NewCrawler),
-		87: toEntityContructor(entity.NewGram),
+		26:  toEntityContructor(entity.NewKnight),
+		27:  toEntityContructor(entity.NewGhoul),
+		28:  toEntityContructor(entity.NewSkeleman),
+		29:  toEntityContructor(entity.NewCrawler),
+		87:  toEntityContructor(entity.NewGram),
+		151: toEntityContructor(entity.NewDoor),
 	}
 	deathTransition Transition
 )

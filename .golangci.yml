@@ -6,6 +6,7 @@ linters:
     - errchkjson
     - exhaustivestruct
     - exhaustruct
+    - forcetypeassert
     - gci
     - gochecknoglobals
     - gochecknoinits

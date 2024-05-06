@@ -2,8 +2,10 @@ package actor
 
 import (
 	"game/comps/ai"
+	"game/core"
 	"game/ext"
 	"game/libs/bump"
+	"game/vars"
 )
 
 var (
@@ -23,7 +25,7 @@ func IdleAction(a *Control, view *bump.Rect) *ai.Action {
 				return true
 			}
 			var targets []Actor
-			// TODO: maybe check both views
+			// TODO: maybe check both views? There is a counter argument, when you want to lower the default enemy view
 			if view == nil {
 				_, _, w, h := a.actor.Rect()
 				targets = ext.QueryFront(a.actor, frontViewDist, h, a.anim.FlipX)
@@ -37,10 +39,12 @@ func IdleAction(a *Control, view *bump.Rect) *ai.Action {
 				targets = ext.QueryItems(a.actor, *view, "body")
 				a.ai.DebugRect = view
 			}
-			if len(targets) > 0 {
-				a.ai.Target = targets[0]
+			for _, target := range targets {
+				if core.GetFlag(target, vars.PlayerTeamFlag) {
+					a.ai.Target = target
 
-				return true
+					return true
+				}
 			}
 
 			return false
