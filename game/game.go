@@ -32,6 +32,8 @@ var (
 		28:  toEntityContructor(entity.NewSkeleman),
 		29:  toEntityContructor(entity.NewCrawler),
 		87:  toEntityContructor(entity.NewGram),
+		149: toEntityContructor(entity.NewChest),
+		150: toEntityContructor(entity.NewGrave),
 		151: toEntityContructor(entity.NewDoor),
 	}
 	deathTransition Transition

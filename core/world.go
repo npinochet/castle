@@ -82,7 +82,10 @@ func (w *World) Update(dt float64) {
 		return
 	}
 	w.Map.Update(dt)
-	for _, e := range w.entities {
+	// Copy entities to prevent inconsistencies when adding/removing entities during update.
+	entities := make([]Entity, len(w.entities))
+	copy(entities, w.entities)
+	for _, e := range entities {
 		for _, c := range e.Components() {
 			c.Update(dt)
 		}
@@ -139,7 +142,7 @@ func (w *World) RemoveAllEntities() {
 			c.Remove()
 		}
 	}
-	w.entities = []Entity{}
+	w.entities = nil
 }
 
 func (w *World) Freeze(time float64) {

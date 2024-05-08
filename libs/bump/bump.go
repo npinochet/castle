@@ -3,6 +3,7 @@ package bump
 import (
 	"math"
 	"sort"
+	"sync"
 )
 
 // Collision detection and resolution library based on bump.lua by kikito.
@@ -47,15 +48,16 @@ func NilFilter(_, _ Item) (ColType, bool)             { return 0, false }
 func DefaultSimpleFilter(_ Item) bool                 { return true }
 
 type Space struct {
-	Rects     map[Item]Rect
-	Tags      map[Item]map[Tag]bool
+	rects     map[Item]Rect
+	tags      map[Item]map[Tag]bool
 	responses map[ColType]Response
+	mutex     sync.Mutex
 }
 
 func NewSpace() *Space {
 	space := &Space{}
-	space.Rects = map[Item]Rect{}
-	space.Tags = map[Item]map[Tag]bool{}
+	space.rects = map[Item]Rect{}
+	space.tags = map[Item]map[Tag]bool{}
 	space.responses = map[ColType]Response{
 		Touch: func(_ Vec2, col *Collision, _ Filter, _ ...Tag) (Vec2, []*Collision) {
 			return col.Touch, nil
@@ -96,33 +98,52 @@ func NewSpace() *Space {
 }
 
 func (s *Space) Set(item Item, rect Rect, tags ...Tag) {
-	s.Rects[item] = rect
-	if s.Tags[item] == nil {
-		s.Tags[item] = map[Tag]bool{}
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.rects[item] = rect
+	if s.tags[item] == nil {
+		s.tags[item] = map[Tag]bool{}
 	}
 	for _, tag := range tags {
-		s.Tags[item][tag] = true
+		s.tags[item][tag] = true
 	}
 }
+
+func (s *Space) Rect(item Item) Rect {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	return s.rects[item]
+}
+
 func (s *Space) Has(item Item, tags ...Tag) bool {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	for _, tag := range tags {
-		if !s.Tags[item][tag] {
+		if !s.tags[item][tag] {
 			return false
 		}
 	}
 
 	return true
 }
+
 func (s *Space) Remove(item Item) {
 	if item == nil {
 		return
 	}
-	delete(s.Rects, item)
-	delete(s.Tags, item)
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	delete(s.rects, item)
+	delete(s.tags, item)
 }
+
 func (s *Space) Move(item Item, targetGoal Vec2, filter Filter, tags ...Tag) (Vec2, []*Collision) {
 	goal, cols := s.Check(item, targetGoal, filter, tags...)
-	rect := s.Rects[item]
+	rect := s.Rect(item)
 	s.Set(item, Rect{goal.X, goal.Y, rect.W, rect.H, rect.Priority, rect.Slope})
 
 	return goal, cols
@@ -142,7 +163,7 @@ func (s *Space) Check(item Item, goal Vec2, filter Filter, tags ...Tag) (Vec2, [
 		return filter(item, other)
 	}
 
-	rect := s.Rects[item]
+	rect := s.Rect(item)
 	projectedCols := s.Project(item, rect, goal, visitedFilter, tags...)
 	sort.Slice(projectedCols, func(i, _ int) bool { return projectedCols[i].Normal.Y != 0 })
 
@@ -163,21 +184,23 @@ func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter, tags ...
 	}
 
 	var cols []*Collision
+	s.mutex.Lock()
 	// TODO: Optimize using cells
-	items := sortPriority(s.Rects)
+	items := sortPriority(s.rects)
 	tagged := map[Item]bool{}
 	for _, tag := range tags {
 		for _, other := range items {
-			tagged[other] = tagged[other] || s.Tags[other][tag]
+			tagged[other] = tagged[other] || s.tags[other][tag]
 		}
 	}
+	s.mutex.Unlock()
 
 	for _, other := range items {
 		if other == item || (len(tags) > 0 && !tagged[other]) {
 			continue
 		}
 		if responseName, ok := filter(item, other); ok {
-			otherRect := s.Rects[other]
+			otherRect := s.Rect(other)
 			if col, ok := detectCollision(rect, otherRect, goal); ok {
 				col.Item, col.Other = item, other
 				col.Type = responseName

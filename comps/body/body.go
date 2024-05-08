@@ -154,7 +154,7 @@ func (c *Comp) bodyFilter() func(bump.Item, bump.Item) (bump.ColType, bool) {
 			return bump.Cross, true
 		}
 		if c.space.Has(other, "passthrough") {
-			itemRect, otherRect := c.space.Rects[item], c.space.Rects[other]
+			itemRect, otherRect := c.space.Rect(item), c.space.Rect(other)
 			if !c.droppingThrough && itemRect.Y+itemRect.H <= otherRect.Y {
 				return bump.Slide, true
 			}

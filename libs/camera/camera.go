@@ -13,7 +13,6 @@ import (
 const (
 	defaultTransitionDuration = 0.8
 	defaultStiffness          = 9
-	heightJitterBuffer        = 8 // Prevent camera from snapping to celling on transition (not sure how it works).
 )
 
 type Recter interface {
@@ -69,8 +68,8 @@ func (c *Camera) Update(dt float64) {
 	x, y := ex+w/2-c.w/2, ey+h/2-c.h/2
 	dx, dy := x-c.x, y-c.y
 
-	c.Translate(damper(dt, dx, dy, c.stiffness))
 	c.SetRoomBorders(true)
+	c.Translate(damper(dt, dx, dy, c.stiffness))
 	if c.borders != nil {
 		x := math.Max(math.Min(c.x, c.borders.X+c.borders.W-c.w), c.borders.X)
 		y := math.Max(math.Min(c.y, c.borders.Y+c.borders.H-c.h), c.borders.Y)
@@ -131,7 +130,7 @@ func (c *Camera) SetRoomBorders(transition bool) {
 
 	if transition && prevRoom != c.borders && c.borders != nil {
 		targetX := math.Max(math.Min(c.x, c.borders.X+c.borders.W-c.w), c.borders.X)
-		targetY := math.Max(math.Min(c.y, c.borders.Y+c.borders.H-c.h+heightJitterBuffer), c.borders.Y)
+		targetY := math.Max(math.Min(c.y, c.borders.Y+c.borders.H-c.h), c.borders.Y)
 		c.transitionX, c.transitionY = c.x-targetX, c.y-targetY
 		c.transitionTween = gween.New(1, 0, c.transitionDuration, ease.OutCubic)
 	}
