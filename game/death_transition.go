@@ -2,7 +2,6 @@ package game
 
 import (
 	"game/assets"
-	"game/entity"
 	"game/utils"
 	"game/vars"
 	"image"
@@ -61,7 +60,7 @@ func (t *DeathTransition) Init() {
 	t.overlayTween = gween.New(0, 1, 3, ease.OutQuad)
 
 	t.overlayImg, _ = textImg.SubImage(image.Rect(0, 0, vars.ScreenWidth, vars.ScreenHeight)).(*ebiten.Image)
-	t.actionKey = vars.Player.(*entity.Player).Pad[utils.KeyAction]
+	t.actionKey = vars.Pad[utils.KeyAction]
 	text := "Press " + t.actionKey.String() + " to respawn"
 	op := &ebiten.DrawImageOptions{}
 	w, h := utils.TextSize(text, assets.M5x7Font)

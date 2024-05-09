@@ -1,7 +1,10 @@
 // nolint:nolintlint, golint, revive
 package vars
 
-import "game/core"
+import (
+	"game/core"
+	"game/utils"
+)
 
 const (
 	// Config.
@@ -63,6 +66,10 @@ var (
 	// Global.
 	World  *core.World
 	Player core.Entity
+	Game   GameManager
+
+	// Player.
+	Pad utils.ControlPack
 
 	// Body.
 	Gravity                     = 300.0
@@ -71,3 +78,10 @@ var (
 	CollisionStiffness          = 1.0
 	FrictionEpsilon             = 0.05
 )
+
+type GameManager interface {
+	Reset()
+	Save() error
+}
+
+func SetGameManager(g GameManager) { Game = g }

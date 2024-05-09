@@ -38,11 +38,11 @@ func (c *Comp) Init(entity core.Entity) {
 	c.Text = ""
 	c.lines = 1
 	for _, word := range words {
-		if len(c.Text+word)+1 > (c.lines*vars.LineWidth)-(c.lines-1) {
+		if len(c.Text+word)+1 > (c.lines*vars.LineWidth)-(c.lines-1) || strings.Contains(word, "\n") {
 			c.Text += "\n"
 			c.lines++
 		}
-		c.Text += " " + word
+		c.Text += " " + strings.ReplaceAll(word, "\n", "")
 	}
 }
 

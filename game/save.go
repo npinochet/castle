@@ -2,6 +2,10 @@ package game
 
 import (
 	"encoding/json"
+	"game/comps/stats"
+	"game/core"
+	"game/entity"
+	"game/utils"
 	"game/vars"
 	"io"
 	"log"
@@ -16,12 +20,14 @@ const (
 var saveDataCache []byte
 
 type PlayerData struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
+	X   float64 `json:"x"`
+	Y   float64 `json:"y"`
+	Exp int     `json:"exp"`
 }
 
 type SaveData struct {
-	PlayerData PlayerData `json:"player_data"`
+	PlayerData PlayerData        `json:"player_data"`
+	Pad        utils.ControlPack `json:"keys"`
 }
 
 func NewSaveData() *SaveData {
@@ -30,7 +36,10 @@ func NewSaveData() *SaveData {
 		log.Println("game: error finding player entity:", err)
 	}
 
-	return &SaveData{PlayerData: PlayerData{X: obj.X, Y: obj.Y}}
+	return &SaveData{
+		PlayerData: PlayerData{X: obj.X, Y: obj.Y},
+		Pad:        utils.NewControlPack(),
+	}
 }
 
 func Save() error {
@@ -92,6 +101,15 @@ func LoadSave() (*SaveData, error) {
 	return saveData, nil
 }
 
+func ApplySaveData(sd *SaveData) {
+	vars.Player = entity.NewPlayer(sd.PlayerData.X, sd.PlayerData.Y)
+	core.Get[*stats.Comp](vars.Player).Exp = sd.PlayerData.Exp
+	vars.Pad = sd.Pad
+}
+
 func updateSaveData(sd *SaveData) {
+	playerStats := core.Get[*stats.Comp](vars.Player)
 	sd.PlayerData.X, sd.PlayerData.Y = vars.Player.Position()
+	sd.PlayerData.Exp = playerStats.Exp
+	sd.Pad = vars.Pad
 }

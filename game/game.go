@@ -39,16 +39,6 @@ var (
 	deathTransition Transition
 )
 
-type Transition interface {
-	Init()
-	Update(dt float64) bool
-	Draw(screen *ebiten.Image)
-}
-
-func toEntityContructor[T core.Entity](contructor func(float64, float64, float64, float64, *core.Properties) T) core.EntityContructor {
-	return func(x, y, w, h float64, props *core.Properties) core.Entity { return contructor(x, y, w, h, props) }
-}
-
 func Load() {
 	worldMap := core.NewMap("intro/intro.tmx", "foreground", "background", maps.IntroFS)
 	vars.World = core.NewWorld(float64(vars.ScreenWidth), float64(vars.ScreenHeight))
@@ -62,7 +52,7 @@ func Reset() {
 	if err != nil {
 		log.Panicln("error loading save:", err)
 	}
-	vars.Player = entity.NewPlayer(saveData.PlayerData.X, saveData.PlayerData.Y)
+	ApplySaveData(saveData)
 
 	vars.World.Speed = 1
 	vars.World.RemoveAllEntities()
