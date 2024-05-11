@@ -9,8 +9,6 @@ import (
 )
 
 /* TODO
-- Add animation tiles on update for Tiled map.
-- Maybe stop time while camera transition is playing, and move follower entity to border?
 - Don't cap max speed when guarding in mid-air.
 - Combos for attacks.
 - Change background color and characters outline color.

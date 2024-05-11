@@ -132,11 +132,11 @@ func (c *Control) Block(other core.Entity, damage, reactForce float64, contactTy
 	c.body.Vx += force
 	if c.stats.Stamina < 0 {
 		c.ShieldDown()
+		c.anim.SetState(vars.StaggerTag)
 		prevPlaySpeed := c.anim.Data.PlaySpeed
 		c.anim.Data.PlaySpeed = 0.5 // double time stagger.
-		force *= 2 * (damage / c.stats.MaxHealth)
-		c.anim.SetState(vars.StaggerTag)
 		c.anim.SetExitCallback(func() { c.anim.Data.PlaySpeed = prevPlaySpeed }, nil)
+		force *= 2 * (damage / c.stats.MaxHealth)
 		c.body.Vx += force
 	}
 }
@@ -147,8 +147,8 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 		return
 	}
 	damage *= 1 + c.stats.AttackMult
-	c.paused = true
 	c.anim.SetState(attackTag)
+	c.paused = true
 	c.anim.SetExitCallback(func() { c.paused = false }, nil)
 
 	var contactType hitbox.ContactType
@@ -200,10 +200,10 @@ func (c *Control) ShieldUp() {
 	if c.PausingState() || c.BlockingState() || c.stats.Stamina <= 0 {
 		return
 	}
+	c.anim.SetState(vars.ParryBlockTag)
 	prevMaxX, prevStaminaRecoverRate := c.body.MaxX, c.stats.StaminaRecoverRate
 	c.body.MaxX /= 2
 	c.stats.StaminaRecoverRate /= 3
-	c.anim.SetState(vars.ParryBlockTag)
 	c.anim.SetExitCallback(func() {
 		c.body.MaxX = prevMaxX
 		c.stats.StaminaRecoverRate = prevStaminaRecoverRate
@@ -252,9 +252,9 @@ func (c *Control) ClimbOn(pressedDown bool) {
 		}
 	}
 	c.ShieldDown()
+	c.anim.SetState(vars.ClimbTag)
 	prevWeight := c.body.Weight
 	c.body.Weight = 0
-	c.anim.SetState(vars.ClimbTag)
 	c.anim.SetExitCallback(func() { c.body.Weight = prevWeight }, nil)
 }
 
@@ -269,9 +269,9 @@ func (c *Control) Heal(effectFrame int) {
 	if c.PausingState() || c.stats.Heal <= 0 || !c.body.Ground {
 		return
 	}
-	prevMaxX := c.body.MaxX
-	c.body.MaxX /= 2
 	c.anim.SetState(vars.ConsumeTag)
+	prevMaxX := c.body.MaxX
+	c.body.MaxX /= 3
 	c.anim.SetExitCallback(func() { c.body.MaxX = prevMaxX }, nil)
 	c.anim.OnFrame(effectFrame, func() { // TODO: Can be replaced with OnSlicePresent.
 		c.stats.AddHeal(-1)

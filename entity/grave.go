@@ -29,7 +29,7 @@ func NewGrave(x, y, _, _ float64, props *core.Properties) *Grave {
 	entity := &core.BaseEntity{X: x, Y: y, W: graveW, H: graveH}
 	text := props.Custom["text"]
 	if text == "" {
-		text = "Here lies a hero thas saved the world from the darkness that consumed it. Rest in peace.\n" + fmt.Sprintf("Press %s to save", vars.Pad[utils.KeyUp].String())
+		text = "Here lies a hero that saved the world from the darkness that consumed him. Rest in peace. \n" + fmt.Sprintf("Press %s to rest", vars.Pad[utils.KeyUp].String())
 	}
 	grave := &Grave{
 		BaseEntity: entity,
@@ -57,9 +57,8 @@ func (g *Grave) Update(_ float64) {
 			break
 		}
 	}
-	if active && vars.Pad.KeyDown(utils.KeyUp) {
-		// TODO: Transition, save and reset game
-		vars.Game.Save()
-		vars.Game.Reset()
+	if active && vars.Pad.KeyPressed(utils.KeyUp) {
+		vars.SaveGame = true
+		vars.ResetGame = true
 	}
 }

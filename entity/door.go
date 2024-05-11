@@ -15,10 +15,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-const (
-	tileSize     = 8
-	doorW, doorH = 3, 8 * 3
-)
+const doorW, doorH = 3, 8 * 3
 
 var (
 	doorImage, _, _               = ebitenutil.NewImageFromFileSystem(assets.FS, "door.png")

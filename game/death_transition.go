@@ -22,15 +22,12 @@ var (
 		gray := 0.299 * color.r + 0.587 * color.g + 0.114 * color.b
 		return vec4(mix(color.r, gray, Force), mix(color.g, gray, Force), mix(color.b, gray, Force), 1)
 	}`)
-	textColor        = color.RGBA{203, 219, 252, 255}
-	fadeImg, textImg *ebiten.Image
-	grayShader       *ebiten.Shader
+	textColor  = color.RGBA{203, 219, 252, 255}
+	textImg    *ebiten.Image
+	grayShader *ebiten.Shader
 )
 
 func init() {
-	fadeImg = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
-	fadeImg.Fill(color.Black)
-
 	textImg = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
 	w, _ := utils.TextSize("Game Over", assets.M6x11Font)
 	op := &ebiten.DrawImageOptions{}
@@ -67,16 +64,12 @@ func (t *DeathTransition) Init() {
 	op.GeoM.Translate(float64(vars.ScreenWidth-w)/2, vars.ScreenHeight-float64(h)-20)
 	op.ColorScale.ScaleWithColor(textColor)
 	utils.DrawText(t.overlayImg, text, assets.M5x7Font, op)
-
-	// TODO: Implement death transition.
-	// - Slow down time
-	// - Fade to grayscale
-	// - Fade to black
-	// - Show death screen
-	// - Press any key to restart
 }
 
 func (t *DeathTransition) Update(dt float64) bool {
+	if t == nil {
+		return false
+	}
 	if t.freezeTime -= dt; t.freezeTime > 0 {
 		return false
 	}
@@ -92,10 +85,9 @@ func (t *DeathTransition) Update(dt float64) bool {
 }
 
 func (t *DeathTransition) Draw(screen *ebiten.Image) {
-	if t.fadeTween == nil {
+	if t == nil {
 		return
 	}
-
 	overlayAlpha, _ := t.overlayTween.Update(0)
 	newScreen := ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
 	ops := &ebiten.DrawRectShaderOptions{Uniforms: map[string]any{"Force": overlayAlpha}, Images: [4]*ebiten.Image{screen}}

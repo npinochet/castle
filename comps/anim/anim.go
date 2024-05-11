@@ -89,7 +89,7 @@ func (c *Comp) SetState(state string) {
 	}
 	c.sliceCallback = nil
 	c.frameCallbacks = map[int]func(){}
-	// c.Data.AnimationInfo.frameCounter = 0 // TODO: This needs to happen. opened a PR: https://github.com/damienfamed75/aseprite/pull/4
+	// c.Data.AnimationInfo.frameCounter = 0 // TODO: This needs to happen. opened a PR: https://github.com/damienfamed75/aseprite/pull/5
 }
 
 func (c *Comp) Update(dt float64) {

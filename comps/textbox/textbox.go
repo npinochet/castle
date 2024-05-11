@@ -37,12 +37,16 @@ func (c *Comp) Init(entity core.Entity) {
 	words := strings.Split(c.Text, " ")
 	c.Text = ""
 	c.lines = 1
+	lineWidth := 0
 	for _, word := range words {
-		if len(c.Text+word)+1 > (c.lines*vars.LineWidth)-(c.lines-1) || strings.Contains(word, "\n") {
+		if lineWidth+len(word)+1 > vars.LineWidth || strings.Contains(word, "\n") {
 			c.Text += "\n"
 			c.lines++
+			lineWidth = 0
 		}
-		c.Text += " " + strings.ReplaceAll(word, "\n", "")
+		normalized := strings.ReplaceAll(word, "\n", "")
+		c.Text += " " + normalized
+		lineWidth += len(normalized) + 1
 	}
 }
 
@@ -83,7 +87,7 @@ func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
 	op.GeoM.Translate(0, math.Max(math.Min(boxY, vars.BoxMaxY), vars.BoxMinY))
 	screen.DrawImage(c.drawBackground(), op)
 
-	op.GeoM.Translate(2, 2)
+	op.GeoM.Translate(0, 2)
 	utils.DrawText(screen, c.Text, assets.TinyFont, op)
 }
 

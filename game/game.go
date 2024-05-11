@@ -36,8 +36,18 @@ var (
 		150: toEntityContructor(entity.NewGrave),
 		151: toEntityContructor(entity.NewDoor),
 	}
-	deathTransition Transition
+	restartTransition, deathTransition Transition
 )
+
+type Transition interface {
+	Init()
+	Update(dt float64) bool
+	Draw(screen *ebiten.Image)
+}
+
+func toEntityContructor[T core.Entity](contructor func(float64, float64, float64, float64, *core.Properties) T) core.EntityContructor {
+	return func(x, y, w, h float64, props *core.Properties) core.Entity { return contructor(x, y, w, h, props) }
+}
 
 func Load() {
 	worldMap := core.NewMap("intro/intro.tmx", "foreground", "background", maps.IntroFS)
@@ -67,12 +77,26 @@ type Game struct{}
 func (g *Game) Update() error {
 	dt := 1.0 / 60
 	vars.World.Update(dt)
-
-	if core.Get[*stats.Comp](vars.Player).Health <= 0 {
-		if deathTransition == nil {
-			deathTransition = &DeathTransition{}
-			deathTransition.Init()
+	if vars.SaveGame {
+		vars.SaveGame = false
+		if err := Save(); err != nil {
+			return err
 		}
+	}
+	if restartTransition == nil && vars.ResetGame {
+		restartTransition = &RestartTransition{}
+		restartTransition.Init()
+	}
+	if restartTransition != nil {
+		vars.ResetGame = false
+		if done := restartTransition.Update(dt); done {
+			restartTransition = nil
+		}
+	}
+
+	if deathTransition == nil && core.Get[*stats.Comp](vars.Player).Health <= 0 {
+		deathTransition = &DeathTransition{}
+		deathTransition.Init()
 	}
 	if deathTransition != nil {
 		if done := deathTransition.Update(dt); done {
@@ -93,6 +117,9 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(backgroundColor)
 	vars.World.Draw(screen)
+	if restartTransition != nil {
+		restartTransition.Draw(screen)
+	}
 	if deathTransition != nil {
 		deathTransition.Draw(screen)
 	}

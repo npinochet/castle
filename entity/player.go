@@ -20,6 +20,8 @@ import (
 )
 
 const (
+	tileSize = 8
+
 	playerMaxX, playerSpeed, playerJumpSpeed, playerClimbSpeed = 60, 350, 110, 5
 	playerDamage                                               = 20
 	playerHealFrame                                            = 3

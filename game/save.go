@@ -45,7 +45,7 @@ func NewSaveData() *SaveData {
 func Save() error {
 	var saveData *SaveData
 	if len(saveDataCache) != 0 {
-		if err := json.Unmarshal(saveDataCache, saveData); err != nil {
+		if err := json.Unmarshal(saveDataCache, &saveData); err != nil {
 			return err
 		}
 	} else {
@@ -57,7 +57,7 @@ func Save() error {
 
 	updateSaveData(saveData)
 
-	saveFile, err := os.OpenFile(SavePath, os.O_WRONLY, fileMode) //nolint: nosnakecase
+	saveFile, err := os.OpenFile(SavePath, os.O_WRONLY|os.O_TRUNC, fileMode) //nolint: nosnakecase
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return err

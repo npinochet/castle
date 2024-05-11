@@ -28,6 +28,7 @@ type Gram struct {
 }
 
 func NewGram(x, y, _, _ float64, props *core.Properties) *Gram {
+	y -= gramHeight - tileSize
 	gram := &Gram{
 		BaseEntity: &core.BaseEntity{X: x, Y: y, W: gramWidth, H: gramHeight},
 		anim:       &anim.Comp{FilesName: gramAnimFile, OX: gramOffsetX, OY: gramOffsetY, OXFlip: gramOffsetFlip, FlipX: props.FlipX},
@@ -35,8 +36,12 @@ func NewGram(x, y, _, _ float64, props *core.Properties) *Gram {
 		hitbox:     &hitbox.Comp{},
 		stats:      &stats.Comp{},
 	}
+	text := "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr"
+	if props.Custom["text"] != "" {
+		text = props.Custom["text"]
+	}
 	textbox := &textbox.Comp{
-		Text: "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr",
+		Text: text,
 		Area: func() bump.Rect {
 			return bump.NewRect(gram.X-gramWidth*2, gram.Y-gramHeight, gramWidth*4, gramHeight*2)
 		},

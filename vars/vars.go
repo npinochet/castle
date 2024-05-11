@@ -66,7 +66,9 @@ var (
 	// Global.
 	World  *core.World
 	Player core.Entity
-	Game   GameManager
+
+	// Signaling.
+	SaveGame, ResetGame bool
 
 	// Player.
 	Pad utils.ControlPack
@@ -78,10 +80,3 @@ var (
 	CollisionStiffness          = 1.0
 	FrictionEpsilon             = 0.05
 )
-
-type GameManager interface {
-	Reset()
-	Save() error
-}
-
-func SetGameManager(g GameManager) { Game = g }
