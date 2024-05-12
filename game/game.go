@@ -62,13 +62,15 @@ func Reset() {
 	if err != nil {
 		log.Panicln("error loading save:", err)
 	}
-	ApplySaveData(saveData)
 
 	vars.World.Speed = 1
-	vars.World.RemoveAllEntities()
+	vars.World.RemoveAll()
+	vars.World.Map.LoadEntityObjects(vars.World, "entities", entityBinds)
+	vars.World.Update(0)
+	ApplySaveData(saveData)
 	vars.World.Add(vars.Player)
 	vars.World.Camera.Follow(vars.Player)
-	vars.World.Map.LoadEntityObjects(vars.World, "entities", entityBinds)
+	vars.World.Update(0)
 	runtime.GC()
 }
 

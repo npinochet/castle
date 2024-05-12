@@ -4,6 +4,7 @@ import (
 	"game/comps/ai"
 	"game/comps/anim"
 	"game/comps/body"
+	"game/comps/gated"
 	"game/comps/hitbox"
 	"game/comps/stats"
 	"game/core"
@@ -28,6 +29,7 @@ type Knight struct {
 	hitbox *hitbox.Comp
 	stats  *stats.Comp
 	ai     *ai.Comp
+	gates  *gated.Comp
 }
 
 func NewKnight(x, y, _, _ float64, props *core.Properties) *Knight {
@@ -43,8 +45,9 @@ func NewKnight(x, y, _, _ float64, props *core.Properties) *Knight {
 		hitbox: &hitbox.Comp{},
 		stats:  &stats.Comp{MaxPoise: knightMaxPosie, Exp: knightExp},
 		ai:     &ai.Comp{},
+		gates:  &gated.Comp{Props: props.Custom},
 	}
-	knight.Add(knight.anim, knight.body, knight.hitbox, knight.stats, knight.ai)
+	knight.Add(knight.anim, knight.body, knight.hitbox, knight.stats, knight.ai, knight.gates)
 	knight.Control = actor.NewControl(knight)
 
 	var view *bump.Rect
@@ -62,6 +65,9 @@ func (k *Knight) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp,
 }
 
 func (k *Knight) Update(dt float64) {
+	if k.stats.Health <= 0 {
+		k.gates.Open()
+	}
 	k.SimpleUpdate(dt)
 }
 
@@ -69,6 +75,7 @@ func (k *Knight) Update(dt float64) {
 func (k *Knight) aiScript(view *bump.Rect) {
 	speed := 100.0
 	k.ai.Add(0, actor.IdleAction(k.Control, view))
+	k.ai.Add(1, actor.EntryAction(func() { k.gates.Close() }))
 	k.ai.Add(0, actor.ApproachAction(k.Control, speed, vars.DefaultMaxX))
 	k.ai.Add(0.1, actor.WaitAction())
 

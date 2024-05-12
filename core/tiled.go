@@ -15,10 +15,7 @@ import (
 	"github.com/lafriks/go-tiled/render"
 )
 
-const (
-	viewPropName = "view"
-	idPropName   = "id"
-)
+const viewPropName = "view"
 
 const (
 	defaultCollisionPriority = -2
@@ -28,7 +25,6 @@ const (
 type Properties struct {
 	FlipX, FlipY bool
 	View         *tiled.Object
-	CustomID     string
 	Custom       map[string]string
 }
 
@@ -259,13 +255,11 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 						panic("tiled: cannot find view object with id " + prop.Value)
 					}
 					props.View = obj
-				case idPropName:
-					props.CustomID = prop.Value
 				default:
 					props.Custom[prop.Name] = prop.Value
 				}
 			}
-			world.Add(construct(obj.X, obj.Y, obj.Width, obj.Height, props))
+			world.AddWithID(construct(obj.X, obj.Y, obj.Width, obj.Height, props), uint(obj.ID))
 		}
 	}
 }

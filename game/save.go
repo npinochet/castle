@@ -28,6 +28,7 @@ type PlayerData struct {
 type SaveData struct {
 	PlayerData PlayerData        `json:"player_data"`
 	Pad        utils.ControlPack `json:"keys"`
+	Opened     []uint            `json:"opened"`
 }
 
 func NewSaveData() *SaveData {
@@ -55,20 +56,15 @@ func Save() error {
 		}
 	}
 
-	updateSaveData(saveData)
+	populateSaveData(saveData)
 
-	saveFile, err := os.OpenFile(SavePath, os.O_WRONLY|os.O_TRUNC, fileMode) //nolint: nosnakecase
+	saveFile, err := os.OpenFile(SavePath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, fileMode) //nolint: nosnakecase
 	if err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-		if saveFile, err = os.Create(SavePath); err != nil {
-			return err
-		}
+		return err
 	}
 	defer saveFile.Close()
 
-	if saveDataCache, err = json.Marshal(saveData); err != nil {
+	if saveDataCache, err = json.MarshalIndent(saveData, "", "	"); err != nil {
 		return err
 	}
 	if _, err := saveFile.Write(saveDataCache); err != nil {
@@ -105,11 +101,32 @@ func ApplySaveData(sd *SaveData) {
 	vars.Player = entity.NewPlayer(sd.PlayerData.X, sd.PlayerData.Y)
 	core.Get[*stats.Comp](vars.Player).Exp = sd.PlayerData.Exp
 	vars.Pad = sd.Pad
+	for _, opened := range sd.Opened {
+		if chest, ok := vars.World.Get(opened).(*entity.Chest); ok {
+			chest.Open(false)
+		}
+		if door, ok := vars.World.Get(opened).(*entity.Door); ok {
+			door.Open()
+		}
+	}
 }
 
-func updateSaveData(sd *SaveData) {
+func populateSaveData(sd *SaveData) {
 	playerStats := core.Get[*stats.Comp](vars.Player)
 	sd.PlayerData.X, sd.PlayerData.Y = vars.Player.Position()
 	sd.PlayerData.Exp = playerStats.Exp
 	sd.Pad = vars.Pad
+
+	for _, e := range vars.World.GetAll() {
+		id := vars.World.GetID(e)
+		if id == 0 {
+			continue
+		}
+		if chest, ok := e.(*entity.Chest); ok && chest.Opened() {
+			sd.Opened = append(sd.Opened, id)
+		}
+		if door, ok := e.(*entity.Door); ok && door.Opened() {
+			sd.Opened = append(sd.Opened, id)
+		}
+	}
 }

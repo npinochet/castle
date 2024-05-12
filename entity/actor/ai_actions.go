@@ -17,6 +17,14 @@ var (
 	pushForce  = 10.0
 )
 
+func EntryAction(entry func()) *ai.Action {
+	return &ai.Action{Entry: entry, Next: func(_ float64) bool { return true }}
+}
+
+func WaitAction() *ai.Action {
+	return &ai.Action{Name: "Wait"}
+}
+
 func IdleAction(a *Control, view *bump.Rect) *ai.Action {
 	return &ai.Action{
 		Name: "Idle",
@@ -50,10 +58,6 @@ func IdleAction(a *Control, view *bump.Rect) *ai.Action {
 			return false
 		},
 	}
-}
-
-func WaitAction() *ai.Action {
-	return &ai.Action{Name: "Wait"}
 }
 
 func AnimAction(a *Control, tag string, entry func()) *ai.Action {

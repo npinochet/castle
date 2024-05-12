@@ -61,17 +61,22 @@ func (c *Chest) Init() {
 	c.hitbox.HitFunc = c.chestHurt
 	c.hitbox.PushHitbox(bump.Rect{W: chestW, H: chestH}, hitbox.Hit, nil)
 	if c.open {
-		c.Open()
+		c.Open(false)
 	}
 }
 
 func (c *Chest) Update(_ float64) {}
 
-func (c *Chest) Open() {
+func (c *Chest) Opened() bool { return c.open }
+
+func (c *Chest) Open(reward bool) {
 	c.open = true
 	c.hitbox.Remove()
 	c.render.Image = chestSemiOpenImage
 	c.render.Y = chestH - float64(chestSemiOpenImage.Bounds().Dy())
+	if !reward {
+		return
+	}
 	time.AfterFunc(500*time.Millisecond, func() {
 		c.render.Image = chestOpenImage
 		c.render.Y = 0
@@ -86,5 +91,5 @@ func (c *Chest) chestHurt(other core.Entity, _ *bump.Collision, _ float64, _ hit
 		return
 	}
 
-	c.Open()
+	c.Open(true)
 }
