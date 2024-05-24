@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	SavePath = "save.json"
-	fileMode = 0666
+	Persistent = false
+	SavePath   = "save.json"
+	fileMode   = 0666
 )
 
 var saveDataCache []byte
@@ -45,12 +46,12 @@ func NewSaveData() *SaveData {
 
 func Save() error {
 	var saveData *SaveData
+	var err error
 	if len(saveDataCache) != 0 {
 		if err := json.Unmarshal(saveDataCache, &saveData); err != nil {
 			return err
 		}
 	} else {
-		var err error
 		if saveData, err = LoadSave(); err != nil && !os.IsNotExist(err) {
 			return err
 		}
@@ -58,35 +59,40 @@ func Save() error {
 
 	populateSaveData(saveData)
 
-	saveFile, err := os.OpenFile(SavePath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, fileMode) //nolint: nosnakecase
-	if err != nil {
-		return err
-	}
-	defer saveFile.Close()
-
 	if saveDataCache, err = json.MarshalIndent(saveData, "", "	"); err != nil {
 		return err
 	}
-	if _, err := saveFile.Write(saveDataCache); err != nil {
-		return err
+
+	if Persistent {
+		saveFile, err := os.OpenFile(SavePath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, fileMode) //nolint: nosnakecase
+		if err != nil {
+			return err
+		}
+		defer saveFile.Close()
+
+		if _, err := saveFile.Write(saveDataCache); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 func LoadSave() (*SaveData, error) {
-	saveFile, err := os.Open(SavePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return NewSaveData(), nil
+	if Persistent || len(saveDataCache) == 0 {
+		saveFile, err := os.Open(SavePath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return NewSaveData(), nil
+			}
+
+			return nil, err
 		}
+		defer saveFile.Close()
 
-		return nil, err
-	}
-	defer saveFile.Close()
-
-	if saveDataCache, err = io.ReadAll(saveFile); err != nil {
-		return nil, err
+		if saveDataCache, err = io.ReadAll(saveFile); err != nil {
+			return nil, err
+		}
 	}
 
 	var saveData *SaveData

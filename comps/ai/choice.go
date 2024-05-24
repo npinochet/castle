@@ -2,12 +2,14 @@ package ai
 
 import "math/rand"
 
-type Choice []struct {
+type Choice = struct {
 	Weight float64
 	Act    func()
 }
 
-func (c Choice) Play() {
+type Choices []Choice
+
+func (c Choices) Play() {
 	totalWeight := 0.0
 	for _, c := range c {
 		totalWeight += c.Weight

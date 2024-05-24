@@ -47,7 +47,7 @@ type Comp struct {
 	poiseTimer                                             *time.Timer
 }
 
-func (c *Comp) Init(_ core.Entity) { //nolint: cyclop
+func (c *Comp) Init(_ core.Entity) {
 	if c.MaxHealth == 0 {
 		c.MaxHealth = vars.DefaultHealth
 	}
@@ -139,6 +139,8 @@ func (c *Comp) Update(dt float64) {
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+	// TODO: Huge GC cpu usage here, pre-create images then draw them, increase the GC overhead by a lot.
+	// Biggest FPS killer, even more than bump.
 	c.debugDraw(screen, entityPos)
 	if c.Hud {
 		op := &ebiten.DrawImageOptions{}
@@ -289,25 +291,28 @@ func (c *Comp) drawAttackMult(hud *ebiten.Image) {
 }
 
 func (c *Comp) headBarImage(current, max, lag float64, barColor color.Color) *ebiten.Image {
-	image := ebiten.NewImage(vars.EnemyBarW+2, vars.InnerBarH)
-	image.Fill(borderColor)
 	fullBar := ebiten.NewImage(vars.EnemyBarW, 1)
 	fullBar.Fill(emptyColor)
 
 	round := 0.5
+	filler := ebiten.NewImage(1, 1)
+	op := &ebiten.DrawImageOptions{}
 	if width := int((lag/max)*vars.EnemyBarW + round); width > 0 {
-		bar := ebiten.NewImage(width, 1)
-		bar.Fill(lagColor)
-		fullBar.DrawImage(bar, nil)
+		filler.Fill(lagColor)
+		op.GeoM.Scale(float64(width), 1)
+		fullBar.DrawImage(filler, op)
 	}
 
 	if width := int((current/max)*vars.EnemyBarW + round); width > 0 {
-		bar := ebiten.NewImage(width, 1)
-		bar.Fill(barColor)
-		fullBar.DrawImage(bar, nil)
+		filler.Fill(barColor)
+		op.GeoM.Reset()
+		op.GeoM.Scale(float64(width), 1)
+		fullBar.DrawImage(filler, op)
 	}
-	op := &ebiten.DrawImageOptions{}
+	op = &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(1, 1)
+	image := ebiten.NewImage(vars.EnemyBarW+2, vars.InnerBarH)
+	image.Fill(borderColor)
 	image.DrawImage(fullBar, op)
 
 	return image

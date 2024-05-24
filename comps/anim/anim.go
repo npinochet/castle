@@ -64,7 +64,9 @@ func (c *Comp) Init(_ core.Entity) {
 		c.Fsm = DefaultFsm()
 	}
 
-	c.ColorScale = color.White
+	if c.ColorScale == nil {
+		c.ColorScale = color.White
+	}
 	c.SetState(c.Data.Meta.Animations[0].Name)
 	c.frameCallbacks = map[int]func(){}
 	rect := c.Data.Frames.FrameAtIndex(c.Data.CurrentFrame).SpriteSourceSize

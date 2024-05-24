@@ -69,7 +69,7 @@ func (g *Ghoul) Update(dt float64) {
 
 func (g *Ghoul) ThrowRock() {
 	tag := "Throw"
-	if g.anim.State == tag || g.anim.State == vars.StaggerTag {
+	if g.anim.State == tag || g.PausingState() || g.rocks <= 0 {
 		return
 	}
 	g.anim.SetState(tag)
@@ -91,7 +91,7 @@ func (g *Ghoul) aiScript(view *bump.Rect, poacher bool) {
 	g.ai.Add(0, actor.ApproachAction(g.Control, ghoulSpeed, vars.DefaultMaxX))
 	g.ai.Add(0.1, actor.WaitAction())
 
-	ai.Choice{
+	ai.Choices{
 		{2, func() { g.ai.Add(5, actor.AttackAction(g.Control, "AttackShort", ghoulDamage)) }},
 		{2, func() { g.ai.Add(5, actor.AttackAction(g.Control, "AttackLong", ghoulDamage)) }},
 		{0.5, func() { g.ai.Add(1, actor.BackUpAction(g.Control, ghoulSpeed, 0)) }},

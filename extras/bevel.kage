@@ -1,0 +1,69 @@
+package main
+
+//kage:unit pixels
+
+const BEVEL_INTENSITY = 1.0 // 0.125
+const BEVEL_CURVE = 1.0
+const BEVEL_RESOLUTION = 4.0
+
+func bevel(subpixel ivec2, subpixels int) float {
+	low := ivec2(0) // ivec2(1)
+	high := ivec2(subpixels) - 2
+	add := 0.0
+
+	center := subpixel.x >= low.x && subpixel.y >= low.y && subpixel.x <= high.x && subpixel.y <= high.y
+	if !center {
+		corner := vec2(float(subpixels)-1, 0.0)
+		add += distance(vec2(subpixel), corner) / float(subpixels)
+		add = max(0.0, pow(add, BEVEL_CURVE))
+	}
+	return add
+}
+
+func Fragment(dst vec4, src vec2, colorScale vec4) vec4 {
+	iResolution := imageDstSize()
+	uv := src / iResolution.xy
+	size := vec2(160, 96) // imageSrc0Size()
+	subpixels := BEVEL_RESOLUTION
+	pixel := uv * size * subpixels
+	subpixel := ivec2(int(mod(pixel.x, subpixels)), int(mod(pixel.y, subpixels)))
+	adjust := bevel(subpixel, int(subpixels)) * float(BEVEL_INTENSITY)
+	final := imageSrc0At(uv * size)
+	final.rgb += mix(final.rgb*adjust, (1.0-final.rgb)*-adjust, adjust)
+
+	return final
+}
+
+
+// Version2
+package main
+
+//kage:unit pixels
+
+const BORDER_RESOLUTION = 3.0
+
+func border(subpixel ivec2, subpixels int) float {
+	low := ivec2(0) // ivec2(1)
+	high := ivec2(subpixels) - 2
+	color := 0.5
+	center := subpixel.x >= low.x && subpixel.y >= low.y && subpixel.x <= high.x && subpixel.y <= high.y
+	if !center {
+    	color = 0.2;
+	}
+	return color
+}
+
+func Fragment(dst vec4, src vec2, colorScale vec4) vec4 {
+	iResolution := imageDstSize()
+	uv := src / iResolution.xy
+	size := vec2(160, 96) // imageSrc0Size()
+	subpixels := BORDER_RESOLUTION
+	pixel := uv * size * subpixels
+	subpixel := ivec2(int(mod(pixel.x, subpixels)), int(mod(pixel.y, subpixels)))
+	borders := border(subpixel, int(subpixels))
+	final := imageSrc0At(uv * size)
+	overlayColor := vec3(borders)
+	final.rgb = mix(1.0 - 2.0 * (1.0 - final.rgb) * (1.0 - overlayColor), 2.0 * final.rgb * overlayColor, step(final.rgb, vec3(0.5)))
+
+	return final
+}

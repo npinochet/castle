@@ -35,11 +35,10 @@ func init() {
 	op.ColorScale.ScaleWithColor(textColor)
 	utils.DrawText(textImg, "Game Over", assets.M6x11Font, op)
 
-	shader, err := ebiten.NewShader(grayscaleShader)
-	if err != nil {
+	var err error
+	if grayShader, err = ebiten.NewShader(grayscaleShader); err != nil {
 		log.Panic(err)
 	}
-	grayShader = shader
 }
 
 type DeathTransition struct {

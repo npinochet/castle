@@ -23,7 +23,7 @@ const (
 	tileSize = 8
 
 	playerMaxX, playerSpeed, playerJumpSpeed, playerClimbSpeed = 60, 350, 110, 5
-	playerDamage                                               = 20
+	playerDamage, playerPoise                                  = 20, 16
 	playerHealFrame                                            = 3
 
 	keyBufferDuration = 500 * time.Millisecond
@@ -47,7 +47,7 @@ func NewPlayer(x, y float64) *Player {
 		anim:       &anim.Comp{FilesName: knightAnimFile, OX: knightOffsetX, OY: knightOffsetY, OXFlip: knightOffsetFlip},
 		body:       &body.Comp{MaxX: playerMaxX},
 		hitbox:     &hitbox.Comp{},
-		stats:      &stats.Comp{Hud: true, NoDebug: true, Stamina: 65},
+		stats:      &stats.Comp{Hud: true, NoDebug: true, MaxStamina: 80, MaxPoise: playerPoise},
 
 		attackPushForce: vars.DefaultAttackPushForce,
 		reactForce:      vars.DefaultReactForce,

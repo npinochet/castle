@@ -16,7 +16,7 @@ const (
 	crawlerAnimFile                                   = "crawler"
 	crawlerWidth, crawlerHeight                       = 11, 8
 	crawlerOffsetX, crawlerOffsetY, crawlerOffsetFlip = -4, -4, 10
-	crawlerHealth, crawlerDamage                      = 30, 20
+	crawlerHealth, crawlerDamage                      = 30, 15
 	crawlerSpeed                                      = 100
 	crawlerExp                                        = 10
 )
@@ -73,7 +73,7 @@ func (c *Crawler) aiScript(view *bump.Rect) {
 	c.ai.Add(0, actor.IdleAction(c.Control, view))
 	c.ai.Add(0, actor.ApproachAction(c.Control, crawlerSpeed, vars.DefaultMaxX))
 
-	ai.Choice{
+	ai.Choices{
 		{1, func() { c.ai.Add(5, actor.AttackAction(c.Control, "Attack", crawlerDamage)) }},
 		{1, func() { c.ai.Add(1.5, actor.BackUpAction(c.Control, crawlerSpeed, 0)) }},
 		{1, func() { c.ai.Add(1, actor.WaitAction()) }},

@@ -74,11 +74,16 @@ func Reset() {
 	runtime.GC()
 }
 
-type Game struct{}
+type Game struct{ loaded bool }
 
 func (g *Game) Update() error {
+	if !g.loaded {
+		g.loaded = true
+		Load()
+	}
 	dt := 1.0 / 60
 	vars.World.Update(dt)
+	runtime.GC() // TODO: If GC does not run every frame, the STW GCs are terrible
 	if vars.SaveGame {
 		vars.SaveGame = false
 		if err := Save(); err != nil {

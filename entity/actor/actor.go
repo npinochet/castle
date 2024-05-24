@@ -101,23 +101,8 @@ func (c *Control) Hurt(other core.Entity, damage, reactForce float64) {
 	}
 }
 
-func (c *Control) Die(dt float64) {
-	c.paused = true
-	c.anim.SetState(vars.StaggerTag)
-	if c.dieTimer -= dt; c.dieTimer > 0 {
-		alpha := uint8(50 + 205*float32(c.dieTimer)/dieSeconds)
-		c.anim.ColorScale = color.RGBA{alpha, alpha, alpha, alpha}
-
-		return
-	}
-
-	vars.World.Remove(c.actor)
-	for i := 0; i < c.stats.Exp; i++ {
-		vars.World.Add(particle.NewFlake(c.actor)) // TODO: keep actor package isolated somehow, move Flake to entity package.
-	}
-}
-
 func (c *Control) Block(other core.Entity, damage, reactForce float64, contactType hitbox.ContactType) {
+	c.stats.AddHealth(-damage / 10)
 	c.stats.AddStamina(-damage)
 	if contactType == hitbox.ParryBlock {
 		return
@@ -138,6 +123,22 @@ func (c *Control) Block(other core.Entity, damage, reactForce float64, contactTy
 		c.anim.SetExitCallback(func() { c.anim.Data.PlaySpeed = prevPlaySpeed }, nil)
 		force *= 2 * (damage / c.stats.MaxHealth)
 		c.body.Vx += force
+	}
+}
+
+func (c *Control) Die(dt float64) {
+	c.paused = true
+	c.anim.SetState(vars.StaggerTag)
+	if c.dieTimer -= dt; c.dieTimer > 0 {
+		alpha := uint8(50 + 205*float32(c.dieTimer)/dieSeconds)
+		c.anim.ColorScale = color.RGBA{alpha, alpha, alpha, alpha}
+
+		return
+	}
+
+	vars.World.Remove(c.actor)
+	for i := 0; i < c.stats.Exp; i++ {
+		vars.World.Add(particle.NewFlake(c.actor)) // TODO: keep actor package isolated somehow, move Flake to entity package.
 	}
 }
 

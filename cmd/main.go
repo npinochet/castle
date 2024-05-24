@@ -37,21 +37,26 @@ import (
 - Experiment with partial blocking (a block does not negate all damage) and a system where you can attack back for a short period and
 	gain the lost health
 - Experiment hiding the enemy health bar, even for bosses.
-
+- Experiment with shaders, change background to be more dark (maybe gradient, from blue to black?), maybe keep background color for a paralax layer details background.
+- Add quick step! Like a Dogde/dash, but small and fast that let you dodge or approach enemies quickly
+	- This ^ but only the enemies
+- lograr 2 cosas:
+	- Deadly enemies
+	- Dread of loosing and urgency to get to the next checkpoint
+- Add item that restores your dropped loot, but spawns a high level enemy at the loot spot. To encourage taking other routes.
 
 - Today's TODO:
 - Demo MVP Steps:
 	- (Optional) Show controls on start screen
 	- Build Map
-		- Add Checkpoint, at least one checkpoint altar?
-		- Death drop
-	- Add Boss
-		- Red knight with second phase where it speeds up, heals and block
+	- Death drop
 	- Add end room message
 	- Add some polish
 		- JUICE UP COMBAT, IM TALKING STOP TIME, PARTICLE EFFECTS, FLASHING BABY
+	- Add Mage Enemy?
+	- Add Heavy attack?
 	- Make enemies respawn when yo get back to the room before after
-	- Add Mage Enemy
+	- Maybe add a new combo for the player?
 */
 
 func main() {
@@ -60,12 +65,9 @@ func main() {
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetVsyncEnabled(false)
 
-	g := &game.Game{}
-	game.Load()
-
 	// TODO: Prevent macOS from using Metal API and panic.
-	// if err := ebiten.RunGame(g); err != nil {
-	if err := ebiten.RunGameWithOptions(g, &ebiten.RunGameOptions{GraphicsLibrary: ebiten.GraphicsLibraryOpenGL}); err != nil {
+	// if err := ebiten.RunGame(&game.Game{}); err != nil {
+	if err := ebiten.RunGameWithOptions(&game.Game{}, &ebiten.RunGameOptions{GraphicsLibrary: ebiten.GraphicsLibraryOpenGL}); err != nil {
 		log.Fatal(err)
 	}
 }

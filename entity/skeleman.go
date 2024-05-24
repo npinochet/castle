@@ -19,7 +19,7 @@ const (
 	skelemanOffsetX, skelemanOffsetY, skelemanOffsetFlip = -12, -5, 20
 	skelemanSpeed, skelemanMaxSpeed                      = 100, 35
 	skelemanHealth                                       = 110
-	skelemanDamage                                       = 20
+	skelemanDamage                                       = 18
 	skelemanExp                                          = 25
 	skelemanPoise                                        = 30
 )
@@ -106,9 +106,9 @@ func (s *Skeleman) aiScript(view *bump.Rect) {
 	s.ai.Add(0, actor.ApproachAction(s.Control, skelemanSpeed, vars.DefaultMaxX))
 	s.ai.Add(0.1, actor.WaitAction())
 
-	ai.Choice{
-		{2, func() { s.ai.Add(5, actor.AttackAction(s.Control, "AttackShort", playerDamage)) }},
-		{2, func() { s.ai.Add(5, actor.AttackAction(s.Control, "AttackLong", playerDamage)) }},
+	ai.Choices{
+		{2, func() { s.ai.Add(5, actor.AttackAction(s.Control, "AttackShort", skelemanDamage)) }},
+		{2, func() { s.ai.Add(5, actor.AttackAction(s.Control, "AttackLong", skelemanDamage)) }},
 		{1, func() { s.ai.Add(10, s.jumpAttackAction()) }},
 		{0.5, func() { s.ai.Add(1, actor.BackUpAction(s.Control, skelemanSpeed, 0)) }},
 		{1, func() { s.ai.Add(1, actor.WaitAction()) }},
