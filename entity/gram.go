@@ -15,7 +15,7 @@ import (
 const (
 	gramAnimFile                             = "gram"
 	gramWidth, gramHeight                    = 10, 12
-	gramOffsetX, gramOffsetY, gramOffsetFlip = -1, -2, 0
+	gramOffsetX, gramOffsetY, gramOffsetFlip = -1, -2, 6
 )
 
 type Gram struct {

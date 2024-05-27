@@ -13,7 +13,7 @@ import (
 - Combos for attacks.
 - Change background color and characters outline color.
 - Rethink Poise mechanic, is shouldn't be a bar that increses with time, it should be more like a health that resets.
-- Experiment implementing a backstepping (kind of life rolling). (think about adding I frames or not, maybe just shrink the hurtbox).
+- Experiment implementing a backstepping (kind of like rolling). (think about adding I frames or not, maybe just shrink the hurtbox).
 
 - Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
 - Sometimes the enemy can cut off the stagger animation somehow.

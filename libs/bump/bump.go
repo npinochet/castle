@@ -2,6 +2,7 @@ package bump
 
 import (
 	"math"
+	"slices"
 	"sort"
 	"sync"
 )
@@ -9,6 +10,7 @@ import (
 // Collision detection and resolution library based on bump.lua by kikito.
 
 const DELTA = 1e-10 // floating-point margin of error.
+var CellSize = 32.0
 
 type Item any
 type Tag string
@@ -51,6 +53,7 @@ type Space struct {
 	rects     map[Item]Rect
 	tags      map[Item]map[Tag]bool
 	responses map[ColType]Response
+	cells     map[[2]int]map[Item]bool
 	mutex     sync.Mutex
 }
 
@@ -58,6 +61,7 @@ func NewSpace() *Space {
 	space := &Space{}
 	space.rects = map[Item]Rect{}
 	space.tags = map[Item]map[Tag]bool{}
+	space.cells = map[[2]int]map[Item]bool{}
 	space.responses = map[ColType]Response{
 		Touch: func(_ Vec2, col *Collision, _ Filter, _ ...Tag) (Vec2, []*Collision) {
 			return col.Touch, nil
@@ -101,6 +105,20 @@ func (s *Space) Set(item Item, rect Rect, tags ...Tag) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	if oldRect, ok := s.rects[item]; ok {
+		for _, cell := range cellCoords(CellSize, oldRect) {
+			delete(s.cells[cell], item)
+			if len(s.cells[cell]) == 0 {
+				delete(s.cells, cell)
+			}
+		}
+	}
+	for _, cell := range cellCoords(CellSize, rect) {
+		if s.cells[cell] == nil {
+			s.cells[cell] = map[Item]bool{}
+		}
+		s.cells[cell][item] = true
+	}
 	s.rects[item] = rect
 	if s.tags[item] == nil {
 		s.tags[item] = map[Tag]bool{}
@@ -185,11 +203,17 @@ func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter, tags ...
 
 	var cols []*Collision
 	s.mutex.Lock()
-	// TODO: Optimize using cells
-	items := sortPriority(s.rects)
+
+	var items []Item
+	for _, cell := range cellCoords(CellSize, rect) {
+		for item := range s.cells[cell] {
+			items = append(items, item)
+		}
+	}
+	slices.SortFunc(items, func(a, b Item) int { return s.rects[b].Priority - s.rects[a].Priority })
 	tagged := map[Item]bool{}
-	for _, tag := range tags {
-		for _, other := range items {
+	for _, other := range items {
+		for _, tag := range tags {
 			tagged[other] = tagged[other] || s.tags[other][tag]
 		}
 	}
@@ -223,17 +247,6 @@ func (s *Space) Query(rect Rect, filter SimpleFilter, tags ...Tag) []*Collision 
 
 func Overlaps(r1, r2 Rect) bool {
 	return rectContainsPoint(rectDiff(r1, r2), Vec2{})
-}
-
-func sortPriority(rects map[Item]Rect) []Item {
-	i, keys := 0, make([]Item, len(rects))
-	for k := range rects {
-		keys[i] = k
-		i++
-	}
-	sort.Slice(keys, func(i, j int) bool { return rects[keys[i]].Priority > rects[keys[j]].Priority })
-
-	return keys
 }
 
 // Liang-Barsky algorithm.
@@ -359,6 +372,20 @@ func rectNearestCorner(rect Rect, p Vec2) Vec2 {
 	}
 
 	return Vec2{nearest(p.X, rect.X, rect.X+rect.W), nearest(p.Y, rect.Y, rect.Y+rect.H)}
+}
+
+func cellCoords(cellSize float64, rect Rect) [][2]int {
+	cx, cy := int(rect.X/cellSize)+1, int(rect.Y/cellSize)+1
+	cr, cb := math.Ceil((rect.X+rect.W)/cellSize), math.Ceil((rect.Y+rect.H)/cellSize)
+
+	var coords [][2]int
+	for y := cy; y <= int(cb+1); y++ {
+		for x := cx; x <= int(cr+1); x++ {
+			coords = append(coords, [2]int{x, y})
+		}
+	}
+
+	return coords
 }
 
 func (r Rect) IsSlope() bool {

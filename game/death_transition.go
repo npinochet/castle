@@ -45,7 +45,7 @@ type DeathTransition struct {
 	freezeTime              float64
 	fadeTween, overlayTween *gween.Tween
 	overlayImg              *ebiten.Image
-	actionKey               ebiten.Key
+	actionKey               []ebiten.Key
 }
 
 func (t *DeathTransition) Init() {
@@ -57,7 +57,7 @@ func (t *DeathTransition) Init() {
 
 	t.overlayImg, _ = textImg.SubImage(image.Rect(0, 0, vars.ScreenWidth, vars.ScreenHeight)).(*ebiten.Image)
 	t.actionKey = vars.Pad[utils.KeyAction]
-	text := "Press " + t.actionKey.String() + " to respawn"
+	text := "Press Attack Key to respawn"
 	op := &ebiten.DrawImageOptions{}
 	w, h := utils.TextSize(text, assets.M5x7Font)
 	op.GeoM.Translate(float64(vars.ScreenWidth-w)/2, vars.ScreenHeight-float64(h)-20)
@@ -74,10 +74,12 @@ func (t *DeathTransition) Update(dt float64) bool {
 	}
 	t.fadeTween.Update(float32(dt))
 	t.overlayTween.Update(float32(dt))
-	if ebiten.IsKeyPressed(t.actionKey) {
-		Reset()
+	for _, key := range t.actionKey {
+		if ebiten.IsKeyPressed(key) {
+			Reset()
 
-		return true
+			return true
+		}
 	}
 
 	return false

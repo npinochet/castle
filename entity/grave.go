@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"fmt"
 	"game/assets"
 	"game/comps/render"
 	"game/comps/textbox"
@@ -29,8 +28,9 @@ func NewGrave(x, y, _, _ float64, props *core.Properties) *Grave {
 	entity := &core.BaseEntity{X: x, Y: y, W: graveW, H: graveH}
 	text := props.Custom["text"]
 	if text == "" {
-		text = "Here lies a hero that saved the world from the darkness that consumed him. Rest in peace. \n" + fmt.Sprintf("Press %s to rest", vars.Pad[utils.KeyUp].String())
+		text = "Here lies a hero that saved the world from the darkness that consumed him. Rest in peace."
 	}
+	text += " \n[Press Up to rest at the grave]"
 	grave := &Grave{
 		BaseEntity: entity,
 		render:     &render.Comp{Image: graveImage},

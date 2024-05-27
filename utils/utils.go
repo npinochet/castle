@@ -6,11 +6,11 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/hajimehoshi/ebiten/v2/text"
+	"github.com/hajimehoshi/ebiten/v2/text" // TODO: Fix this import
 	"golang.org/x/image/font"
 )
 
-type ControlPack [9]ebiten.Key
+type ControlPack [9][]ebiten.Key
 type ControlKey int
 
 const (
@@ -30,28 +30,50 @@ var bufferTimers = map[ControlKey]*time.Timer{}
 
 func NewControlPack() ControlPack {
 	return ControlPack{
-		KeyRight:  ebiten.KeyArrowRight,
-		KeyLeft:   ebiten.KeyArrowLeft,
-		KeyUp:     ebiten.KeyArrowUp,
-		KeyDown:   ebiten.KeyArrowDown,
-		KeyJump:   ebiten.KeyZ,
-		KeyAction: ebiten.KeyX,
-		KeyGuard:  ebiten.KeyC,
-		KeyHeal:   ebiten.KeyV,
-		KeyDash:   ebiten.KeySpace, // TODO: Reconsider dash mechanic
+		KeyRight:  {ebiten.KeyArrowRight, ebiten.KeyD},
+		KeyLeft:   {ebiten.KeyArrowLeft, ebiten.KeyA},
+		KeyUp:     {ebiten.KeyArrowUp, ebiten.KeyW},
+		KeyDown:   {ebiten.KeyArrowDown, ebiten.KeyS},
+		KeyJump:   {ebiten.KeyZ, ebiten.KeyN},
+		KeyAction: {ebiten.KeyX, ebiten.KeyM},
+		KeyGuard:  {ebiten.KeyC, ebiten.KeyB},
+		KeyHeal:   {ebiten.KeyV, ebiten.KeyShiftLeft, ebiten.KeyShiftRight},
+		//KeyDash:   {ebiten.KeySpace}, // TODO: Reconsider dash mechanic
 	}
 }
 
 func (cp ControlPack) KeyDown(key ControlKey) bool {
-	return ebiten.IsKeyPressed(cp[key])
+	for _, key := range cp[key] {
+		if ebiten.IsKeyPressed(key) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (cp ControlPack) KeyPressed(key ControlKey) bool {
-	return inpututil.IsKeyJustPressed(cp[key])
+	for _, key := range cp[key] {
+		if inpututil.IsKeyJustPressed(key) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (cp ControlPack) KeyReleased(key ControlKey) bool {
+	for _, key := range cp[key] {
+		if inpututil.IsKeyJustReleased(key) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (cp ControlPack) KeyPressedBuffered(key ControlKey, timeBuffer time.Duration) func() bool {
-	pressed := inpututil.IsKeyJustPressed(cp[key])
+	pressed := cp.KeyPressed(key)
 	if pressed {
 		buffer[key] = true
 		if bufferTimers[key] != nil {
@@ -69,10 +91,6 @@ func (cp ControlPack) KeyPressedBuffered(key ControlKey, timeBuffer time.Duratio
 
 		return pressed
 	}
-}
-
-func (cp ControlPack) KeyReleased(key ControlKey) bool {
-	return inpututil.IsKeyJustReleased(cp[key])
 }
 
 func Distante(x1, y1, x2, y2 float64) float64 {

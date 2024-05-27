@@ -20,7 +20,7 @@ const (
 	knightOffsetX, knightOffsetY, knightOffsetFlip = -10, -3, 17
 	knightDamage                                   = 25
 	knightHealth, knightPosie                      = 180, 25
-	knightExp                                      = 20
+	knightExp                                      = 50
 )
 
 type Knight struct {
