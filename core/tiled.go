@@ -49,6 +49,7 @@ type Map struct {
 }
 
 func NewMap(mapPath string, foregroundLayerName, backgroundLayerName string, fs fs.FS) *Map {
+	// TODO: can fail on windows: https://github.com/lafriks/go-tiled/issues/63
 	data, err := tiled.LoadFile(mapPath, tiled.WithFileSystem(fs))
 	if err != nil {
 		log.Println("Error parsing Tiled map:", err)

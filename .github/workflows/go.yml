@@ -1,0 +1,42 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.22"
+
+      - name: Build
+        run: go build -ldflags "-w -s" -o castle.exe cmd/main.go
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: castle.exe
+          path: castle.exe
+
+  run:
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: castle.exe
+
+      - name: Run
+        run: ./castle.exe

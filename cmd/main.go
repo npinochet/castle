@@ -4,6 +4,7 @@ import (
 	"game/game"
 	"game/vars"
 	"log"
+	"runtime"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -66,8 +67,11 @@ func main() {
 	ebiten.SetVsyncEnabled(false)
 
 	// TODO: Prevent macOS from using Metal API and panic.
-	// if err := ebiten.RunGame(&game.Game{}); err != nil {
-	if err := ebiten.RunGameWithOptions(&game.Game{}, &ebiten.RunGameOptions{GraphicsLibrary: ebiten.GraphicsLibraryOpenGL}); err != nil {
+	op := &ebiten.RunGameOptions{}
+	if runtime.GOOS == "darwin" {
+		op.GraphicsLibrary = ebiten.GraphicsLibraryOpenGL
+	}
+	if err := ebiten.RunGameWithOptions(&game.Game{}, op); err != nil {
 		log.Fatal(err)
 	}
 }
