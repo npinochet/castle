@@ -24,13 +24,37 @@ var (
 	middleBarImage, _ = hudImage.SubImage(image.Rect(vars.MiddleBarX1, 0, vars.MiddleBarX2, vars.BarH)).(*ebiten.Image)
 	healthColor       = color.RGBA{172, 50, 50, 255}
 	staminaColor      = color.RGBA{55, 148, 110, 255}
-	//poiseColor        = color.RGBA{91, 110, 225, 255}
+	// poiseColor        = color.RGBA{91, 110, 225, 255}
 	borderColor = color.RGBA{34, 32, 52, 255}
 	emptyColor  = color.RGBA{89, 86, 82, 255}
 	lagColor    = color.RGBA{251, 242, 54, 255}
+
+	fullEmptyBarImage  = ebiten.NewImage(1, vars.InnerBarH)
+	fullBarImage       = ebiten.NewImage(1, vars.InnerBarH)
+	fullLagBarImage    = ebiten.NewImage(1, vars.InnerBarH)
+	fullAttackBarImage = ebiten.NewImage(1, vars.BarH)
+	fullCountBar       = ebiten.NewImage(1, vars.BarH+2)
+	headBar            = ebiten.NewImage(vars.EnemyBarW+2, vars.InnerBarH)
+	headInnerBar       = ebiten.NewImage(vars.EnemyBarW, 1)
+	headLagBar         = ebiten.NewImage(1, 1)
+	headFillerBar      = ebiten.NewImage(1, 1)
+	iconsImage         *ebiten.Image
 )
 
 var DebugDraw = false
+
+func init() {
+	fullEmptyBarImage.Fill(emptyColor)
+	fullLagBarImage.Fill(lagColor)
+	fullAttackBarImage.Fill(borderColor)
+	fullCountBar.Fill(borderColor)
+	iconsImage, _ = hudImage.SubImage(image.Rect(0, 0, vars.HudIconsX, hudImage.Bounds().Dy())).(*ebiten.Image)
+
+	headBar.Fill(borderColor)
+	headInnerBar.Fill(emptyColor)
+	headLagBar.Fill(lagColor)
+	headFillerBar.Fill(healthColor)
+}
 
 type Comp struct {
 	Hud, Pause, NoDebug                                    bool
@@ -45,9 +69,10 @@ type Comp struct {
 	healthTween, staminaTween, poiseTween, attackMultTween *gween.Tween
 	healthLag, staminaLag, poiseLag                        float64
 	poiseTimer                                             *time.Timer
+	entityW                                                float64
 }
 
-func (c *Comp) Init(_ core.Entity) {
+func (c *Comp) Init(entity core.Entity) {
 	if c.MaxHealth == 0 {
 		c.MaxHealth = vars.DefaultHealth
 	}
@@ -87,6 +112,7 @@ func (c *Comp) Init(_ core.Entity) {
 	c.healthLag = c.Health
 	c.staminaLag = c.Stamina
 	c.poiseLag = c.Poise
+	_, _, c.entityW, _ = entity.Rect()
 }
 
 func (c *Comp) Remove() {
@@ -139,13 +165,9 @@ func (c *Comp) Update(dt float64) {
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
-	// TODO: Huge GC cpu usage here, pre-create images then draw them, increase the GC overhead by a lot.
-	// Biggest FPS killer, even more than bump.
 	c.debugDraw(screen, entityPos)
 	if c.Hud {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(1, 1)
-		screen.DrawImage(c.drawHud(), op)
+		c.drawHud(screen)
 
 		return
 	}
@@ -153,10 +175,7 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 		return
 	}
 
-	healthBar := c.headBarImage(c.Health, c.MaxHealth, c.healthLag, healthColor)
-	op := &ebiten.DrawImageOptions{GeoM: entityPos}
-	op.GeoM.Translate(-2, -10)
-	screen.DrawImage(healthBar, op)
+	c.drawHeadHealthBar(screen, entityPos, c.Health, c.MaxHealth, c.healthLag)
 }
 
 func (c *Comp) HealthPercent() float64  { return c.Health / c.MaxHealth }
@@ -178,7 +197,7 @@ func (c *Comp) AddHealth(amount float64) {
 }
 func (c *Comp) AddStamina(amount float64) {
 	c.staminaLag = c.Stamina
-	//c.staminaLag = math.Max(c.Stamina, c.staminaLag)
+	// c.staminaLag = math.Max(c.Stamina, c.staminaLag)
 	c.Stamina = math.Min(c.Stamina+amount, c.MaxStamina)
 	c.staminaTween = gween.New(float32(c.staminaLag), float32(c.Stamina), 1, ease.Linear)
 }
@@ -214,108 +233,108 @@ func (c *Comp) AddExp(amount int) {
 	c.Exp += amount
 }
 
-func (c *Comp) drawHud() *ebiten.Image {
-	h := hudImage.Bounds().Dy()
-	hud := ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
-	icons, _ := hudImage.SubImage(image.Rect(0, 0, vars.HudIconsX, h)).(*ebiten.Image)
-	hud.DrawImage(icons, nil)
+func (c *Comp) drawHud(screen *ebiten.Image) {
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(1, 1)
+	screen.DrawImage(iconsImage, op)
 
-	c.drawSegment(hud, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
-	c.drawSegment(hud, 1, c.Stamina, c.MaxStamina, c.staminaLag, staminaColor)
-	c.drawAttackMult(hud)
-	// c.drawSegment(hud, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
-	c.drawCount(hud, 2, c.Heal, 0)
-	c.drawCount(hud, 3, c.Exp, 2)
-
-	return hud
+	c.drawSegment(screen, op.GeoM, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
+	c.drawSegment(screen, op.GeoM, 1, c.Stamina, c.MaxStamina, c.staminaLag, staminaColor)
+	c.drawAttackMult(screen, op.GeoM)
+	// c.drawSegment(screen, op.GeoM, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
+	c.drawCount(screen, op.GeoM, 2, c.Heal, 0)
+	c.drawCount(screen, op.GeoM, 3, c.Exp, 2)
 }
 
-func (c *Comp) drawSegment(hud *ebiten.Image, y, current, max, lag float64, barColor color.Color) {
-	fullBar := ebiten.NewImage(int(max), vars.InnerBarH)
-	fullBar.Fill(emptyColor)
-	if lag > 0 {
-		bar := ebiten.NewImage(int(lag+1), vars.InnerBarH)
-		bar.Fill(lagColor)
-		fullBar.DrawImage(bar, nil)
-	}
-	if current > 0 {
-		bar := ebiten.NewImage(int(current+1), vars.InnerBarH)
-		bar.Fill(barColor)
-		fullBar.DrawImage(bar, nil)
-	}
-
+func (c *Comp) drawSegment(screen *ebiten.Image, geoM ebiten.GeoM, y, current, max, lag float64, barColor color.Color) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(max, 1)
+	op.GeoM.Concat(geoM)
 	op.GeoM.Translate(vars.HudIconsX, vars.BarMiddleH*y)
-	hud.DrawImage(middleBarImage, op)
+	screen.DrawImage(middleBarImage, op)
+
+	fillerGeoM := geoM
+	fillerGeoM.Translate(vars.HudIconsX, vars.BarMiddleH*y+2)
 
 	op.GeoM.Reset()
-	op.GeoM.Translate(vars.HudIconsX, vars.BarMiddleH*y+2)
-	hud.DrawImage(fullBar, op)
+	op.GeoM.Scale(max, 1)
+	op.GeoM.Concat(fillerGeoM)
+	screen.DrawImage(fullEmptyBarImage, op)
+	if lag > 0 {
+		op.GeoM.Reset()
+		op.GeoM.Scale(lag+1, 1)
+		op.GeoM.Concat(fillerGeoM)
+		screen.DrawImage(fullLagBarImage, op)
+	}
+	if current > 0 {
+		op.GeoM.Reset()
+		op.GeoM.Scale(current+1, 1)
+		op.GeoM.Concat(fillerGeoM)
+		fullBarImage.Fill(barColor)
+		screen.DrawImage(fullBarImage, op)
+	}
 
 	op.GeoM.Reset()
+	op.GeoM.Concat(geoM)
 	op.GeoM.Translate(vars.BarMiddleH+max, vars.BarMiddleH*y)
-	hud.DrawImage(barEndImage, op)
+	screen.DrawImage(barEndImage, op)
 }
 
-func (c *Comp) drawCount(hud *ebiten.Image, y float64, count int, offset float64) {
-	fullBar := ebiten.NewImage(vars.MaxTextWidth, vars.BarH+2)
-	fullBar.Fill(borderColor)
+func (c *Comp) drawCount(screen *ebiten.Image, geoM ebiten.GeoM, y float64, count int, offset float64) {
+	text := strconv.Itoa(count)
+	w, _ := utils.TextSize(text, assets.TinyFont)
+	op := &ebiten.DrawImageOptions{GeoM: geoM}
+	op.GeoM.Translate(vars.HudIconsX, vars.BarMiddleH*y+offset)
 
-	op := &ebiten.DrawImageOptions{}
+	opBackground := &ebiten.DrawImageOptions{}
+	opBackground.GeoM.Scale(float64(w)+2, 1)
+	opBackground.GeoM.Concat(op.GeoM)
+	screen.DrawImage(fullCountBar, opBackground)
+
 	op.GeoM.Translate(0, 2)
-	w, _ := utils.DrawText(fullBar, strconv.Itoa(count), assets.TinyFont, op)
-	fullBar, _ = fullBar.SubImage(image.Rect(0, 0, w+2, vars.BarH+2)).(*ebiten.Image)
-
-	op.GeoM.Reset()
-	op.GeoM.Translate(0, -2)
-	op.GeoM.Translate(vars.HudIconsX, vars.BarMiddleH*y+2+offset)
-	hud.DrawImage(fullBar, op)
+	utils.DrawText(screen, text, assets.TinyFont, op)
 }
 
-func (c *Comp) drawAttackMult(hud *ebiten.Image) {
+func (c *Comp) drawAttackMult(screen *ebiten.Image, geoM ebiten.GeoM) {
 	if c.AttackMult == 0 {
 		return
 	}
-	fullBar := ebiten.NewImage(vars.MaxTextWidth, vars.BarH)
-	fullBar.Fill(borderColor)
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(0, 1)
-	w, _ := utils.DrawText(fullBar, fmt.Sprintf("x%.1fATK", 1+c.AttackMult), assets.TinyFont, op)
-	fullBar, _ = fullBar.SubImage(image.Rect(0, 0, w+2, vars.BarH+2)).(*ebiten.Image)
-
+	op := &ebiten.DrawImageOptions{GeoM: geoM}
 	endImgW := float64(barEndImage.Bounds().Dx())
-	op = &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(c.MaxHealth+vars.BarMiddleH+endImgW, 0)
-	hud.DrawImage(fullBar, op)
+
+	text := fmt.Sprintf("x%.1fATK", 1+c.AttackMult)
+	w, _ := utils.TextSize(text, assets.TinyFont)
+	opBackground := &ebiten.DrawImageOptions{}
+	opBackground.GeoM.Scale(float64(w)+2, 1)
+	opBackground.GeoM.Concat(op.GeoM)
+	screen.DrawImage(fullAttackBarImage, opBackground)
+
+	op.GeoM.Translate(0, 1)
+	utils.DrawText(screen, text, assets.TinyFont, op)
 }
 
-func (c *Comp) headBarImage(current, max, lag float64, barColor color.Color) *ebiten.Image {
-	fullBar := ebiten.NewImage(vars.EnemyBarW, 1)
-	fullBar.Fill(emptyColor)
-
-	round := 0.5
-	filler := ebiten.NewImage(1, 1)
-	op := &ebiten.DrawImageOptions{}
-	if width := int((lag/max)*vars.EnemyBarW + round); width > 0 {
-		filler.Fill(lagColor)
-		op.GeoM.Scale(float64(width), 1)
-		fullBar.DrawImage(filler, op)
-	}
-
-	if width := int((current/max)*vars.EnemyBarW + round); width > 0 {
-		filler.Fill(barColor)
-		op.GeoM.Reset()
-		op.GeoM.Scale(float64(width), 1)
-		fullBar.DrawImage(filler, op)
-	}
-	op = &ebiten.DrawImageOptions{}
+func (c *Comp) drawHeadHealthBar(screen *ebiten.Image, entityPos ebiten.GeoM, current, max, lag float64) {
+	op := &ebiten.DrawImageOptions{GeoM: entityPos}
+	barW := float64(headBar.Bounds().Dx())
+	op.GeoM.Translate((c.entityW-barW)/2, -10)
+	screen.DrawImage(headBar, op)
 	op.GeoM.Translate(1, 1)
-	image := ebiten.NewImage(vars.EnemyBarW+2, vars.InnerBarH)
-	image.Fill(borderColor)
-	image.DrawImage(fullBar, op)
+	screen.DrawImage(headInnerBar, op)
 
-	return image
+	if width := math.Floor((lag / max) * vars.EnemyBarW); width > 0 {
+		opScaler := &ebiten.DrawImageOptions{}
+		opScaler.GeoM.Scale(width, 1)
+		opScaler.GeoM.Concat(op.GeoM)
+		screen.DrawImage(headLagBar, opScaler)
+	}
+
+	if width := math.Round((current / max) * vars.EnemyBarW); width > 0 {
+		opScaler := &ebiten.DrawImageOptions{}
+		opScaler.GeoM.Scale(width, 1)
+		opScaler.GeoM.Concat(op.GeoM)
+		screen.DrawImage(headFillerBar, opScaler)
+	}
 }
 
 func (c *Comp) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {

@@ -27,6 +27,7 @@ type Comp struct {
 	entity                     core.Entity
 	space                      *bump.Space
 	prevVx                     float64
+	coyoteTime                 float64
 }
 
 func (c *Comp) Init(entity core.Entity) {
@@ -60,6 +61,9 @@ func (c *Comp) Update(dt float64) {
 	noForceApplied := !c.Ground || c.prevVx == c.Vx
 	c.updateMovement(dt, noForceApplied)
 	c.prevVx = c.Vx
+	if c.coyoteTime -= dt; c.coyoteTime > 0 {
+		c.Ground = true
+	}
 }
 
 func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
@@ -79,9 +83,14 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	utils.DrawText(screen, fmt.Sprintf(`MAX:%v`, c.MaxX), assets.TinyFont, op)
 }
 
-func (c *Comp) DropThrough() bool {
+func (c *Comp) QueryFloor(tags ...bump.Tag) bool {
 	x, y, w, h := c.entity.Rect()
-	onPassThrough := len(c.space.Query(bump.NewRect(x, y+h, w, 1), nil, "passthrough")) > 0
+
+	return len(c.space.Query(bump.NewRect(x, y+h, w, 1), nil, tags...)) > 0
+}
+
+func (c *Comp) DropThrough() bool {
+	onPassThrough := c.QueryFloor("passthrough")
 	if onPassThrough {
 		c.droppingThrough = true
 	}
@@ -127,6 +136,12 @@ func (c *Comp) updateMovement(dt float64, noForceApplied bool) {
 			c.applyOverlapForce(col)
 		}
 		c.InsidePassThrough = c.InsidePassThrough || (c.space.Has(col.Other, "passthrough") && col.Overlaps)
+	}
+	if c.Ground {
+		c.coyoteTime = vars.CoyoteTimeSeconds
+		if c.QueryFloor("slope") {
+			c.Vy = c.MaxY / 4
+		}
 	}
 	if !c.InsidePassThrough {
 		c.droppingThrough = false

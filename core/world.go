@@ -54,18 +54,6 @@ func NewWorld(width, height float64) *World {
 }
 
 func (w *World) Add(entity Entity) Entity {
-	i, _ := slices.BinarySearchFunc(w.entities, entity, func(o, e Entity) int {
-		oz, ez := 0, 0
-		if s, ok := o.(Sortable); ok {
-			oz = s.Priority()
-		}
-		if s, ok := e.(Sortable); ok {
-			ez = s.Priority()
-		}
-
-		return oz - ez
-	})
-	w.entities = slices.Insert(w.entities, i, entity)
 	w.toInit = append(w.toInit, entity)
 
 	return entity
@@ -80,10 +68,7 @@ func (w *World) AddWithID(entity Entity, id uint) Entity {
 
 func (w *World) Update(dt float64) {
 	for _, entity := range w.toInit {
-		for _, c := range entity.Components() {
-			c.Init(entity)
-		}
-		entity.Init()
+		w.insertEntity(entity)
 	}
 	w.toInit = nil
 	dt *= w.Speed
@@ -176,3 +161,22 @@ func (w *World) RemoveAll() {
 }
 
 func (w *World) Freeze(time float64) { w.freezeTimer = time }
+
+func (w *World) insertEntity(entity Entity) {
+	for _, c := range entity.Components() {
+		c.Init(entity)
+	}
+	entity.Init()
+	i, _ := slices.BinarySearchFunc(w.entities, entity, func(o, e Entity) int {
+		oz, ez := 0, 0
+		if s, ok := o.(Sortable); ok {
+			oz = s.Priority()
+		}
+		if s, ok := e.(Sortable); ok {
+			ez = s.Priority()
+		}
+
+		return oz - ez
+	})
+	w.entities = slices.Insert(w.entities, i, entity)
+}

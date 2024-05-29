@@ -79,4 +79,5 @@ var (
 	GroundFriction, AirFriction = 8.0, 2.0 // TODO: Tune this variables. They might be too high.
 	CollisionStiffness          = 1.0
 	FrictionEpsilon             = 0.05
+	CoyoteTimeSeconds           = 0.1
 )

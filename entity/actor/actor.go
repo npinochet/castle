@@ -252,6 +252,9 @@ func (c *Control) ClimbOn(pressedDown bool) {
 			return
 		}
 	}
+	if !c.body.InsidePassThrough && !c.body.DropThrough() {
+		return
+	}
 	c.ShieldDown()
 	c.anim.SetState(vars.ClimbTag)
 	prevWeight := c.body.Weight

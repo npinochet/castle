@@ -120,6 +120,7 @@ func DrawText(img *ebiten.Image, txt string, face font.Face, op *ebiten.DrawImag
 	w, h := TextSize(txt, face)
 	op.GeoM.Translate(0, float64(h))
 	text.DrawWithOptions(img, txt, face, op)
+	op.GeoM.Translate(0, -float64(h))
 
 	return w, h
 }

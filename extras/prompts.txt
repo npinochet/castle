@@ -1,2 +1,14 @@
 knight, 8-bit pixel art, gameplay, side scroller, 4 colors, NES, dark souls, style of Castlevania 1986, clean
 4 colors 8-bit NES pixel art knight on a side scroller gameplay in the style of Castlevania 1986
+
+
+"King Arawn sits upon a throne of lies, a god in name, but a prisoner in truth. His kingdom eternal, his reign unending, his subjects forever cursed."
+"Here lies the First Death, a beacon of hope in a land where death is a dream. They say he escaped the curse, yet his tomb remains empty, a mystery for the faithful."
+"The Dreamer watches, an unseen puppet master pulling strings of fate. His barrier a cruel jest, his intentions a riddle lost to the ages."
+"Gold and death, both equally worthless here."
+"A king’s splendor, built on borrowed time. The Dreamer’s eye sees all, and eternity’s price is paid in echoes of stolen grace."
+"Leaves fall and bloom in the same breath, as years become whispers. The garden remembers what the world forgets."
+"Books whisper secrets that span eons in mere moments. Wisdom here is a river that drowns as it enlightens."
+"Laughter in the shadows, gold that glitters without gleam. In Ferragus' realm, despair stretches thin, and time coils upon itself."
+
+

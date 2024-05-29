@@ -18,7 +18,6 @@ import (
 
 - Clean up actor.ManageAnim and body.Vx code, make it sry with player and other Actors.
 - Sometimes the enemy can cut off the stagger animation somehow.
-- Cannot jump when going down slope, body.Ground is mostly false, this can be solved with coyote time.
 
 -- Dark Souls Combat Findings
 	- When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.
@@ -45,6 +44,7 @@ import (
 	- Deadly enemies
 	- Dread of loosing and urgency to get to the next checkpoint
 - Add item that restores your dropped loot, but spawns a high level enemy at the loot spot. To encourage taking other routes.
+- Make friction higher on ladders, do not keep too much momentum.
 
 - Today's TODO:
 - Demo MVP Steps:
@@ -64,7 +64,7 @@ func main() {
 	ebiten.SetWindowSize(vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale)
 	ebiten.SetWindowTitle("Castle")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-	ebiten.SetVsyncEnabled(false)
+	ebiten.SetVsyncEnabled(!vars.Debug)
 
 	// TODO: Prevent macOS from using Metal API and panic.
 	op := &ebiten.RunGameOptions{}
