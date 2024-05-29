@@ -44,7 +44,6 @@ import (
 	- Deadly enemies
 	- Dread of loosing and urgency to get to the next checkpoint
 - Add item that restores your dropped loot, but spawns a high level enemy at the loot spot. To encourage taking other routes.
-- Make friction higher on ladders, do not keep too much momentum.
 
 - Today's TODO:
 - Demo MVP Steps:

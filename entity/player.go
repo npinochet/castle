@@ -163,8 +163,15 @@ func (p *Player) inputClimbing(dt float64) {
 
 		return
 	}
-	p.body.Vy = 0
 	speed := p.speed * playerClimbSpeed * dt
+	p.body.Vx = 0
+	if vars.Pad.KeyDown(utils.KeyLeft) {
+		p.body.Vx = -speed
+	}
+	if vars.Pad.KeyDown(utils.KeyRight) {
+		p.body.Vx = speed
+	}
+	p.body.Vy = 0
 	if vars.Pad.KeyDown(utils.KeyUp) {
 		p.body.Vy = -speed
 	}

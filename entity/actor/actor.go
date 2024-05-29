@@ -252,7 +252,7 @@ func (c *Control) ClimbOn(pressedDown bool) {
 			return
 		}
 	}
-	if !c.body.InsidePassThrough && !c.body.DropThrough() {
+	if !c.body.InsidePassThrough {
 		return
 	}
 	c.ShieldDown()
