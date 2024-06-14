@@ -1,4 +1,4 @@
-package particle
+package entity
 
 import (
 	"game/assets"

@@ -17,7 +17,7 @@ const (
 	skelemanAnimFile                                     = "skeleman"
 	skelemanWidth, skelemanHeight                        = 8, 12
 	skelemanOffsetX, skelemanOffsetY, skelemanOffsetFlip = -12, -5, 20
-	skelemanSpeed, skelemanMaxSpeed                      = 100, 35
+	skelemanSpeed, skelemanMaxSpeed                      = 100, 60
 	skelemanHealth                                       = 110
 	skelemanDamage                                       = 18
 	skelemanExp                                          = 25

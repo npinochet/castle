@@ -7,15 +7,16 @@ import (
 	"game/comps/hitbox"
 	"game/comps/stats"
 	"game/core"
-	"game/entity/particle"
 	"game/libs/bump"
-	"game/utils"
 	"game/vars"
 	"image/color"
 	"log"
+	"slices"
 )
 
 const dieSeconds = 1
+
+var DieParticle func(core.Entity) core.Entity
 
 type Actor interface {
 	core.Entity
@@ -92,8 +93,7 @@ func (c *Control) Hurt(other core.Entity, damage, reactForce float64) {
 	c.body.Vx += force
 	if c.stats.Poise <= 0 || c.anim.State == vars.ConsumeTag {
 		force *= 2 * (damage / c.stats.MaxHealth)
-		c.anim.SetState(vars.StaggerTag)
-		c.body.Vx += force
+		c.Stagger(force, false, 1)
 	}
 
 	if c.ai != nil && c.ai.Target == nil {
@@ -116,19 +116,14 @@ func (c *Control) Block(other core.Entity, damage, reactForce float64, contactTy
 
 	c.body.Vx += force
 	if c.stats.Stamina < 0 {
-		c.ShieldDown()
-		c.anim.SetState(vars.StaggerTag)
-		prevPlaySpeed := c.anim.Data.PlaySpeed
-		c.anim.Data.PlaySpeed = 0.5 // double time stagger.
-		c.anim.SetExitCallback(func() { c.anim.Data.PlaySpeed = prevPlaySpeed }, nil)
 		force *= 2 * (damage / c.stats.MaxHealth)
-		c.body.Vx += force
+		c.Stagger(force, false, 2)
 	}
 }
 
 func (c *Control) Die(dt float64) {
 	c.paused = true
-	c.anim.SetState(vars.StaggerTag)
+	c.Stagger(0, false, 1)
 	if c.dieTimer -= dt; c.dieTimer > 0 {
 		alpha := uint8(50 + 205*float32(c.dieTimer)/dieSeconds)
 		c.anim.ColorScale = color.RGBA{alpha, alpha, alpha, alpha}
@@ -137,8 +132,10 @@ func (c *Control) Die(dt float64) {
 	}
 
 	vars.World.Remove(c.actor)
-	for i := 0; i < c.stats.Exp; i++ {
-		vars.World.Add(particle.NewFlake(c.actor)) // TODO: keep actor package isolated somehow, move Flake to entity package.
+	if DieParticle != nil {
+		for i := 0; i < c.stats.Exp; i++ {
+			vars.World.Add(DieParticle(c.actor))
+		}
 	}
 }
 
@@ -148,9 +145,13 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 		return
 	}
 	damage *= 1 + c.stats.AttackMult
+	c.ShieldDown()
 	c.anim.SetState(attackTag)
-	c.paused = true
-	c.anim.SetExitCallback(func() { c.paused = false }, nil)
+	c.anim.SetStateEffect(func() func() {
+		c.paused = true
+
+		return func() { c.paused = false }
+	})
 
 	var contactType hitbox.ContactType
 	var contacted []*hitbox.Comp
@@ -165,34 +166,22 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 			c.World.Freeze(0.1)
 			c.World.Camera.Shake(0.1, 1)
 		}*/
-		if contactType != hitbox.Hit {
-			blockForce := reactForce / 2
-			if !once {
-				blockForce *= 2
-			}
-			if c.anim.FlipX {
-				blockForce *= -1
-			}
-			c.body.Vx += blockForce
-			if contactType == hitbox.ParryBlock {
-				if c.stats.AddPoise(-damage); c.stats.Poise <= 0 {
-					c.anim.SetState(vars.StaggerTag)
-					force := reactForce
-					if c.anim.FlipX {
-						force *= -1
-					}
-					c.body.Vx += force * (damage / c.stats.MaxHealth)
-				}
+		if contactType == hitbox.ParryBlock {
+			if c.stats.AddPoise(-damage); c.stats.Poise <= 0 {
+				c.Stagger(reactForce*(damage/c.stats.MaxHealth), true, 1)
 			}
 		}
 		if !once {
 			once = true
 			c.stats.AddStamina(-staminaDamage)
 			force := pushForce
-			if c.anim.FlipX {
+			if contactType >= hitbox.Block {
+				force = reactForce
+			}
+			if (contactType >= hitbox.Block && c.anim.FlipX) || (contactType < hitbox.Block && !c.anim.FlipX) {
 				force *= -1
 			}
-			c.body.Vx -= force
+			c.body.Vx += force
 		}
 	})
 }
@@ -202,13 +191,13 @@ func (c *Control) ShieldUp() {
 		return
 	}
 	c.anim.SetState(vars.ParryBlockTag)
-	prevMaxX, prevStaminaRecoverRate := c.body.MaxX, c.stats.StaminaRecoverRate
-	c.body.MaxX /= 2
-	c.stats.StaminaRecoverRate /= 3
-	c.anim.SetExitCallback(func() {
-		c.body.MaxX = prevMaxX
-		c.stats.StaminaRecoverRate = prevStaminaRecoverRate
-	}, func() bool { return !c.BlockingState() })
+	c.anim.SetStateEffect(func() func() {
+		prevMaxX, prevStaminaRecoverRate := c.body.MaxX, c.stats.StaminaRecoverRate
+		c.body.MaxX /= 2
+		c.stats.StaminaRecoverRate /= 3
+
+		return func() { c.body.MaxX, c.stats.StaminaRecoverRate = prevMaxX, prevStaminaRecoverRate }
+	}, vars.ParryBlockTag, vars.BlockTag)
 	blockSlice, err := c.anim.FrameSlice(vars.BlockSliceName)
 	if err != nil {
 		panic(err)
@@ -231,7 +220,7 @@ func (c *Control) ShieldDown() {
 }
 
 func (c *Control) PausingState() bool {
-	return c.paused || utils.Contains([]string{vars.StaggerTag, vars.ConsumeTag}, c.anim.State)
+	return c.paused || slices.Contains([]string{vars.StaggerTag, vars.ConsumeTag}, c.anim.State)
 }
 
 func (c *Control) BlockingState() bool {
@@ -257,9 +246,29 @@ func (c *Control) ClimbOn(pressedDown bool) {
 	}
 	c.ShieldDown()
 	c.anim.SetState(vars.ClimbTag)
-	prevWeight := c.body.Weight
-	c.body.Weight = 0
-	c.anim.SetExitCallback(func() { c.body.Weight = prevWeight }, nil)
+	c.anim.SetStateEffect(func() func() {
+		prevWeight := c.body.Weight
+		c.body.Weight = 0
+
+		return func() { c.body.Weight = prevWeight }
+	})
+}
+
+func (c *Control) Stagger(force float64, moveBack bool, timeMult float64) {
+	c.ShieldDown()
+	c.anim.SetState(vars.StaggerTag)
+	if timeMult != 1 {
+		c.anim.SetStateEffect(func() func() {
+			prevPlaySpeed := c.anim.Data.PlaySpeed
+			c.anim.Data.PlaySpeed = float32(1.0 / timeMult)
+
+			return func() { c.anim.Data.PlaySpeed = prevPlaySpeed }
+		})
+	}
+	if moveBack && c.anim.FlipX {
+		force *= -1
+	}
+	c.body.Vx += force
 }
 
 func (c *Control) ClimbOff() {
@@ -273,11 +282,13 @@ func (c *Control) Heal(effectFrame int) {
 	if c.PausingState() || c.stats.Heal <= 0 || !c.body.Ground {
 		return
 	}
+	c.ShieldDown()
 	c.anim.SetState(vars.ConsumeTag)
-	prevMaxX := c.body.MaxX
-	c.body.MaxX /= 3
-	c.anim.SetExitCallback(func() { c.body.MaxX = prevMaxX }, nil)
-	c.anim.OnFrame(effectFrame, func() { // TODO: Can be replaced with OnSlicePresent.
-		c.stats.AddHeal(-1)
+	c.anim.SetStateEffect(func() func() {
+		prevMaxX := c.body.MaxX
+		c.body.MaxX /= 3
+
+		return func() { c.body.MaxX = prevMaxX }
 	})
+	c.anim.OnFrame(effectFrame, func() { c.stats.AddHeal(-1) }) // TODO: Can be replaced with OnSlicePresent.
 }

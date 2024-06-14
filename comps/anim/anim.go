@@ -10,6 +10,7 @@ import (
 	"image/color"
 	"log"
 	"math"
+	"slices"
 
 	"github.com/damienfamed75/aseprite"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -25,9 +26,9 @@ type Fsm struct {
 
 type SliceCallback func(slice bump.Rect, segmented bool)
 
-type stateExitCallback struct {
-	exited   func() bool
-	callback func()
+type stateEffect struct {
+	restore func()
+	states  []string
 }
 
 type Comp struct {
@@ -43,7 +44,7 @@ type Comp struct {
 	Data           *aseprite.File
 	w, h           float64
 	slices         map[string]map[int]bump.Rect
-	exitCallback   *stateExitCallback
+	stateEffect    *stateEffect
 	sliceCallback  func()
 	frameCallbacks map[int]func()
 }
@@ -83,11 +84,13 @@ func (c *Comp) SetState(state string) {
 	}
 	c.State = state
 	if err := c.Data.Play(state); err != nil {
-		log.Panicf("anim: %s", err)
+		log.Printf("anim: %s", err)
+
+		return
 	}
-	if c.exitCallback != nil && c.exitCallback.exited() {
-		c.exitCallback.callback()
-		c.exitCallback = nil
+	if c.stateEffect != nil && !slices.Contains(c.stateEffect.states, c.State) {
+		c.stateEffect.restore()
+		c.stateEffect = nil
 	}
 	c.sliceCallback = nil
 	c.frameCallbacks = map[int]func(){}
@@ -178,12 +181,11 @@ func (c *Comp) FrameSlice(sliceName string) (bump.Rect, error) {
 	return rect, nil
 }
 
-func (c *Comp) SetExitCallback(callback func(), exited func() bool) {
-	if exited == nil {
-		currentState := c.State
-		exited = func() bool { return currentState != c.State }
+func (c *Comp) SetStateEffect(applyAndGetRestore func() func(), forStates ...string) {
+	if c.stateEffect != nil {
+		c.stateEffect.restore()
 	}
-	c.exitCallback = &stateExitCallback{exited, callback}
+	c.stateEffect = &stateEffect{applyAndGetRestore(), forStates}
 }
 
 func (c *Comp) allocateSlices() {

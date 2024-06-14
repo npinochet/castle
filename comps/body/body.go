@@ -9,6 +9,7 @@ import (
 	"game/vars"
 	"image/color"
 	"math"
+	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -159,7 +160,7 @@ func (c *Comp) applyOverlapForce(col *bump.Collision) {
 func (c *Comp) bodyFilter() func(bump.Item, bump.Item) (bump.ColType, bool) {
 	return func(item, other bump.Item) (bump.ColType, bool) {
 		if entity, ok := other.(core.Entity); ok {
-			if utils.Contains(c.FilterOut, entity) {
+			if slices.Contains(c.FilterOut, entity) {
 				return 0, false
 			}
 			if c.space.Has(entity, "solid") {

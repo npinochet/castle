@@ -2,6 +2,7 @@ package game
 
 import (
 	"encoding/json"
+	"errors"
 	"game/comps/stats"
 	"game/core"
 	"game/entity"
@@ -10,6 +11,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"syscall"
 )
 
 const (
@@ -62,27 +64,28 @@ func Save() error {
 	if saveDataCache, err = json.MarshalIndent(saveData, "", "	"); err != nil {
 		return err
 	}
+	if !Persistent {
+		return nil
+	}
 
-	if Persistent {
-		saveFile, err := os.OpenFile(SavePath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, fileMode) //nolint: nosnakecase
-		if err != nil {
-			return err
-		}
-		defer saveFile.Close()
+	saveFile, err := os.OpenFile(SavePath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, fileMode) //nolint: nosnakecase
+	if err != nil {
+		return err
+	}
+	defer saveFile.Close()
 
-		if _, err := saveFile.Write(saveDataCache); err != nil {
-			return err
-		}
+	if _, err := saveFile.Write(saveDataCache); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func LoadSave() (*SaveData, error) {
-	if Persistent || len(saveDataCache) == 0 {
+	if len(saveDataCache) == 0 {
 		saveFile, err := os.Open(SavePath)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if os.IsNotExist(err) || (!Persistent && errors.Is(err, syscall.ENOSYS)) {
 				return NewSaveData(), nil
 			}
 

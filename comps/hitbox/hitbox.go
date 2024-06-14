@@ -3,9 +3,9 @@ package hitbox
 import (
 	"game/core"
 	"game/libs/bump"
-	"game/utils"
 	"game/vars"
 	"image/color"
+	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/lafriks/go-tiled"
@@ -126,7 +126,7 @@ func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) 
 	doesHit := map[*Comp]contactInfo{}
 	for _, col := range cols {
 		if other, ok := col.Other.(*Hitbox); ok { //nolint: nestif
-			if utils.Contains(filterOut, other.comp) {
+			if slices.Contains(filterOut, other.comp) {
 				continue
 			}
 			contacted = append(contacted, other.comp)

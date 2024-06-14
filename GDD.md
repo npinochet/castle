@@ -307,7 +307,7 @@ Level design steps [How to Design Great Metroidvania Levels | Game Design](https
 - Add a quick step/dodge mechanic where you can approach or flee the enemy. Enemies can do this too, so you have to be focused and block or dodge incoming quick step attacks.
 - Make a tall enemy that can't be jumped over
 - Find a way to make enemies follow you and really overwhelm and bother you when you pass them through
-  - For example in dark souls you can't really run through enemies some times, because they can stop you in narrow doors or geometry and overwhelm you
+  - For example in dark souls you can't really run through enemies some times, because they can stop you in narrow halllways or geometry and overwhelm you
 - Polish combat? Rethink combat, maybe change the animations a bit, make them faster?
   - Rethink anticipation frames
 - Have stakes
@@ -322,3 +322,15 @@ In MDA context, Dynamics:
 
 - Positioning: The player must position themselves correctly in relation to the enemy to avoid attacks and exploit weaknesses.
 - Adaptation: The player must adapt to each enemy's attack patterns, weaknesses, and strengths to overcome them.
+
+#### Dark Souls Combat Findings
+
+- When guard breaks while guarding (stamina < 0) the stagger animation is longer than poise break.
+- Poise break are really small, just to interrupt animation.
+- When using a big shield (stability high) and guarding, an enemy attack can be deflect.
+- When blocking an attack, a little stagger animation is played.
+- Stagger animation can be reset if hit again.
+  - Only the player can be stun locked. -> poise is reset only after stagger animation finishes.
+- No invinsibility frames after getting hit.
+  - Each enemy can hit the player after being in contact with the hitbox once.
+  - If the hitbox gets away from the player hurtbox in one frame and then it overlaps again on the next frame, it should hit again.

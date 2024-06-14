@@ -11,6 +11,7 @@ import (
 	"game/comps/stats"
 	"game/core"
 	"game/entity"
+	"game/entity/actor"
 	"game/maps"
 	"game/utils"
 	"game/vars"
@@ -49,6 +50,7 @@ func toEntityContructor[T core.Entity](contructor func(float64, float64, float64
 }
 
 func Load() {
+	actor.DieParticle = func(e core.Entity) core.Entity { return entity.NewFlake(e) }
 	worldMap := core.NewMap("intro/intro.tmx", "foreground", "background", maps.IntroFS)
 	vars.World = core.NewWorld(float64(vars.ScreenWidth), float64(vars.ScreenHeight))
 	vars.World.SetMap(worldMap, "rooms")

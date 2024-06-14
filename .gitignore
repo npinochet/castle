@@ -4,7 +4,11 @@
 *.dll
 *.so
 *.dylib
+*.wasm
 tmp/
+
+main
+castle
 
 # Test binary, built with `go test -c`
 *.test
@@ -18,5 +22,5 @@ tmp/
 # MacOS
 .DS_Store
 
-# Save
+# Save data
 save.json

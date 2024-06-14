@@ -200,29 +200,32 @@ func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter, tags ...
 	if filter == nil {
 		filter = DefaultResponseFilter
 	}
-
-	var cols []*Collision
 	s.mutex.Lock()
-
 	var items []Item
 	for _, cell := range cellCoords(CellSize, rect) {
-		for item := range s.cells[cell] {
-			items = append(items, item)
+		for other := range s.cells[cell] {
+			if item == other {
+				continue
+			}
+			if len(tags) == 0 {
+				items = append(items, other)
+
+				continue
+			}
+			for _, tag := range tags {
+				if s.tags[other][tag] {
+					items = append(items, other)
+
+					break
+				}
+			}
 		}
 	}
 	slices.SortFunc(items, func(a, b Item) int { return s.rects[b].Priority - s.rects[a].Priority })
-	tagged := map[Item]bool{}
-	for _, other := range items {
-		for _, tag := range tags {
-			tagged[other] = tagged[other] || s.tags[other][tag]
-		}
-	}
 	s.mutex.Unlock()
 
+	var cols []*Collision
 	for _, other := range items {
-		if other == item || (len(tags) > 0 && !tagged[other]) {
-			continue
-		}
 		if responseName, ok := filter(item, other); ok {
 			otherRect := s.Rect(other)
 			if col, ok := detectCollision(rect, otherRect, goal); ok {
@@ -263,7 +266,7 @@ func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (i1, i2 float64, normal Vec
 	for i := 0; i < 4; i++ {
 		if p[i] == 0 {
 			if q[i] <= 0 {
-				return
+				return i1, i2, normal, ok
 			}
 
 			continue
@@ -271,7 +274,7 @@ func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (i1, i2 float64, normal Vec
 		r := q[i] / p[i]
 		if p[i] < 0 {
 			if r > i2 {
-				return
+				return i1, i2, normal, ok
 			} else if r > i1 {
 				i1 = r
 				normal = Vec2{nx[i], ny[i]}
@@ -280,7 +283,7 @@ func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (i1, i2 float64, normal Vec
 			continue
 		}
 		if r < i1 {
-			return
+			return i1, i2, normal, ok
 		} else if r < i2 {
 			i2 = r
 		}

@@ -5,7 +5,6 @@ import (
 	"game/comps/hitbox"
 	"game/comps/render"
 	"game/core"
-	"game/entity/particle"
 	"game/libs/bump"
 	"game/vars"
 	"image"
@@ -81,7 +80,7 @@ func (c *Chest) Open(reward bool) {
 		c.render.Image = chestOpenImage
 		c.render.Y = 0
 		for i := 0; i < c.reward; i++ {
-			vars.World.Add(particle.NewFlake(c))
+			vars.World.Add(NewFlake(c))
 		}
 	})
 }
