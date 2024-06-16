@@ -71,11 +71,11 @@ func (c *Crawler) Update(dt float64) {
 // nolint: nolintlint, gomnd
 func (c *Crawler) aiScript(view *bump.Rect) {
 	c.ai.Add(0, actor.IdleAction(c.Control, view))
-	c.ai.Add(0, actor.ApproachAction(c.Control, crawlerSpeed, vars.DefaultMaxX))
+	c.ai.Add(0, actor.ApproachAction(c.Control, crawlerSpeed, vars.DefaultMaxX, 0))
 
 	ai.Choices{
 		{1, func() { c.ai.Add(5, actor.AttackAction(c.Control, "Attack", crawlerDamage)) }},
 		{1, func() { c.ai.Add(1.5, actor.BackUpAction(c.Control, crawlerSpeed, 0)) }},
-		{1, func() { c.ai.Add(1, actor.WaitAction()) }},
+		{1, func() { c.ai.Add(0.6, actor.WaitAction()) }},
 	}.Play()
 }

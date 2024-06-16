@@ -125,7 +125,7 @@ func (k *Knight) aiScript(view *bump.Rect) {
 	}
 	k.ai.Add(0, actor.IdleAction(k.Control, view))
 	k.ai.Add(1, actor.EntryAction(func() { k.gates.Close() }))
-	k.ai.Add(0, actor.ApproachAction(k.Control, speed, maxSpeed))
+	k.ai.Add(0, actor.ApproachAction(k.Control, speed, maxSpeed, 0))
 	k.ai.Add(0.1, actor.WaitAction())
 
 	choices := ai.Choices{

@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	minTargetRange = 20.0
-	maxTargetRange = 30.0
-	frontViewDist  = 60.0
+	ApproachMinTargetRange = 20.0
+	maxTargetRange         = 30.0
+	frontViewDist          = 60.0
 
 	reactForce = 10.0
 	pushForce  = 10.0
@@ -115,7 +115,7 @@ func ShieldBackUpAction(a *Control, speed, maxSpeed float64) *ai.Action {
 	}
 }
 
-func ApproachAction(a *Control, speed, maxSpeed float64) *ai.Action {
+func ApproachAction(a *Control, speed, maxSpeed, rangeAdjustment float64) *ai.Action {
 	currentMaxSpeed := a.body.MaxX
 
 	return &ai.Action{
@@ -123,7 +123,7 @@ func ApproachAction(a *Control, speed, maxSpeed float64) *ai.Action {
 		Entry: func() { a.body.MaxX = maxSpeed },
 		Exit:  func() { a.body.MaxX = currentMaxSpeed },
 		Next: func(dt float64) bool {
-			if a.ai.Target == nil || a.ai.InTargetRange(0, minTargetRange) {
+			if a.ai.Target == nil || a.ai.InTargetRange(0, ApproachMinTargetRange+rangeAdjustment) {
 				return true
 			}
 			if !a.ai.InTargetRange(0, maxTargetRange) {

@@ -9,7 +9,6 @@ import (
 	"game/core"
 	"game/entity/actor"
 	"game/libs/bump"
-	"game/vars"
 	"time"
 )
 
@@ -17,7 +16,7 @@ const (
 	skelemanAnimFile                                     = "skeleman"
 	skelemanWidth, skelemanHeight                        = 8, 12
 	skelemanOffsetX, skelemanOffsetY, skelemanOffsetFlip = -12, -5, 20
-	skelemanSpeed, skelemanMaxSpeed                      = 100, 60
+	skelemanSpeed, skelemanMaxSpeed                      = 100, 50
 	skelemanHealth                                       = 110
 	skelemanDamage                                       = 18
 	skelemanExp                                          = 25
@@ -103,7 +102,7 @@ func (s *Skeleman) jumpAttackAction() *ai.Action {
 // nolint: nolintlint, gomnd
 func (s *Skeleman) aiScript(view *bump.Rect) {
 	s.ai.Add(0, actor.IdleAction(s.Control, view))
-	s.ai.Add(0, actor.ApproachAction(s.Control, skelemanSpeed, vars.DefaultMaxX))
+	s.ai.Add(0, actor.ApproachAction(s.Control, skelemanSpeed, skelemanMaxSpeed, 0))
 	s.ai.Add(0.1, actor.WaitAction())
 
 	ai.Choices{
@@ -111,6 +110,6 @@ func (s *Skeleman) aiScript(view *bump.Rect) {
 		{2, func() { s.ai.Add(5, actor.AttackAction(s.Control, "AttackLong", skelemanDamage)) }},
 		{1, func() { s.ai.Add(10, s.jumpAttackAction()) }},
 		{0.5, func() { s.ai.Add(1, actor.BackUpAction(s.Control, skelemanSpeed, 0)) }},
-		{1, func() { s.ai.Add(1, actor.WaitAction()) }},
+		{1, func() { s.ai.Add(0.8, actor.WaitAction()) }},
 	}.Play()
 }

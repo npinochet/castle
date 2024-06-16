@@ -29,6 +29,7 @@ const (
 	HurtboxSliceName = "hurtbox"
 	HitboxSliceName  = "hitbox"
 	BlockSliceName   = "blockbox"
+	HealSliceName    = "healbox"
 
 	// Actor.
 	DefaultAttackPushForce                    = 100
@@ -42,7 +43,7 @@ const (
 	DefaultHeal           = 3
 	DefaultHealAmount     = 20
 	AttackMultPerHeal     = 0.2
-	DefaultRecoverRate    = 30
+	DefaultRecoverRate    = 26
 	DefaultRecoverSeconds = 3
 
 	// HUD consts.

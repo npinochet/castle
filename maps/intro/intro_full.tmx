@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="8" tileheight="8" infinite="0" backgroundcolor="#323c39" nextlayerid="8" nextobjectid="461">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="8" tileheight="8" infinite="0" backgroundcolor="#323c39" nextlayerid="8" nextobjectid="462">
  <editorsettings>
   <chunksize width="8" height="8"/>
  </editorsettings>
@@ -1283,8 +1283,8 @@
   <object id="449" type="ladder" x="2624" y="472" width="16" height="192"/>
  </objectgroup>
  <objectgroup color="#4fa63b" id="4" name="entities">
-  <object id="11" name="Player" gid="26" x="1984" y="336" width="8" height="8"/>
-  <object id="12" name="Knight" gid="27" x="1952" y="2040" width="8" height="8"/>
+  <object id="11" name="Player" gid="26" x="1864" y="2040" width="8" height="8"/>
+  <object id="12" name="Knight" gid="27" x="2064" y="1984" width="8" height="8"/>
   <object id="27" name="GhoulWithRocks" gid="2147483676" x="2008" y="2384" width="8" height="8">
    <properties>
     <property name="ai" value="poacher"/>
@@ -1293,7 +1293,7 @@
    </properties>
   </object>
   <object id="33" name="Bonfire" x="2072" y="2328" width="8" height="8"/>
-  <object id="83" name="Ghoul" gid="28" x="2064" y="2016" width="8" height="8"/>
+  <object id="83" name="Ghoul" gid="28" x="2040" y="2016" width="8" height="8"/>
   <object id="84" name="Ghoul" gid="2147483676" x="2120" y="2424" width="8" height="8">
    <properties>
     <property name="rocks" type="int" value="1"/>
@@ -1450,9 +1450,10 @@
     <property name="open" type="bool" value="false"/>
    </properties>
   </object>
+  <object id="461" name="Skeleman" gid="29" x="1936" y="2040" width="8" height="8"/>
  </objectgroup>
  <objectgroup color="#fffb00" id="5" name="rooms" visible="0" locked="1">
-  <object id="3" x="1792" y="1992" width="160" height="96"/>
+  <object id="3" x="1792" y="1968" width="160" height="96"/>
   <object id="13" x="1952" y="1960" width="208" height="128"/>
   <object id="28" x="1784" y="2168" width="160" height="96"/>
   <object id="29" x="1944" y="2168" width="160" height="96"/>
@@ -1497,7 +1498,7 @@
   <object id="319" x="2240" y="384" width="160" height="96"/>
   <object id="320" x="2400" y="384" width="160" height="96"/>
  </objectgroup>
- <objectgroup color="#cc2fe0" id="7" name="views">
+ <objectgroup color="#cc2fe0" id="7" name="views" locked="1">
   <object id="88" x="2056" y="2416" width="56" height="32"/>
   <object id="89" x="2128" y="2416" width="40" height="32"/>
   <object id="184" x="1536" y="2528" width="24" height="24"/>

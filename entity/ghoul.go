@@ -11,15 +11,16 @@ import (
 	"game/libs/bump"
 	"game/vars"
 	"strconv"
+	"time"
 )
 
 const (
 	ghoulAnimFile                               = "ghoul"
 	ghoulWidth, ghoulHeight                     = 9, 13
 	ghoulOffsetX, ghoulOffsetY, ghoulOffsetFlip = -6.5, -4, 14
-	ghoulSpeed, ghoulMaxSpeed                   = 100, 30
+	ghoulSpeed, ghoulMaxSpeed                   = 100, 45
 	ghoulHealth                                 = 70
-	ghoulDamage                                 = 18
+	ghoulDamage, ghoulPoise                     = 18, 21
 	ghoulExp                                    = 20
 	ghoulThrowFrame                             = 2
 )
@@ -42,7 +43,7 @@ func NewGhoul(x, y, _, _ float64, props *core.Properties) *Ghoul {
 		anim:       &anim.Comp{FilesName: ghoulAnimFile, OX: ghoulOffsetX, OY: ghoulOffsetY, OXFlip: ghoulOffsetFlip, FlipX: props.FlipX},
 		body:       &body.Comp{MaxX: ghoulMaxSpeed},
 		hitbox:     &hitbox.Comp{},
-		stats:      &stats.Comp{MaxPoise: ghoulDamage, MaxHealth: ghoulHealth, Exp: ghoulExp},
+		stats:      &stats.Comp{MaxPoise: ghoulPoise, MaxHealth: ghoulHealth, Exp: ghoulExp},
 		ai:         &ai.Comp{},
 		rocks:      rocks,
 	}
@@ -63,9 +64,7 @@ func (g *Ghoul) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, 
 	return g.anim, g.body, g.hitbox, g.stats, g.ai
 }
 
-func (g *Ghoul) Update(dt float64) {
-	g.SimpleUpdate(dt)
-}
+func (g *Ghoul) Update(dt float64) { g.SimpleUpdate(dt) }
 
 func (g *Ghoul) ThrowRock() {
 	tag := "Throw"
@@ -79,6 +78,37 @@ func (g *Ghoul) ThrowRock() {
 	})
 }
 
+func (g *Ghoul) jumpAttackAction() *ai.Action {
+	speed := float64(skelemanSpeed)
+
+	return &ai.Action{
+		Name: "JumpAttack",
+		Entry: func() {
+			if g.PausingState() {
+				return
+			}
+			g.body.MaxX = ghoulMaxSpeed * 2
+			time.AfterFunc(1*time.Millisecond, func() { g.Control.Attack("AttackShort", skelemanDamage, 0, 10, 10) })
+			g.body.Vy = -skelemanSpeed / 2
+			g.body.Ground = false
+			if g.anim.FlipX {
+				g.body.Vx += ghoulMaxSpeed * 2
+			} else {
+				g.body.Vx -= ghoulMaxSpeed * 2
+				speed *= -1
+			}
+		},
+		Next: func(dt float64) bool {
+			if !g.PausingState() {
+				g.body.Vx += speed * dt
+			}
+
+			return g.body.Ground && g.anim.State != "AttackShort"
+		},
+		Exit: func() { g.body.MaxX = ghoulMaxSpeed },
+	}
+}
+
 // nolint: nolintlint, gomnd
 func (g *Ghoul) aiScript(view *bump.Rect, poacher bool) {
 	g.ai.Add(0, actor.IdleAction(g.Control, view))
@@ -88,13 +118,22 @@ func (g *Ghoul) aiScript(view *bump.Rect, poacher bool) {
 
 		return
 	}
-	g.ai.Add(0, actor.ApproachAction(g.Control, ghoulSpeed, vars.DefaultMaxX))
-	g.ai.Add(0.1, actor.WaitAction())
-
 	ai.Choices{
-		{2, func() { g.ai.Add(5, actor.AttackAction(g.Control, "AttackShort", ghoulDamage)) }},
-		{2, func() { g.ai.Add(5, actor.AttackAction(g.Control, "AttackLong", ghoulDamage)) }},
-		{0.5, func() { g.ai.Add(1, actor.BackUpAction(g.Control, ghoulSpeed, 0)) }},
-		{1, func() { g.ai.Add(1, actor.WaitAction()) }},
+		{0.2, func() {
+			g.ai.Add(0, actor.ApproachAction(g.Control, ghoulSpeed, ghoulMaxSpeed, 10))
+			g.ai.Add(0.1, actor.WaitAction())
+			g.ai.Add(5, g.jumpAttackAction())
+			g.ai.Add(0.2, actor.WaitAction())
+		}},
+		{1, func() {
+			g.ai.Add(0, actor.ApproachAction(g.Control, ghoulSpeed, ghoulMaxSpeed, 0))
+			g.ai.Add(0.1, actor.WaitAction())
+			ai.Choices{
+				{2, func() { g.ai.Add(5, actor.AttackAction(g.Control, "AttackShort", ghoulDamage)) }},
+				{2, func() { g.ai.Add(5, actor.AttackAction(g.Control, "AttackLong", ghoulDamage)) }},
+				{0.5, func() { g.ai.Add(1, actor.BackUpAction(g.Control, ghoulSpeed, 0)) }},
+				{1, func() { g.ai.Add(0.1, actor.WaitAction()) }},
+			}.Play()
+		}},
 	}.Play()
 }

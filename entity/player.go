@@ -22,9 +22,9 @@ import (
 const (
 	tileSize = 8
 
-	playerMaxX, playerSpeed, playerJumpSpeed, playerClimbSpeed = 60, 350, 110, 5
+	playerMaxX, playerSpeed, playerJumpSpeed, playerClimbSpeed = 55, 350, 110, 5
 	playerDamage, playerPoise                                  = 20, 16
-	playerHealFrame                                            = 3
+	jumpingStamina                                             = 30
 
 	keyBufferDuration = 500 * time.Millisecond
 )
@@ -47,7 +47,7 @@ func NewPlayer(x, y float64) *Player {
 		anim:       &anim.Comp{FilesName: knightAnimFile, OX: knightOffsetX, OY: knightOffsetY, OXFlip: knightOffsetFlip},
 		body:       &body.Comp{MaxX: playerMaxX},
 		hitbox:     &hitbox.Comp{},
-		stats:      &stats.Comp{Hud: true, NoDebug: true, MaxStamina: 80, MaxPoise: playerPoise},
+		stats:      &stats.Comp{Hud: true, NoDebug: true, MaxStamina: 65, MaxPoise: playerPoise},
 
 		attackPushForce: vars.DefaultAttackPushForce,
 		reactForce:      vars.DefaultReactForce,
@@ -105,7 +105,7 @@ func (p *Player) input(dt float64) {
 		p.Attack(vars.AttackTag, playerDamage, playerDamage, p.reactForce, p.attackPushForce)
 	}
 	if healPressed() {
-		p.Heal(playerHealFrame)
+		p.Heal()
 	}
 	if dashPressed() {
 		speed := p.body.MaxX * 4
@@ -123,15 +123,19 @@ func (p *Player) input(dt float64) {
 	p.inputClimbing(dt)
 
 	flip := p.anim.FlipX
+	speed := p.speed
+	if !p.body.Ground {
+		speed /= 2
+	}
 	if vars.Pad.KeyDown(utils.KeyLeft) {
 		if math.Abs(p.body.Vx) <= p.body.MaxX {
-			p.body.Vx -= p.speed * dt
+			p.body.Vx -= speed * dt
 		}
 		flip = false
 	}
 	if vars.Pad.KeyDown(utils.KeyRight) {
 		if math.Abs(p.body.Vx) <= p.body.MaxX {
-			p.body.Vx += p.speed * dt
+			p.body.Vx += speed * dt
 		}
 		flip = true
 	}
@@ -141,6 +145,7 @@ func (p *Player) input(dt float64) {
 	}
 	if vars.Pad.KeyPressed(utils.KeyJump) && p.CanJump() {
 		p.ClimbOff()
+		p.stats.AddStamina(-jumpingStamina)
 		p.body.Vy = -p.jumpSpeed
 	}
 

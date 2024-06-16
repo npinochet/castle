@@ -6,7 +6,6 @@ import (
 	"game/core"
 	"game/libs/bump"
 	"game/utils"
-	"game/vars"
 	"image/color"
 	"log"
 	"math"
@@ -140,6 +139,11 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 }
 
 func (c *Comp) OnSlicePresent(sliceName string, callback SliceCallback) {
+	if callback == nil {
+		c.sliceCallback = nil
+
+		return
+	}
 	newSlice := true
 	c.sliceCallback = func() {
 		slice, err := c.FrameSlice(sliceName)
@@ -191,18 +195,13 @@ func (c *Comp) SetStateEffect(applyAndGetRestore func() func(), forStates ...str
 func (c *Comp) allocateSlices() {
 	c.slices = map[string]map[int]bump.Rect{}
 
-	for _, sliceName := range []string{vars.HurtboxSliceName, vars.HitboxSliceName, vars.BlockSliceName} {
-		slices := c.Data.Slice(sliceName)
-		if slices == nil {
-			continue
-		}
-
-		c.slices[sliceName] = map[int]bump.Rect{}
-		for _, key := range slices.Keys {
+	for _, slice := range c.Data.Meta.Slices {
+		c.slices[slice.Name] = map[int]bump.Rect{}
+		for _, key := range slice.Keys {
 			sss := c.Data.Frames.FrameAtIndex(key.FrameNum).SpriteSourceSize
 
 			bound := key.Bounds
-			c.slices[sliceName][key.FrameNum] = bump.Rect{
+			c.slices[slice.Name][key.FrameNum] = bump.Rect{
 				X: float64(bound.X) - float64(sss.X), Y: float64(bound.Y) - float64(sss.Y),
 				W: float64(bound.Width), H: float64(bound.Height),
 			}

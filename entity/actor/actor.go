@@ -12,6 +12,7 @@ import (
 	"image/color"
 	"log"
 	"slices"
+	"strings"
 )
 
 const dieSeconds = 1
@@ -145,6 +146,10 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 		return
 	}
 	damage *= 1 + c.stats.AttackMult
+	if strings.HasPrefix(c.anim.State, attackTag) && c.anim.Data.Animation(c.anim.State+"C") != nil {
+		attackTag = c.anim.State + "C"
+	}
+
 	c.ShieldDown()
 	c.anim.SetState(attackTag)
 	c.anim.SetStateEffect(func() func() {
@@ -152,6 +157,11 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 
 		return func() { c.paused = false }
 	})
+
+	if c.anim.Data.Animation(attackTag+"C") != nil {
+		lastFrame := c.anim.Data.CurrentAnimation.To - c.anim.Data.CurrentAnimation.From
+		c.anim.OnFrame(lastFrame, func() { c.paused = false })
+	}
 
 	var contactType hitbox.ContactType
 	var contacted []*hitbox.Comp
@@ -228,8 +238,7 @@ func (c *Control) BlockingState() bool {
 }
 
 func (c *Control) CanJump() bool {
-	return (c.anim.State == vars.ClimbTag || c.body.Ground) &&
-		!c.BlockingState() && c.anim.State != vars.ConsumeTag
+	return c.stats.Stamina > 0 && (c.anim.State == vars.ClimbTag || c.body.Ground) && !c.BlockingState() && c.anim.State != vars.ConsumeTag
 }
 
 func (c *Control) ClimbOn(pressedDown bool) {
@@ -278,7 +287,7 @@ func (c *Control) ClimbOff() {
 	c.anim.SetState(vars.IdleTag)
 }
 
-func (c *Control) Heal(effectFrame int) {
+func (c *Control) Heal() {
 	if c.PausingState() || c.stats.Heal <= 0 || !c.body.Ground {
 		return
 	}
@@ -290,5 +299,10 @@ func (c *Control) Heal(effectFrame int) {
 
 		return func() { c.body.MaxX = prevMaxX }
 	})
-	c.anim.OnFrame(effectFrame, func() { c.stats.AddHeal(-1) }) // TODO: Can be replaced with OnSlicePresent.
+	c.anim.OnSlicePresent(vars.HealSliceName, func(_ bump.Rect, segmented bool) {
+		if segmented {
+			c.stats.AddHeal(-1)
+		}
+	})
+	c.anim.OnFrame(3, func() { c.stats.AddHeal(-1) }) // TODO: Add "healbox" slice to player anim file and delete this line
 }

@@ -19,35 +19,34 @@ import (
 - Clean up actor.ManageAnim and body.Vx code, make it dry with player and other Actors.
 - Add enemy that can only be hit from behind.
 - Add enemy that jumps around.
-- Experiment with partial blocking (a block does not negate all damage) and a system where you can attack back for a short period and gain the lost health
+- Experiment with partial blocking (a block does not negate all damage)
+	and a system where you can attack back for a short period and gain the lost health
 - Experiment hiding the enemy health bar, even for bosses.
-- Experiment with shaders, change background to be more dark (maybe gradient, from blue to black?), maybe keep background color for a paralax layer details background.
+- Experiment with shaders, change background to be more dark (maybe gradient, from blue to black?),
+	maybe keep background color for a paralax layer details background.
 - Lograr 2 cosas:
 	- Deadly enemies
 	- Dread of loosing and urgency to get to the next checkpoint
-- Add item that restores your dropped loot, but spawns a high level enemy at the loot spot. To encourage taking other routes.
+- Add item that restores your dropped loot, but spawns a high level enemy at the loot spot.
+	To encourage taking other routes.
+- Maybe separate waling from running (costs stamina), maybe double tapping the direction?
+	This way enemies can run towards you and reach you, dificulting escaping.
+
+- Video playtest things: https://drive.google.com/file/d/1GZ48vG0wAzkD09A6MYnGKDKIRahOqUev/view
+	- Pixel font too hard to read
 
 - Today's TODO:
-	- Combo
+	- Finish combo animation
 	- White flash on enemy when hit
 	- Adjust attack speed
 	- Lower stamina for player
 		- Need to create a 2 phase fight, where one you do action, second you defend while waiting for stamina to recover
-		- Maybe 4 attacks can deplete all stamina
 	- Make jump cost stamina
 	- Make enemies faster and more aggressive
 		- Enemy combos only need a wind up animation for the first hit
 		- Add attack that jump fast to the player
 		- Add attack that quickly runs towards the player and attack
 		- These all exists in some ways, but make them faster and more aggressive
-
-- Cosas Video Playtest: https://drive.google.com/file/d/1GZ48vG0wAzkD09A6MYnGKDKIRahOqUev/view
-- Hitbox stays for too long
-- Muy facil, puro spam
-- Pixel font qlo
-- El pushback al golpear una muralla es muy fuerte
-- Saltar gasta stamina?
-
 */
 
 func main() {
