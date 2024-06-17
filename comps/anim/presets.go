@@ -12,3 +12,9 @@ func DefaultFsm() *Fsm {
 		},
 	}
 }
+
+type AlphaScalerColor struct{ A uint32 }
+
+func (c AlphaScalerColor) RGBA() (uint32, uint32, uint32, uint32) { return c.A, c.A, c.A, c.A }
+
+var WhiteScalerColor = AlphaScalerColor{0xffff * 4}

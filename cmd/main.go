@@ -35,18 +35,15 @@ import (
 - Video playtest things: https://drive.google.com/file/d/1GZ48vG0wAzkD09A6MYnGKDKIRahOqUev/view
 	- Pixel font too hard to read
 
-- Today's TODO:
-	- Finish combo animation
-	- White flash on enemy when hit
-	- Adjust attack speed
+- Demo 2 Roadmap:
+	- Ajust combat flow speed
 	- Lower stamina for player
 		- Need to create a 2 phase fight, where one you do action, second you defend while waiting for stamina to recover
-	- Make jump cost stamina
-	- Make enemies faster and more aggressive
-		- Enemy combos only need a wind up animation for the first hit
-		- Add attack that jump fast to the player
-		- Add attack that quickly runs towards the player and attack
-		- These all exists in some ways, but make them faster and more aggressive
+	- New map
+	- Implement light shader
+		- Normal maps can be made after the demo
+
+	- Add a new enemy (low priority)
 */
 
 func main() {

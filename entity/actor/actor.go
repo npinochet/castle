@@ -15,7 +15,10 @@ import (
 	"strings"
 )
 
-const dieSeconds = 1
+const (
+	dieSeconds   = 1
+	flashSeconds = 0.05
+)
 
 var DieParticle func(core.Entity) core.Entity
 
@@ -25,14 +28,14 @@ type Actor interface {
 }
 
 type Control struct {
-	actor    Actor
-	anim     *anim.Comp
-	body     *body.Comp
-	hitbox   *hitbox.Comp
-	stats    *stats.Comp
-	ai       *ai.Comp
-	paused   bool
-	dieTimer float64
+	actor                Actor
+	anim                 *anim.Comp
+	body                 *body.Comp
+	hitbox               *hitbox.Comp
+	stats                *stats.Comp
+	ai                   *ai.Comp
+	paused               bool
+	dieTimer, flashTimer float64
 }
 
 func NewControl(a Actor) *Control {
@@ -63,6 +66,10 @@ func (c *Control) SimpleUpdate(dt float64) {
 		c.Die(dt)
 
 		return
+	}
+	c.anim.ColorScale = color.White
+	if c.flashTimer -= dt; c.flashTimer > 0 {
+		c.anim.ColorScale = anim.WhiteScalerColor
 	}
 	c.stats.Pause = c.PausingState()
 	if state := c.anim.State; state == vars.IdleTag || state == vars.WalkTag {
@@ -96,6 +103,7 @@ func (c *Control) Hurt(other core.Entity, damage, reactForce float64) {
 		force *= 2 * (damage / c.stats.MaxHealth)
 		c.Stagger(force, false, 1)
 	}
+	c.flashTimer = flashSeconds
 
 	if c.ai != nil && c.ai.Target == nil {
 		c.ai.Target = other
@@ -165,17 +173,17 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 
 	var contactType hitbox.ContactType
 	var contacted []*hitbox.Comp
+	var shakeNum int
 	var once bool
 	c.anim.OnSlicePresent(vars.HitboxSliceName, func(slice bump.Rect, segmented bool) {
 		if segmented {
 			contacted = nil
 		}
 		contactType, contacted = c.hitbox.HitFromHitBox(slice, damage, contacted)
-		/*if len(contacted) > 0 && c.Entity == vars.Player && !freezeOnce { // TODO: This is a mess...
-			freezeOnce = true
-			c.World.Freeze(0.1)
-			c.World.Camera.Shake(0.1, 1)
-		}*/
+		if c.actor == vars.Player && shakeNum != len(contacted) { // TODO: This is an ugly hack
+			shakeNum = len(contacted)
+			vars.World.Camera.Shake(0.1, 0.5)
+		}
 		if contactType == hitbox.ParryBlock {
 			if c.stats.AddPoise(-damage); c.stats.Poise <= 0 {
 				c.Stagger(reactForce*(damage/c.stats.MaxHealth), true, 1)

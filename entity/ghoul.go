@@ -43,7 +43,7 @@ func NewGhoul(x, y, _, _ float64, props *core.Properties) *Ghoul {
 		anim:       &anim.Comp{FilesName: ghoulAnimFile, OX: ghoulOffsetX, OY: ghoulOffsetY, OXFlip: ghoulOffsetFlip, FlipX: props.FlipX},
 		body:       &body.Comp{MaxX: ghoulMaxSpeed},
 		hitbox:     &hitbox.Comp{},
-		stats:      &stats.Comp{MaxPoise: ghoulPoise, MaxHealth: ghoulHealth, Exp: ghoulExp},
+		stats:      &stats.Comp{MaxHealth: ghoulHealth, MaxPoise: ghoulPoise, Exp: ghoulExp},
 		ai:         &ai.Comp{},
 		rocks:      rocks,
 	}

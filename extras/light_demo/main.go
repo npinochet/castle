@@ -74,17 +74,17 @@ func (g *Game) Layout(_, _ int) (int, int) {
 
 func main() {
 	var err error
-	image, _, err = ebitenutil.NewImageFromFile("cmd/light/image.png")
+	image, _, err = ebitenutil.NewImageFromFile("./image.png")
 	if err != nil {
 		log.Fatal(err)
 	}
-	normalImage, _, err = ebitenutil.NewImageFromFile("cmd/light/normal.png")
+	normalImage, _, err = ebitenutil.NewImageFromFile("./normal.png")
 	if err != nil {
 		log.Fatal(err)
 	}
 	width, height = image.Bounds().Dx(), image.Bounds().Dy()
 
-	shaderFile, err := os.Open("cmd/light/light.kage")
+	shaderFile, err := os.Open("./light.kage")
 	if err != nil {
 		log.Fatal(err)
 	}

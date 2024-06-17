@@ -18,6 +18,8 @@ import (
 	"github.com/tanema/gween/ease"
 )
 
+const minAttackMultToShow = 0.1
+
 var (
 	hudImage, _, _    = ebitenutil.NewImageFromFileSystem(assets.FS, "hud.png")
 	barEndImage, _    = hudImage.SubImage(image.Rect(vars.BarEndX1, 0, vars.BarEndX2, vars.BarH)).(*ebiten.Image)
@@ -197,7 +199,6 @@ func (c *Comp) AddHealth(amount float64) {
 }
 func (c *Comp) AddStamina(amount float64) {
 	c.staminaLag = c.Stamina
-	// c.staminaLag = math.Max(c.Stamina, c.staminaLag)
 	c.Stamina = math.Min(c.Stamina+amount, c.MaxStamina)
 	c.staminaTween = gween.New(float32(c.staminaLag), float32(c.Stamina), 1, ease.Linear)
 }
@@ -238,8 +239,11 @@ func (c *Comp) drawHud(screen *ebiten.Image) {
 	op.GeoM.Translate(1, 1)
 	screen.DrawImage(iconsImage, op)
 
+	const staminaVisualScale = 0.8
 	c.drawSegment(screen, op.GeoM, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
-	c.drawSegment(screen, op.GeoM, 1, c.Stamina, c.MaxStamina, c.staminaLag, staminaColor)
+	c.drawSegment(
+		screen, op.GeoM, 1, c.Stamina*staminaVisualScale, c.MaxStamina*staminaVisualScale, c.staminaLag*staminaVisualScale, staminaColor,
+	)
 	c.drawAttackMult(screen, op.GeoM)
 	// c.drawSegment(screen, op.GeoM, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
 	c.drawCount(screen, op.GeoM, 2, c.Heal, 0)
@@ -296,7 +300,7 @@ func (c *Comp) drawCount(screen *ebiten.Image, geoM ebiten.GeoM, y float64, coun
 }
 
 func (c *Comp) drawAttackMult(screen *ebiten.Image, geoM ebiten.GeoM) {
-	if c.AttackMult == 0 {
+	if c.AttackMult < minAttackMultToShow {
 		return
 	}
 	op := &ebiten.DrawImageOptions{GeoM: geoM}

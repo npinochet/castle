@@ -47,7 +47,7 @@ func NewPlayer(x, y float64) *Player {
 		anim:       &anim.Comp{FilesName: knightAnimFile, OX: knightOffsetX, OY: knightOffsetY, OXFlip: knightOffsetFlip},
 		body:       &body.Comp{MaxX: playerMaxX},
 		hitbox:     &hitbox.Comp{},
-		stats:      &stats.Comp{Hud: true, NoDebug: true, MaxStamina: 65, MaxPoise: playerPoise},
+		stats:      &stats.Comp{Hud: true, NoDebug: true, MaxHealth: 60, MaxStamina: 65, MaxPoise: playerPoise, MaxHeal: 5},
 
 		attackPushForce: vars.DefaultAttackPushForce,
 		reactForce:      vars.DefaultReactForce,
