@@ -2,6 +2,8 @@
 
 //kage:unit pixels
 
+//https://github.com/mattdesl/lwjgl-basics/wiki/ShaderLesson6
+
 package main
 
 var (
@@ -16,22 +18,25 @@ func rand(co vec2) float {
 }
 
 func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
-	lightDir := normalize(vec3(Cursor, 50) - vec3(dstPos.xy-imageDstOrigin(), 0))
-	normalColor := imageSrc1At(srcPos)
+	lightPos := vec3(Cursor, 32)
+	lightDir := 0.1 * (lightPos - vec3(dstPos.xy-imageDstOrigin(), 0))
+
+	normalColor := imageSrc1At(srcPos).xyz
 	if Apply == 0 {
 		normalColor.xyz = vec3(0.5, 0.5, 1)
 	}
 	normalColor.y = 1 - normalColor.y
-	normal := normalize(normalColor - 0.5)
+	normal := normalize(normalColor*2 - 1)
 	const ambient = 0.25
-	const lightResolution = 12
-	diffuse := (1 - ambient) * max(dot(normal.xyz, lightDir), 0.0)
+	const lightResolution = 10
+	diffuse := (1 - ambient) * max(dot(normal, normalize(lightDir)), 0.0)
 
 	diffuse += (cos(Time*1.5) + ((rand(vec2(Time, Time)) - 0.5) * 0.4)) * 0.01
 	randcomp := 1 + (rand(srcPos)-0.5)*0.03
 	diffuse *= randcomp
 
-	diffuse = (floor(lightResolution*diffuse) / lightResolution)
+	diffuse = floor(lightResolution*diffuse) / lightResolution
+
 	if Texture == 1 {
 		return vec4(diffuse, diffuse, diffuse, 1)
 	}
@@ -40,6 +45,35 @@ func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
 }
 
 /*
+float rand(vec2 co) {
+	return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec3 lightPos = vec3(iMouse.xy, iMouse.y);
+	vec3 lightDir = (lightPos - vec3(fragCoord, 0));
+    //fragColor = vec4(lightDir.xy, 0, 1);
+    //return;
+
+	vec3 normalColor = texture(iChannel1, fragCoord/iResolution.xy).xyz;
+	//normalColor.y = 1.0 - normalColor.y;
+	vec3 normal = normalize(2.0*normalColor - 1.0);
+	float ambient = 0.25;
+	float diffuse = (1.0 - ambient) * max(dot(normal, normalize(lightDir)), 0.0);
+
+
+    float lightResolution = 12.0;
+	//diffuse += (cos(iTime*1.5) + ((rand(vec2(iTime, iTime)) - 0.5) * 0.4)) * 0.01;
+	//float randcomp = 1.0 + (rand(fragCoord)-0.5)*0.07;
+	//diffuse *= randcomp;
+
+	diffuse = floor(diffuse*lightResolution) / lightResolution;
+	fragColor = texture(iChannel0, fragCoord/iResolution.xy) * (ambient + diffuse);
+}
+
+
+
+
 // https://godotshaders.com/shader/2d-fire-effect-with-colour-banding/
 uniform vec4 color1;
 uniform vec4 color2;
@@ -65,5 +99,56 @@ void fragment() {
 	COLOR.a = (COLOR.a * (2.0) + texture(noise, vec2(UV.x * -0.1 + TIME * -0.1, UV.y) * 4.0).r) / 2.0;
 	COLOR.a = round(COLOR.a * 20.0) / 20.0;
 	COLOR.a = clamp(COLOR.a, 0.0, 1.0);
+}
+
+
+
+https://gamedev.stackexchange.com/questions/184949/glsl-how-can-i-optimize-this-lighting-fragment-shader-basic-2d-game-30-lig
+#version 120
+uniform sampler2D LastPass;
+uniform sampler2D DiffuseMap;
+uniform vec3 AmbientLight;
+uniform int LightCount;
+uniform int PassNumber;
+
+struct LightInfo {
+    vec3 position;
+    vec3 color;
+    float radius;
+    float falloff;
+};
+
+const int MaxLights = 40;
+uniform LightInfo Lights[MaxLights];
+
+
+void main()
+{
+    vec4 pixel = texture2D(LastPass, gl_TexCoord[0].xy);
+    vec4 diffusepixel = texture2D(DiffuseMap, gl_TexCoord[0].xy);
+
+    vec4 finalPixel = gl_Color * pixel;
+
+    for(int i = 0; i < LightCount; ++i) {
+
+        LightInfo light = Lights[i];
+        vec3 L = light.position - gl_FragCoord.xyz;
+        float distance = length(L);
+        float d = max(distance - light.radius, 0);
+        L /= distance;
+        // calculate basic light attenuation
+        float attenuation = 1 / pow(d/light.radius + 1, 2);
+        // scale and bias attenuation such that:
+        //   attenuation == 0 at extent of max influence
+        //   attenuation == 1 when d == 0
+        attenuation = (attenuation - light.falloff) / (1 - light.falloff);
+        attenuation = max(attenuation, 0);
+
+        //This line runs VERY slow when there are many light sources.
+        finalPixel += (diffusepixel * ((vec4(light.color, 0.4) * attenuation)));
+
+    }
+    gl_FragColor = finalPixel;
+
 }
 */
