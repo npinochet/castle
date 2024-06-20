@@ -46,22 +46,43 @@ func (g *Game) Update() error {
 	return nil
 }
 
-func (g *Game) Draw(screen *ebiten.Image) {
-	time++
-	cx, cy := ebiten.CursorPosition()
+func DeferredLight(x, y int, image, normalImage *ebiten.Image) *ebiten.Image {
 	op := &ebiten.DrawRectShaderOptions{
 		Uniforms: map[string]any{
-			"Texture": texture,
-			"Apply":   float32(apply),
-			"Cursor":  []float32{float32(cx), float32(cy)},
-			"Time":    float32(time) / 60,
+			"Texture":  texture,
+			"Apply":    float32(apply),
+			"LightPos": []float32{float32(x), float32(y), 16},
+			"Time":     float32(time) / 60,
 		},
 		Images: [4]*ebiten.Image{image, normalImage},
 	}
 	if !pixelPerfect {
 		op.GeoM.Scale(scale, scale)
 	}
-	screen.DrawRectShader(width, height, shader, op)
+	light := ebiten.NewImage(width, height)
+	light.DrawRectShader(width, height, shader, op)
+
+	return light
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
+	time++
+
+	cx, cy := ebiten.CursorPosition()
+
+	diffuse := ebiten.NewImage(width, height)
+	light1 := DeferredLight(50, 50, image, normalImage)
+	light2 := DeferredLight(110, 50, image, normalImage)
+	light3 := DeferredLight(cx, cy, image, normalImage)
+	op := &ebiten.DrawImageOptions{Blend: ebiten.BlendLighter}
+	op.Blend.BlendOperationRGB = ebiten.BlendOperationMax
+	op.Blend.BlendOperationAlpha = ebiten.BlendOperationMax
+	diffuse.DrawImage(light1, op)
+	diffuse.DrawImage(light2, op)
+	diffuse.DrawImage(light3, op)
+	screen.DrawImage(image, op)
+	op.CompositeMode = ebiten.CompositeModeMultiply
+	screen.DrawImage(diffuse, op)
 }
 
 func (g *Game) Layout(_, _ int) (int, int) {

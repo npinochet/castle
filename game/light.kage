@@ -1,0 +1,70 @@
+//go:build ignore
+
+//kage:unit pixels
+
+//https://github.com/mattdesl/lwjgl-basics/wiki/ShaderLesson6
+
+package main
+
+const (
+	ambientLight          = 0.25
+	lightResolution       = 7
+	lightResolutionOffset = 0.5
+)
+
+var (
+	Time         float
+	LightPosSize vec3
+)
+
+// https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
+func rand(co vec2) float {
+	return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453)
+}
+
+func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+	lightDir := 0.1 * (LightPosSize - vec3(dstPos.xy-imageDstOrigin(), 0))
+
+	normalColor := imageSrc0At(srcPos).xyz
+	normalColor.y = 1 - normalColor.y
+	normal := normalize(normalColor*2 - 1)
+	diffuse := (1 - ambientLight) * max(dot(normal, normalize(lightDir)), 0.0)
+
+	diffuse += (cos(Time*1.5) + ((rand(vec2(Time, Time)) - 0.5) * 0.4)) * 0.01
+	randcomp := 1 + (rand(srcPos)-0.5)*0.05
+	diffuse *= randcomp
+	diffuse = floor(lightResolution*diffuse+lightResolutionOffset) / lightResolution
+
+	diffuse = clamp(diffuse+ambientLight, 0, 1)
+
+	return vec4(diffuse, diffuse, diffuse, 1)
+}
+
+/*
+
+float rand(vec2 co) {
+	return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec3 lightPos = vec3(iMouse.xy, iMouse.y);
+	vec3 lightDir = (lightPos - vec3(fragCoord, 0));
+    //fragColor = vec4(lightDir.xy, 0, 1);
+    //return;
+
+	vec3 normalColor = texture(iChannel1, fragCoord/iResolution.xy).xyz;
+	//normalColor.y = 1.0 - normalColor.y;
+	vec3 normal = normalize(2.0*normalColor - 1.0);
+	float ambient = 0.25;
+	float diffuse = (1.0 - ambient) * max(dot(normal, normalize(lightDir)), 0.0);
+
+
+    float lightResolution = 12.0;
+	//diffuse += (cos(iTime*1.5) + ((rand(vec2(iTime, iTime)) - 0.5) * 0.4)) * 0.01;
+	//float randcomp = 1.0 + (rand(fragCoord)-0.5)*0.07;
+	//diffuse *= randcomp;
+
+	diffuse = floor(diffuse*lightResolution) / lightResolution;
+	fragColor = texture(iChannel0, fragCoord/iResolution.xy) * (ambient + diffuse);
+}
+*/

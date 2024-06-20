@@ -7,10 +7,10 @@
 package main
 
 var (
-	Apply   float
-	Texture float
-	Cursor  vec2
-	Time    float
+	Apply    float
+	Texture  float
+	LightPos vec3
+	Time     float
 )
 
 func rand(co vec2) float {
@@ -18,8 +18,7 @@ func rand(co vec2) float {
 }
 
 func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
-	lightPos := vec3(Cursor, 32)
-	lightDir := 0.1 * (lightPos - vec3(dstPos.xy-imageDstOrigin(), 0))
+	lightDir := 0.1 * (LightPos - vec3(dstPos.xy-imageDstOrigin(), 0))
 
 	normalColor := imageSrc1At(srcPos).xyz
 	if Apply == 0 {
@@ -28,20 +27,22 @@ func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
 	normalColor.y = 1 - normalColor.y
 	normal := normalize(normalColor*2 - 1)
 	const ambient = 0.25
-	const lightResolution = 10
+	const lightResolution = 7
+	const lightResolutionOffset = 0.5
 	diffuse := (1 - ambient) * max(dot(normal, normalize(lightDir)), 0.0)
 
 	diffuse += (cos(Time*1.5) + ((rand(vec2(Time, Time)) - 0.5) * 0.4)) * 0.01
-	randcomp := 1 + (rand(srcPos)-0.5)*0.03
+	randcomp := 1 + (rand(srcPos)-0.5)*0.05
 	diffuse *= randcomp
 
-	diffuse = floor(lightResolution*diffuse) / lightResolution
+	diffuse = floor(lightResolution*diffuse+lightResolutionOffset) / lightResolution
 
 	if Texture == 1 {
 		return vec4(diffuse, diffuse, diffuse, 1)
 	}
-
-	return imageSrc0At(srcPos) * (ambient + diffuse)
+	//return imageSrc0At(srcPos) * (ambient + diffuse)
+	diffuse = clamp(diffuse+ambient, 0, 1)
+	return vec4(diffuse, diffuse, diffuse, 1)
 }
 
 /*

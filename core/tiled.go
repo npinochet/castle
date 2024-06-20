@@ -45,7 +45,7 @@ type Animation struct {
 type Map struct {
 	data                                       *tiled.Map
 	foregroundImage, backgroundImage           *ebiten.Image
-	foregroundAnimations, backgroundAnimations []*Animation
+	foregroundAnimations, backgroundAnimations map[uint32]*Animation
 }
 
 func NewMap(mapPath string, foregroundLayerName, backgroundLayerName string, fs fs.FS) *Map {
@@ -129,11 +129,10 @@ func (m *Map) Draw(screen *ebiten.Image, camera *camera.Camera, betweenDraw func
 		screen.DrawImage(foreground, nil)
 		cx, cy := camera.Position()
 		for _, anim := range m.foregroundAnimations {
-			frame := anim.frames[anim.current]
 			for _, pos := range anim.positions {
 				op := &ebiten.DrawImageOptions{}
 				op.GeoM.Translate(pos[0]-cx, pos[1]-cy)
-				screen.DrawImage(frame.image, op)
+				screen.DrawImage(anim.frames[anim.current].image, op)
 			}
 		}
 	}
@@ -177,6 +176,27 @@ func (m *Map) FindObjectFromTileID(id uint32, objectGroupName string) (*tiled.Ob
 	}
 
 	return nil, tiled.ErrInvalidTileGID
+}
+
+func (m *Map) FindTilePosition(gid uint32) [][2]float64 {
+	var positions [][2]float64
+	if anim, ok := m.backgroundAnimations[gid]; ok {
+		positions = append(positions, anim.positions...)
+	}
+	if anim, ok := m.foregroundAnimations[gid]; ok {
+		positions = append(positions, anim.positions...)
+	}
+	for _, layer := range m.data.Layers {
+		for y := 0; y < m.data.Height; y++ {
+			for x := 0; x < m.data.Width; x++ {
+				if tile := layer.Tiles[y*m.data.Width+x]; !tile.IsNil() && tile.Tileset.FirstGID+tile.ID == gid {
+					positions = append(positions, [2]float64{float64(x * m.data.TileWidth), float64(y * m.data.TileHeight)})
+				}
+			}
+		}
+	}
+
+	return positions
 }
 
 func (m *Map) LoadBumpObjects(space *bump.Space, objectGroupName string) {
@@ -287,7 +307,7 @@ func (m *Map) GetObjectsRects(objectGroupName string) ([]bump.Rect, bool) {
 	return rects, true
 }
 
-func extractLayerAnimations(data *tiled.Map, fs fs.FS, layerIndex int) ([]*Animation, error) {
+func extractLayerAnimations(data *tiled.Map, fs fs.FS, layerIndex int) (map[uint32]*Animation, error) {
 	animationFrames := map[uint32]*Animation{}
 	for _, tileset := range data.Tilesets {
 		sf, err := fs.Open(tileset.GetFileFullPath(tileset.Image.Source))
@@ -335,12 +355,5 @@ func extractLayerAnimations(data *tiled.Map, fs fs.FS, layerIndex int) ([]*Anima
 		}
 	}
 
-	i := 0
-	animations := make([]*Animation, len(animationFrames))
-	for _, anim := range animationFrames {
-		animations[i] = anim
-		i++
-	}
-
-	return animations, nil
+	return animationFrames, nil
 }

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"errors"
 	"fmt"
 	"game/assets"
 	"game/comps/ai"
@@ -22,7 +21,10 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-const playerID = 25
+const (
+	playerID  = 25
+	tourchGID = 378
+)
 
 var (
 	backgroundColor = color.RGBA{50, 60, 57, 255}
@@ -51,10 +53,12 @@ func toEntityContructor[T core.Entity](contructor func(float64, float64, float64
 
 func Load() {
 	actor.DieParticle = func(e core.Entity) core.Entity { return entity.NewFlake(e) }
-	worldMap := core.NewMap("intro/intro.tmx", "foreground", "background", maps.IntroFS)
+	mapFile := "intro/intro.tmx"
+	worldMap := core.NewMap(mapFile, "foreground", "background", maps.IntroFS)
 	vars.World = core.NewWorld(float64(vars.ScreenWidth), float64(vars.ScreenHeight))
 	vars.World.SetMap(worldMap, "rooms")
 	worldMap.LoadBumpObjects(vars.World.Space, "collisions")
+	shaderLoad(mapFile, tourchGID)
 	Reset()
 }
 
@@ -81,8 +85,9 @@ func (g *Game) Update() error {
 		g.loaded = true
 		Load()
 	}
-	dt := 1.0 / 60
+	dt := 1.0 / 60 // TODO: Correctly calculate delta time
 	vars.World.Update(dt)
+	shaderUpdate(dt)
 	if vars.SaveGame {
 		vars.SaveGame = false
 		if err := Save(); err != nil {
@@ -112,7 +117,7 @@ func (g *Game) Update() error {
 
 	if vars.Debug {
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-			return errors.New("exited")
+			return ebiten.Termination
 		}
 		debugControls()
 	}
@@ -123,6 +128,7 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(backgroundColor)
 	vars.World.Draw(screen)
+	shaderDrawLights(screen)
 	if restartTransition != nil {
 		restartTransition.Draw(screen)
 	}
