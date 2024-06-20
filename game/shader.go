@@ -20,12 +20,14 @@ const (
 )
 
 var (
-	normalMapImage = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
-	diffuseImage   = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
-	normalTiledMap *core.Map
-	lights         []light
-	shaderTime     float32
-	shader         *ebiten.Shader
+	normalMapImage     = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
+	diffuseImage       = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
+	entitiesMask       = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
+	normalNeutralColor = color.NRGBA{127, 127, 255, 255}
+	normalTiledMap     *core.Map
+	lights             []light
+	shaderTime         float32
+	shader             *ebiten.Shader
 	//go:embed light.kage
 	shaderData []byte
 )
@@ -67,10 +69,17 @@ func shaderDrawLights(screen *ebiten.Image) {
 		return
 	}
 
-	normalMapImage.Fill(color.NRGBA{127, 127, 255, 255})
+	normalMapImage.Fill(normalNeutralColor)
 	diffuseImage.Fill(color.Black)
+	entitiesMask.Fill(color.Transparent)
+	normalTiledMap.Draw(normalMapImage, vars.World.Camera, nil)
+	vars.World.DrawEntites(entitiesMask)
+	normalMapImage.DrawImage(entitiesMask, &ebiten.DrawImageOptions{Blend: ebiten.BlendDestinationOut})
+	entitiesMask.Fill(normalNeutralColor)
+	normalMapImage.DrawImage(entitiesMask, &ebiten.DrawImageOptions{Blend: ebiten.BlendDestinationOver})
+
 	cx, cy := vars.World.Camera.Position()
-	for _, light := range lights {
+	for i, light := range lights {
 		x, y := light.x-cx, light.y-cy
 		w, h := float64(vars.ScreenWidth), float64(vars.ScreenHeight)
 		if x < -2*w || y < -2*h || x > 3*w || y > 3*h {
@@ -79,8 +88,8 @@ func shaderDrawLights(screen *ebiten.Image) {
 
 		op := &ebiten.DrawRectShaderOptions{
 			Uniforms: map[string]any{
-				"Time":         shaderTime,
 				"LightPosSize": []float32{float32(x), float32(y), float32(light.size)},
+				"Time":         shaderTime + float32(10*i),
 			},
 			Images: [4]*ebiten.Image{normalMapImage},
 			Blend:  ebiten.BlendLighter,

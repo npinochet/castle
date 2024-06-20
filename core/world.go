@@ -89,19 +89,21 @@ func (w *World) Update(dt float64) {
 }
 
 func (w *World) Draw(screen *ebiten.Image) {
-	w.Map.Draw(screen, w.Camera, func() {
-		cx, cy := w.Camera.Position()
-		entityPos := ebiten.GeoM{}
-		for _, e := range w.entities {
-			x, y := e.Position()
-			entityPos.Reset()
-			entityPos.Translate(x, y)
-			entityPos.Translate(-cx, -cy)
-			for _, c := range e.Components() {
-				c.Draw(screen, entityPos)
-			}
+	w.Map.Draw(screen, w.Camera, func() { w.DrawEntites(screen) })
+}
+
+func (w *World) DrawEntites(screen *ebiten.Image) {
+	cx, cy := w.Camera.Position()
+	entityPos := ebiten.GeoM{}
+	for _, e := range w.entities {
+		x, y := e.Position()
+		entityPos.Reset()
+		entityPos.Translate(x, y)
+		entityPos.Translate(-cx, -cy)
+		for _, c := range e.Components() {
+			c.Draw(screen, entityPos)
 		}
-	})
+	}
 }
 
 func (w *World) SetMap(tiledMap *Map, roomsLayer string) {

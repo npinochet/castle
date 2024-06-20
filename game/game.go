@@ -85,7 +85,7 @@ func (g *Game) Update() error {
 		g.loaded = true
 		Load()
 	}
-	dt := 1.0 / 60 // TODO: Correctly calculate delta time
+	dt := 1.0 / 60
 	vars.World.Update(dt)
 	shaderUpdate(dt)
 	if vars.SaveGame {

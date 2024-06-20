@@ -7,9 +7,12 @@
 package main
 
 const (
-	ambientLight          = 0.25
-	lightResolution       = 7
-	lightResolutionOffset = 0.5
+	ambientLight          = 0.5
+	lightResolution       = 8
+	lightResolutionOffset = 0.8
+	swingSpeed            = 1.5
+	flickerIntensity      = 0.4
+	ditherIntensity       = 0.04
 )
 
 var (
@@ -30,9 +33,8 @@ func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
 	normal := normalize(normalColor*2 - 1)
 	diffuse := (1 - ambientLight) * max(dot(normal, normalize(lightDir)), 0.0)
 
-	diffuse += (cos(Time*1.5) + ((rand(vec2(Time, Time)) - 0.5) * 0.4)) * 0.01
-	randcomp := 1 + (rand(srcPos)-0.5)*0.05
-	diffuse *= randcomp
+	diffuse += (cos(swingSpeed*Time) + ((rand(vec2(Time)) - 0.5) * flickerIntensity)) * 0.01
+	diffuse *= 1 + ditherIntensity*(rand(srcPos)-0.5)
 	diffuse = floor(lightResolution*diffuse+lightResolutionOffset) / lightResolution
 
 	diffuse = clamp(diffuse+ambientLight, 0, 1)
