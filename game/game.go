@@ -28,6 +28,7 @@ const (
 
 var (
 	backgroundColor = color.RGBA{50, 60, 57, 255}
+	pipeline        = core.NewPipeline()
 	entityBinds     = map[uint32]core.EntityContructor{
 		26:  toEntityContructor(entity.NewKnight),
 		27:  toEntityContructor(entity.NewGhoul),
@@ -53,12 +54,11 @@ func toEntityContructor[T core.Entity](contructor func(float64, float64, float64
 
 func Load() {
 	actor.DieParticle = func(e core.Entity) core.Entity { return entity.NewFlake(e) }
-	mapFile := "intro/intro.tmx"
-	worldMap := core.NewMap(mapFile, "foreground", "background", maps.IntroFS)
+	worldMap := core.NewMap("intro/intro.tmx", 1, maps.IntroFS, vars.PipelineScreenTag, vars.PipelineNormalMapTag)
 	vars.World = core.NewWorld(float64(vars.ScreenWidth), float64(vars.ScreenHeight))
 	vars.World.SetMap(worldMap, "rooms")
 	worldMap.LoadBumpObjects(vars.World.Space, "collisions")
-	shaderLoad(mapFile, tourchGID)
+	shaderLoad(worldMap, tourchGID)
 	Reset()
 }
 
@@ -127,8 +127,9 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(backgroundColor)
-	vars.World.Draw(screen)
-	shaderDrawLights(screen)
+	vars.World.Draw(pipeline)
+	pipeline.Compose(vars.PipelineScreenTag, screen)
+	shaderDrawLights(pipeline, screen)
 	if restartTransition != nil {
 		restartTransition.Draw(screen)
 	}

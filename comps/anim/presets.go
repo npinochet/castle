@@ -1,6 +1,12 @@
 package anim
 
-import "game/vars"
+import (
+	"game/vars"
+	"image/color"
+	"math"
+
+	"github.com/hajimehoshi/ebiten/v2/colorm"
+)
 
 func DefaultFsm() *Fsm {
 	return &Fsm{
@@ -13,8 +19,18 @@ func DefaultFsm() *Fsm {
 	}
 }
 
-type AlphaScalerColor struct{ A uint32 }
+type UberColor struct{ R, G, B, A uint32 }
 
-func (c AlphaScalerColor) RGBA() (uint32, uint32, uint32, uint32) { return c.A, c.A, c.A, c.A }
+func (c UberColor) RGBA() (uint32, uint32, uint32, uint32) { return c.R, c.G, c.B, c.A }
 
-var WhiteScalerColor = AlphaScalerColor{0xffff * 4}
+var (
+	WhiteScalerColor     = UberColor{0xffff * 4, 0xffff * 4, 0xffff * 4, 0xffff * 4}
+	NormalMaskColor      = color.NRGBA{127, 127, 255, 255}
+	FillNormalMaskColorM = colorm.ColorM{}
+)
+
+func init() {
+	FillNormalMaskColorM.Scale(0, 0, 0, 1)
+	r, g, b := float64(NormalMaskColor.R)/math.MaxUint8, float64(NormalMaskColor.G)/math.MaxUint8, float64(NormalMaskColor.B)/math.MaxUint8
+	FillNormalMaskColorM.Translate(r, g, b, 0)
+}

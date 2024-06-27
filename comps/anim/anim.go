@@ -6,6 +6,7 @@ import (
 	"game/core"
 	"game/libs/bump"
 	"game/utils"
+	"game/vars"
 	"image/color"
 	"log"
 	"math"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/damienfamed75/aseprite"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/colorm"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
@@ -35,6 +37,7 @@ type Comp struct {
 	OX, OY         float64
 	OXFlip, OYFlip float64
 	FlipX, FlipY   bool
+	Layer          int
 	ColorScale     color.Color
 	Fsm            *Fsm
 
@@ -93,7 +96,6 @@ func (c *Comp) SetState(state string) {
 	}
 	c.sliceCallback = nil
 	c.frameCallbacks = map[int]func(){}
-	// c.Data.AnimationInfo.frameCounter = 0 // TODO: This needs to happen. opened a PR: https://github.com/damienfamed75/aseprite/pull/5
 }
 
 func (c *Comp) Update(dt float64) {
@@ -117,7 +119,7 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}
 	var x, y, sx, sy, dx, dy float64 = c.OX, c.OY, 1, 1, 0, 0
 	if c.FlipX {
@@ -127,14 +129,17 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 		sy, dy = -1, math.Floor(c.h/2)+c.OYFlip
 	}
 	op.GeoM.Scale(sx, sy)
-	op.GeoM.Translate(x, y)
-	op.GeoM.Translate(dx, dy)
+	op.GeoM.Translate(x+dx, y+dy)
 	op.GeoM.Concat(entityPos)
 	op.ColorScale.ScaleWithColor(c.ColorScale)
 	sprite, _ := c.Image.SubImage(c.Data.FrameBoundaries().Rectangle()).(*ebiten.Image)
-	screen.DrawImage(sprite, op)
+	pipeline.AddDraw(vars.PipelineScreenTag, c.Layer, func(screen *ebiten.Image) { screen.DrawImage(sprite, op) })
+	normalOp := &colorm.DrawImageOptions{GeoM: op.GeoM}
+	pipeline.AddDraw(vars.PipelineNormalMapTag, c.Layer, func(normalMap *ebiten.Image) {
+		colorm.DrawImage(normalMap, sprite, FillNormalMaskColorM, normalOp)
+	})
 	if DebugDraw {
-		c.debugDraw(screen, entityPos)
+		pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) { c.debugDraw(screen, entityPos) })
 	}
 }
 

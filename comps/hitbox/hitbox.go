@@ -63,29 +63,31 @@ func (c *Comp) Update(_ float64) {
 	}
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	if !DebugDraw {
 		return
 	}
-	for _, box := range c.hurtBoxes {
-		image := ebiten.NewImage(int(box.rect.W), int(box.rect.H))
-		image.Fill(color.NRGBA{0, 0, 255, 75})
-		if box.contactType != Hit {
-			image.Fill(color.NRGBA{255, 0, 0, 75})
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+		for _, box := range c.hurtBoxes {
+			image := ebiten.NewImage(int(box.rect.W), int(box.rect.H))
+			image.Fill(color.NRGBA{0, 0, 255, 75})
+			if box.contactType != Hit {
+				image.Fill(color.NRGBA{255, 0, 0, 75})
+			}
+			op := &ebiten.DrawImageOptions{GeoM: entityPos}
+			op.GeoM.Translate(box.rect.X, box.rect.Y)
+			screen.DrawImage(image, op)
 		}
-		op := &ebiten.DrawImageOptions{GeoM: entityPos}
-		op.GeoM.Translate(box.rect.X, box.rect.Y)
-		screen.DrawImage(image, op)
-	}
 
-	if c.debugLastHitbox.W != 0 || c.debugLastHitbox.H != 0 {
-		image := ebiten.NewImage(int(c.debugLastHitbox.W), int(c.debugLastHitbox.H))
-		image.Fill(color.NRGBA{255, 255, 0, 75})
-		op := &ebiten.DrawImageOptions{GeoM: entityPos}
-		op.GeoM.Translate(c.debugLastHitbox.X, c.debugLastHitbox.Y)
-		screen.DrawImage(image, op)
-		c.debugLastHitbox = bump.Rect{}
-	}
+		if c.debugLastHitbox.W != 0 || c.debugLastHitbox.H != 0 {
+			image := ebiten.NewImage(int(c.debugLastHitbox.W), int(c.debugLastHitbox.H))
+			image.Fill(color.NRGBA{255, 255, 0, 75})
+			op := &ebiten.DrawImageOptions{GeoM: entityPos}
+			op.GeoM.Translate(c.debugLastHitbox.X, c.debugLastHitbox.Y)
+			screen.DrawImage(image, op)
+			c.debugLastHitbox = bump.Rect{}
+		}
+	})
 }
 
 func (c *Comp) PushHitbox(rect bump.Rect, block ContactType, updateContactType func() ContactType) {

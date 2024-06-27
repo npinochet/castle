@@ -5,7 +5,6 @@ import (
 	"game/libs/camera"
 	"log"
 	"reflect"
-	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -24,11 +23,9 @@ type Entity interface {
 type Component interface {
 	Init(entity Entity)
 	Update(dt float64)
-	Draw(screen *ebiten.Image, entityPos ebiten.GeoM)
+	Draw(pipeline *Pipeline, entityPos ebiten.GeoM)
 	Remove()
 }
-
-type Sortable interface{ Priority() int }
 
 type World struct {
 	Space      *bump.Space
@@ -68,7 +65,11 @@ func (w *World) AddWithID(entity Entity, id uint) Entity {
 
 func (w *World) Update(dt float64) {
 	for _, entity := range w.toInit {
-		w.insertEntity(entity)
+		for _, c := range entity.Components() {
+			c.Init(entity)
+		}
+		entity.Init()
+		w.entities = append(w.entities, entity)
 	}
 	w.toInit = nil
 	dt *= w.Speed
@@ -88,20 +89,16 @@ func (w *World) Update(dt float64) {
 	}
 }
 
-func (w *World) Draw(screen *ebiten.Image) {
-	w.Map.Draw(screen, w.Camera, func() { w.DrawEntites(screen) })
-}
-
-func (w *World) DrawEntites(screen *ebiten.Image) {
+func (w *World) Draw(pipeline *Pipeline) {
+	w.Map.Draw(pipeline, w.Camera)
 	cx, cy := w.Camera.Position()
 	entityPos := ebiten.GeoM{}
 	for _, e := range w.entities {
 		x, y := e.Position()
 		entityPos.Reset()
-		entityPos.Translate(x, y)
-		entityPos.Translate(-cx, -cy)
+		entityPos.Translate(x-cx, y-cy)
 		for _, c := range e.Components() {
-			c.Draw(screen, entityPos)
+			c.Draw(pipeline, entityPos)
 		}
 	}
 }
@@ -163,22 +160,3 @@ func (w *World) RemoveAll() {
 }
 
 func (w *World) Freeze(time float64) { w.freezeTimer = time }
-
-func (w *World) insertEntity(entity Entity) {
-	for _, c := range entity.Components() {
-		c.Init(entity)
-	}
-	entity.Init()
-	i, _ := slices.BinarySearchFunc(w.entities, entity, func(o, e Entity) int {
-		oz, ez := 0, 0
-		if s, ok := o.(Sortable); ok {
-			oz = s.Priority()
-		}
-		if s, ok := e.(Sortable); ok {
-			ez = s.Priority()
-		}
-
-		return oz - ez
-	})
-	w.entities = slices.Insert(w.entities, i, entity)
-}

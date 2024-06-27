@@ -1,14 +1,17 @@
 package core
 
 import (
+	"fmt"
 	"game/libs/bump"
 	"game/libs/camera"
 	"image"
 	"io/fs"
 	"log"
 	"math"
+	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/disintegration/imaging"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -23,6 +26,8 @@ const (
 	secondToMillisecond      = 1000
 )
 
+var LayerIndex = 2
+
 type Properties struct {
 	FlipX, FlipY bool
 	View         *tiled.Object
@@ -31,109 +36,98 @@ type Properties struct {
 
 type EntityContructor func(x, y, w, h float64, props *Properties) Entity
 
-type AnimationFrame struct {
+type animationFrame struct {
 	image    *ebiten.Image
 	duration float64
 }
 
-type Animation struct {
-	frames    []*AnimationFrame
+type animation struct {
+	frames    []*animationFrame
 	positions [][2]float64
 	timer     float64
 	current   int
 }
 
-type Map struct {
-	data                                       *tiled.Map
-	foregroundImage, backgroundImage           *ebiten.Image
-	foregroundAnimations, backgroundAnimations map[uint32]*Animation
+type layerData struct {
+	image      *ebiten.Image
+	animations map[uint32]*animation
+	imageTag   string
 }
 
-func NewMap(mapPath string, foregroundLayerName, backgroundLayerName string, fs fs.FS) *Map {
-	// TODO: can fail on windows: https://github.com/lafriks/go-tiled/issues/63
+type Map struct {
+	data                *tiled.Map
+	layersSet           [][]*layerData
+	backgroundLayersNum int
+}
+
+type extVariationFS struct {
+	ext, target string
+	fs          fs.FS
+}
+
+func (fs *extVariationFS) Open(name string) (fs.File, error) {
+	dir, file := path.Split(name)
+	if fileExt := strings.Split(file, "."); fileExt[1] == fs.target {
+		name = path.Join(dir, fmt.Sprintf("%s_%s.%s", fileExt[0], fs.ext, fileExt[1]))
+	}
+
+	return fs.fs.Open(name)
+}
+
+func NewMap(mapPath string, backLayersNum int, fs fs.FS, drawImagesTags ...string) *Map {
 	data, err := tiled.LoadFile(mapPath, tiled.WithFileSystem(fs))
 	if err != nil {
 		log.Println("Error parsing Tiled map:", err)
 	}
 
-	renderer, err := render.NewRendererWithFileSystem(data, fs)
+	layersSet := make([][]*layerData, len(drawImagesTags))
+	layersSet[0], err = extractLayers(data, drawImagesTags[0], fs, false)
 	if err != nil {
-		log.Println("Tiled map unsupported for rendering:", err)
+		log.Println("Error extracting layers data from Tiled map:", err)
 	}
 
-	var foreLayerIndex, backLayerIndex = -1, -1
-	for i, layer := range data.Layers {
-		if foregroundLayerName == layer.Name {
-			foreLayerIndex = i
-		}
-		if backgroundLayerName == layer.Name {
-			backLayerIndex = i
+	for i, ext := range drawImagesTags[1:] {
+		layersSet[i+1], err = extractLayers(data, ext, &extVariationFS{ext: ext, target: "png", fs: fs}, i == len(drawImagesTags)-1)
+		if err != nil {
+			log.Println("Error extracting layers data from Tiled map:", err)
 		}
 	}
 
-	foregroundAnim, err := extractLayerAnimations(data, fs, foreLayerIndex)
-	if err != nil {
-		log.Println("map: error extracting foreground animations:", err)
-	}
-	backgroundAnim, err := extractLayerAnimations(data, fs, backLayerIndex)
-	if err != nil {
-		log.Println("map: error extracting background animations:", err)
-	}
-
-	if err := renderer.RenderLayer(foreLayerIndex); err != nil {
-		log.Println("map: tiled layer unsupported for rendering:", err)
-	}
-	foreImage := ebiten.NewImageFromImage(renderer.Result)
-
-	renderer.Clear()
-	if err := renderer.RenderLayer(backLayerIndex); err != nil {
-		log.Println("map: tiled layer unsupported for rendering:", err)
-	}
-	backImage := ebiten.NewImageFromImage(renderer.Result)
-
-	return &Map{data, foreImage, backImage, foregroundAnim, backgroundAnim}
+	return &Map{data, layersSet, backLayersNum}
 }
 
 func (m *Map) Update(dt float64) {
-	for _, anim := range m.foregroundAnimations {
-		if anim.timer += dt; anim.timer >= anim.frames[anim.current].duration {
-			anim.current = (anim.current + 1) % len(anim.frames)
-			anim.timer = 0
-		}
-	}
-	for _, anim := range m.backgroundAnimations {
-		if anim.timer += dt; anim.timer >= anim.frames[anim.current].duration {
-			anim.current = (anim.current + 1) % len(anim.frames)
-			anim.timer = 0
+	for _, layers := range m.layersSet {
+		for _, layer := range layers {
+			for _, anim := range layer.animations {
+				if anim.timer += dt; anim.timer >= anim.frames[anim.current].duration {
+					anim.current = (anim.current + 1) % len(anim.frames)
+					anim.timer = 0
+				}
+			}
 		}
 	}
 }
 
-func (m *Map) Draw(screen *ebiten.Image, camera *camera.Camera, betweenDraw func()) {
-	if m.backgroundImage != nil {
-		background, _ := m.backgroundImage.SubImage(camera.Bounds()).(*ebiten.Image)
-		screen.DrawImage(background, nil)
-		cx, cy := camera.Position()
-		for _, anim := range m.backgroundAnimations {
-			for _, pos := range anim.positions {
-				op := &ebiten.DrawImageOptions{}
-				op.GeoM.Translate(pos[0]-cx, pos[1]-cy)
-				screen.DrawImage(anim.frames[anim.current].image, op)
-			}
+func (m *Map) Draw(pipeline *Pipeline, camera *camera.Camera) {
+	for i := range m.layersSet[0] {
+		layerDepth := -LayerIndex
+		if i >= m.backgroundLayersNum {
+			layerDepth = LayerIndex
 		}
-	}
-	if betweenDraw != nil {
-		betweenDraw()
-	}
-	if m.foregroundImage != nil {
-		foreground, _ := m.foregroundImage.SubImage(camera.Bounds()).(*ebiten.Image)
-		screen.DrawImage(foreground, nil)
-		cx, cy := camera.Position()
-		for _, anim := range m.foregroundAnimations {
-			for _, pos := range anim.positions {
-				op := &ebiten.DrawImageOptions{}
-				op.GeoM.Translate(pos[0]-cx, pos[1]-cy)
-				screen.DrawImage(anim.frames[anim.current].image, op)
+		for _, set := range m.layersSet {
+			localImage, _ := set[i].image.SubImage(camera.Bounds()).(*ebiten.Image)
+			pipeline.AddDraw(set[i].imageTag, layerDepth, func(screen *ebiten.Image) { screen.DrawImage(localImage, nil) })
+			cx, cy := camera.Position()
+			for _, anim := range set[i].animations {
+				for _, pos := range anim.positions {
+					op := &ebiten.DrawImageOptions{}
+					op.GeoM.Translate(pos[0]-cx, pos[1]-cy)
+					localAnim := anim
+					pipeline.AddDraw(set[i].imageTag, layerDepth, func(screen *ebiten.Image) {
+						screen.DrawImage(localAnim.frames[localAnim.current].image, op)
+					})
+				}
 			}
 		}
 	}
@@ -181,11 +175,10 @@ func (m *Map) FindObjectFromTileID(id uint32, objectGroupName string) (*tiled.Ob
 
 func (m *Map) FindTilePosition(gid uint32) [][2]float64 {
 	var positions [][2]float64
-	if anim, ok := m.backgroundAnimations[gid]; ok {
-		positions = append(positions, anim.positions...)
-	}
-	if anim, ok := m.foregroundAnimations[gid]; ok {
-		positions = append(positions, anim.positions...)
+	for _, layer := range m.layersSet[0] {
+		if anim, ok := layer.animations[gid]; ok {
+			positions = append(positions, anim.positions...)
+		}
 	}
 	for _, layer := range m.data.Layers {
 		for y := 0; y < m.data.Height; y++ {
@@ -308,8 +301,31 @@ func (m *Map) GetObjectsRects(objectGroupName string) ([]bump.Rect, bool) {
 	return rects, true
 }
 
-func extractLayerAnimations(data *tiled.Map, fs fs.FS, layerIndex int) (map[uint32]*Animation, error) {
-	animationFrames := map[uint32]*Animation{}
+func extractLayers(data *tiled.Map, imageTag string, fs fs.FS, last bool) ([]*layerData, error) {
+	renderer, err := render.NewRendererWithFileSystem(data, fs)
+	if err != nil {
+		return nil, fmt.Errorf("tiled map unsupported for rendering: %w", err)
+	}
+
+	layersData := make([]*layerData, len(data.Layers))
+	for i, layer := range data.Layers {
+		anims, err := extractLayerAnimations(data, fs, i, last)
+		if err != nil {
+			return nil, fmt.Errorf("map: error extracting %s animations: %w", layer.Name, err)
+		}
+		renderer.Clear()
+		if err := renderer.RenderLayer(i); err != nil {
+			return nil, fmt.Errorf("map: tiled layer %s unsupported for rendering: %w", layer.Name, err)
+		}
+		layersData[i] = &layerData{ebiten.NewImageFromImage(renderer.Result), anims, imageTag}
+	}
+
+	return layersData, nil
+}
+
+func extractLayerAnimations(data *tiled.Map, fs fs.FS, layerIndex int, last bool) (map[uint32]*animation, error) {
+	// TODO: this first part can be run once, it's not consistant with the rest of the file
+	animationFrames := map[uint32]*animation{}
 	for _, tileset := range data.Tilesets {
 		sf, err := fs.Open(filepath.ToSlash(tileset.GetFileFullPath(tileset.Image.Source)))
 		if err != nil {
@@ -326,13 +342,13 @@ func extractLayerAnimations(data *tiled.Map, fs fs.FS, layerIndex int) (map[uint
 			if len(tile.Animation) == 0 {
 				continue
 			}
-			frames := make([]*AnimationFrame, len(tile.Animation))
+			frames := make([]*animationFrame, len(tile.Animation))
 			for i, frame := range tile.Animation {
 				duration := float64(frame.Duration) / secondToMillisecond
 				fameImg := ebiten.NewImageFromImage(imaging.Crop(img, tileset.GetTileRect(frame.TileID)))
-				frames[i] = &AnimationFrame{image: fameImg, duration: duration}
+				frames[i] = &animationFrame{image: fameImg, duration: duration}
 			}
-			animationFrames[tileset.FirstGID+tile.ID] = &Animation{frames: frames}
+			animationFrames[tileset.FirstGID+tile.ID] = &animation{frames: frames}
 		}
 	}
 
@@ -349,8 +365,10 @@ func extractLayerAnimations(data *tiled.Map, fs fs.FS, layerIndex int) (map[uint
 			gid := tile.Tileset.FirstGID + tile.ID
 			if animation, ok := animationFrames[gid]; ok {
 				animation.positions = append(animation.positions, [2]float64{float64(x * data.TileWidth), float64(y * data.TileHeight)})
-				layer.Tiles[tileID] = tiled.NilLayerTile
 				animationFrames[gid] = animation
+				if last {
+					layer.Tiles[tileID] = tiled.NilLayerTile
+				}
 			}
 			tileID++
 		}

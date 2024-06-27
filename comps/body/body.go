@@ -67,7 +67,7 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	if !DebugDraw {
 		return
 	}
@@ -75,13 +75,14 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	_, _, ew, eh := c.entity.Rect()
 	image := ebiten.NewImage(int(ew), int(eh))
 	image.Fill(color.NRGBA{255, 0, 0, 75})
-	screen.DrawImage(image, &ebiten.DrawImageOptions{GeoM: entityPos})
-
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
-	op.GeoM.Translate(-5, -22)
-	utils.DrawText(screen, fmt.Sprintf(`FRIC:%v`, friction), assets.TinyFont, op)
-	op.GeoM.Translate(0, 4)
-	utils.DrawText(screen, fmt.Sprintf(`MAX:%v`, c.MaxX), assets.TinyFont, op)
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+		screen.DrawImage(image, op)
+		op.GeoM.Translate(-5, -22)
+		utils.DrawText(screen, fmt.Sprintf(`FRIC:%v`, friction), assets.TinyFont, op)
+		op.GeoM.Translate(0, 6)
+		utils.DrawText(screen, fmt.Sprintf(`MAX:%v`, c.MaxX), assets.TinyFont, op)
+	})
 }
 
 func (c *Comp) QueryFloor(tags ...bump.Tag) bool {

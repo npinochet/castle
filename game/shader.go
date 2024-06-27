@@ -1,15 +1,12 @@
 package game
 
 import (
-	_ "embed"
+	_ "embed" // Embed is used to embed the shader file.
+	"game/comps/anim"
 	"game/core"
-	"game/maps"
 	"game/vars"
 	"image/color"
-	"io/fs"
 	"log"
-	"path/filepath"
-	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -20,31 +17,18 @@ const (
 )
 
 var (
-	normalMapImage     = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
-	diffuseImage       = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
-	entitiesMask       = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
-	normalNeutralColor = color.NRGBA{127, 127, 255, 255}
-	normalTiledMap     *core.Map
-	lights             []light
-	shaderTime         float32
-	shader             *ebiten.Shader
+	normalMapImage = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
+	diffuseImage   = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
+	lights         []light
+	shaderTime     float32
+	shader         *ebiten.Shader
 	//go:embed light.kage
 	shaderData []byte
 )
 
 type light struct{ x, y, size float64 }
-type normalMapFS struct{ fs fs.FS }
 
-func (n *normalMapFS) Open(name string) (fs.File, error) {
-	dir, file := filepath.Split(name)
-	if fileExt := strings.Split(file, "."); fileExt[1] == "png" {
-		name = filepath.Join(dir, fileExt[0]+"_normal."+fileExt[1])
-	}
-
-	return n.fs.Open(name)
-}
-
-func shaderLoad(mapFile string, lightTileGID uint32) {
+func shaderLoad(worldMap *core.Map, lightTileGID uint32) {
 	if !Lights {
 		return
 	}
@@ -53,8 +37,7 @@ func shaderLoad(mapFile string, lightTileGID uint32) {
 	if shader, err = ebiten.NewShader(shaderData); err != nil {
 		log.Fatal(err)
 	}
-	normalTiledMap = core.NewMap(mapFile, "foreground", "background", &normalMapFS{fs: maps.IntroFS})
-	positions := normalTiledMap.FindTilePosition(lightTileGID)
+	positions := worldMap.FindTilePosition(lightTileGID)
 	lights = make([]light, len(positions)+1)
 	lights[len(lights)-1] = light{0, 0, 0}
 	for i, pos := range positions {
@@ -64,20 +47,16 @@ func shaderLoad(mapFile string, lightTileGID uint32) {
 
 func shaderUpdate(dt float64) { shaderTime += float32(dt) }
 
-func shaderDrawLights(screen *ebiten.Image) {
+func shaderDrawLights(pipeline *core.Pipeline, screen *ebiten.Image) {
 	if !Lights {
+		pipeline.Dispose(vars.PipelineNormalMapTag)
+
 		return
 	}
 
-	normalMapImage.Fill(normalNeutralColor)
+	normalMapImage.Fill(anim.NormalMaskColor)
+	pipeline.Compose(vars.PipelineNormalMapTag, normalMapImage)
 	diffuseImage.Fill(color.Black)
-	entitiesMask.Fill(color.Transparent)
-	normalTiledMap.Draw(normalMapImage, vars.World.Camera, nil)
-	vars.World.DrawEntites(entitiesMask)
-	normalMapImage.DrawImage(entitiesMask, &ebiten.DrawImageOptions{Blend: ebiten.BlendDestinationOut})
-	entitiesMask.Fill(normalNeutralColor)
-	normalMapImage.DrawImage(entitiesMask, &ebiten.DrawImageOptions{Blend: ebiten.BlendDestinationOver})
-
 	cx, cy := vars.World.Camera.Position()
 	for i, light := range lights {
 		x, y := light.x-cx, light.y-cy

@@ -1,17 +1,21 @@
 package render
 
 import (
+	"game/comps/anim"
 	"game/core"
+	"game/vars"
 	"math"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/colorm"
 )
 
 type Comp struct {
 	Image        *ebiten.Image
 	X, Y         float64
 	FlipX, FlipY bool
+	Layer        int
 	RollingTime  time.Duration
 	rollingTimer *time.Timer
 	r            float64
@@ -40,7 +44,7 @@ func (c *Comp) Remove() {
 
 func (c *Comp) Update(_ float64) {}
 
-func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}
 	var sx, sy, dx, dy float64 = 1, 1, 0, 0
 	if c.FlipX {
@@ -56,5 +60,9 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op.GeoM.Translate(c.X, c.Y)
 	op.GeoM.Translate(dx, dy)
 	op.GeoM.Concat(entityPos)
-	screen.DrawImage(c.Image, op)
+	pipeline.AddDraw(vars.PipelineScreenTag, c.Layer, func(screen *ebiten.Image) { screen.DrawImage(c.Image, op) })
+	normalOp := &colorm.DrawImageOptions{GeoM: op.GeoM}
+	pipeline.AddDraw(vars.PipelineNormalMapTag, c.Layer, func(normalMap *ebiten.Image) {
+		colorm.DrawImage(normalMap, c.Image, anim.FillNormalMaskColorM, normalOp)
+	})
 }

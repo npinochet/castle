@@ -45,7 +45,7 @@ func NewChest(x, y, _, _ float64, props *core.Properties) *Chest {
 	}
 	chest := &Chest{
 		BaseEntity: &core.BaseEntity{X: x, Y: y, W: chestW, H: chestH},
-		render:     &render.Comp{X: imageOffset, Image: chestCloseImage, FlipX: props.FlipX},
+		render:     &render.Comp{X: imageOffset, Image: chestCloseImage, FlipX: props.FlipX, Layer: -1},
 		hitbox:     &hitbox.Comp{},
 		reward:     100,
 		open:       props.Custom["open"] == "true",
@@ -54,7 +54,6 @@ func NewChest(x, y, _, _ float64, props *core.Properties) *Chest {
 
 	return chest
 }
-func (c *Chest) Priority() int { return -1 }
 
 func (c *Chest) Init() {
 	c.hitbox.HitFunc = c.chestHurt

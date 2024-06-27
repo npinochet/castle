@@ -59,7 +59,7 @@ func main() {
 	if runtime.GOOS == "darwin" {
 		op.GraphicsLibrary = ebiten.GraphicsLibraryOpenGL
 	}
-	if os.Args[1] == "test" {
+	if os.Args[len(os.Args)-1] == "test" {
 		go func() {
 			time.Sleep(2 * time.Second)
 			os.Exit(0)

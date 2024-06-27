@@ -28,7 +28,8 @@ func rand(co vec2) float {
 func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
 	lightDir := 0.1 * (LightPosSize - vec3(dstPos.xy-imageDstOrigin(), 0))
 
-	normalColor := imageSrc0At(srcPos).xyz
+	normalValues := imageSrc0At(srcPos).xyzw
+	normalColor := normalValues.xyz
 	normalColor.y = 1 - normalColor.y
 	normal := normalize(normalColor*2 - 1)
 	diffuse := (1 - ambientLight) * max(dot(normal, normalize(lightDir)), 0.0)
@@ -38,6 +39,7 @@ func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
 	diffuse = floor(lightResolution*diffuse+lightResolutionOffset) / lightResolution
 
 	diffuse = clamp(diffuse+ambientLight, 0, 1)
+	diffuse += 1 - normalValues.w
 
 	return vec4(diffuse, diffuse, diffuse, 1)
 }

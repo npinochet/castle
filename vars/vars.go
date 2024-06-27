@@ -12,6 +12,11 @@ const (
 	ScreenWidth, ScreenHeight = 160, 96 // 320, 240.
 	Debug                     = true
 
+	// Pipeline Layers and Tags.
+	PipelineUILayer      = 10
+	PipelineScreenTag    = "screen"
+	PipelineNormalMapTag = "normal"
+
 	// Entity Flags.
 	PlayerTeamFlag = iota
 	EnemyTeamFlag

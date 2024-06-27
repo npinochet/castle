@@ -166,18 +166,17 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
-	c.debugDraw(screen, entityPos)
+func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
+	c.debugDraw(pipeline, entityPos)
 	if c.Hud {
-		c.drawHud(screen)
+		c.drawHud(pipeline)
 
 		return
 	}
 	if c.Health >= c.MaxHealth || c.Health < 0 {
 		return
 	}
-
-	c.drawHeadHealthBar(screen, entityPos, c.Health, c.MaxHealth, c.healthLag)
+	c.drawHeadHealthBar(pipeline, entityPos, c.Health, c.MaxHealth, c.healthLag)
 }
 
 func (c *Comp) HealthPercent() float64  { return c.Health / c.MaxHealth }
@@ -234,57 +233,69 @@ func (c *Comp) AddExp(amount int) {
 	c.Exp += amount
 }
 
-func (c *Comp) drawHud(screen *ebiten.Image) {
+func (c *Comp) drawHud(pipeline *core.Pipeline) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(1, 1)
-	screen.DrawImage(iconsImage, op)
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) { screen.DrawImage(iconsImage, op) })
+	pipeline.AddDraw(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
+		normalMap.DrawImage(iconsImage, &ebiten.DrawImageOptions{GeoM: op.GeoM, Blend: ebiten.BlendDestinationOut})
+	})
 
 	const staminaVisualScale = 0.8
-	c.drawSegment(screen, op.GeoM, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
+	c.drawSegment(pipeline, op.GeoM, 0, c.Health, c.MaxHealth, c.healthLag, healthColor)
 	c.drawSegment(
-		screen, op.GeoM, 1, c.Stamina*staminaVisualScale, c.MaxStamina*staminaVisualScale, c.staminaLag*staminaVisualScale, staminaColor,
+		pipeline, op.GeoM, 1, c.Stamina*staminaVisualScale, c.MaxStamina*staminaVisualScale, c.staminaLag*staminaVisualScale, staminaColor,
 	)
-	c.drawAttackMult(screen, op.GeoM)
-	// c.drawSegment(screen, op.GeoM, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
-	c.drawCount(screen, op.GeoM, 2, c.Heal, 0)
-	c.drawCount(screen, op.GeoM, 3, c.Exp, 2)
+	c.drawAttackMult(pipeline, op.GeoM)
+	// c.drawSegment(pipeline, op.GeoM, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
+	c.drawCount(pipeline, op.GeoM, 2, c.Heal, 0)
+	c.drawCount(pipeline, op.GeoM, 3, c.Exp, 2)
 }
 
-func (c *Comp) drawSegment(screen *ebiten.Image, geoM ebiten.GeoM, y, current, max, lag float64, barColor color.Color) {
+func (c *Comp) drawSegment(pipeline *core.Pipeline, geoM ebiten.GeoM, y, current, max, lag float64, barColor color.Color) {
+	normalOp := &ebiten.DrawImageOptions{Blend: ebiten.BlendDestinationOut}
+	normalOp.GeoM.Scale(max+2, 1)
+	normalOp.GeoM.Concat(geoM)
+	normalOp.GeoM.Translate(vars.HudIconsX, vars.BarMiddleH*y)
+	pipeline.AddDraw(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
+		normalMap.DrawImage(fullAttackBarImage, normalOp)
+	})
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(max, 1)
 	op.GeoM.Concat(geoM)
 	op.GeoM.Translate(vars.HudIconsX, vars.BarMiddleH*y)
-	screen.DrawImage(middleBarImage, op)
 
 	fillerGeoM := geoM
 	fillerGeoM.Translate(vars.HudIconsX, vars.BarMiddleH*y+2)
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+		screen.DrawImage(middleBarImage, op)
 
-	op.GeoM.Reset()
-	op.GeoM.Scale(max, 1)
-	op.GeoM.Concat(fillerGeoM)
-	screen.DrawImage(fullEmptyBarImage, op)
-	if lag > 0 {
 		op.GeoM.Reset()
-		op.GeoM.Scale(lag+1, 1)
+		op.GeoM.Scale(max, 1)
 		op.GeoM.Concat(fillerGeoM)
-		screen.DrawImage(fullLagBarImage, op)
-	}
-	if current > 0 {
-		op.GeoM.Reset()
-		op.GeoM.Scale(current+1, 1)
-		op.GeoM.Concat(fillerGeoM)
-		fullBarImage.Fill(barColor)
-		screen.DrawImage(fullBarImage, op)
-	}
+		screen.DrawImage(fullEmptyBarImage, op)
+		if lag > 0 {
+			op.GeoM.Reset()
+			op.GeoM.Scale(lag+1, 1)
+			op.GeoM.Concat(fillerGeoM)
+			screen.DrawImage(fullLagBarImage, op)
+		}
+		if current > 0 {
+			op.GeoM.Reset()
+			op.GeoM.Scale(current+1, 1)
+			op.GeoM.Concat(fillerGeoM)
+			fullBarImage.Fill(barColor)
+			screen.DrawImage(fullBarImage, op)
+		}
 
-	op.GeoM.Reset()
-	op.GeoM.Concat(geoM)
-	op.GeoM.Translate(vars.BarMiddleH+max, vars.BarMiddleH*y)
-	screen.DrawImage(barEndImage, op)
+		op.GeoM.Reset()
+		op.GeoM.Concat(geoM)
+		op.GeoM.Translate(vars.BarMiddleH+max, vars.BarMiddleH*y)
+		screen.DrawImage(barEndImage, op)
+	})
 }
 
-func (c *Comp) drawCount(screen *ebiten.Image, geoM ebiten.GeoM, y float64, count int, offset float64) {
+func (c *Comp) drawCount(pipeline *core.Pipeline, geoM ebiten.GeoM, y float64, count int, offset float64) {
 	text := strconv.Itoa(count)
 	w, _ := utils.TextSize(text, assets.TinyFont)
 	op := &ebiten.DrawImageOptions{GeoM: geoM}
@@ -293,13 +304,17 @@ func (c *Comp) drawCount(screen *ebiten.Image, geoM ebiten.GeoM, y float64, coun
 	opBackground := &ebiten.DrawImageOptions{}
 	opBackground.GeoM.Scale(float64(w)+2, 1)
 	opBackground.GeoM.Concat(op.GeoM)
-	screen.DrawImage(fullCountBar, opBackground)
-
-	op.GeoM.Translate(0, 2)
-	utils.DrawText(screen, text, assets.TinyFont, op)
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+		screen.DrawImage(fullCountBar, opBackground)
+		op.GeoM.Translate(0, 2)
+		utils.DrawText(screen, text, assets.TinyFont, op)
+	})
+	pipeline.AddDraw(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
+		normalMap.DrawImage(fullCountBar, &ebiten.DrawImageOptions{GeoM: opBackground.GeoM, Blend: ebiten.BlendDestinationOut})
+	})
 }
 
-func (c *Comp) drawAttackMult(screen *ebiten.Image, geoM ebiten.GeoM) {
+func (c *Comp) drawAttackMult(pipeline *core.Pipeline, geoM ebiten.GeoM) {
 	if c.AttackMult < minAttackMultToShow {
 		return
 	}
@@ -312,40 +327,53 @@ func (c *Comp) drawAttackMult(screen *ebiten.Image, geoM ebiten.GeoM) {
 	opBackground := &ebiten.DrawImageOptions{}
 	opBackground.GeoM.Scale(float64(w)+2, 1)
 	opBackground.GeoM.Concat(op.GeoM)
-	screen.DrawImage(fullAttackBarImage, opBackground)
-
-	op.GeoM.Translate(0, 1)
-	utils.DrawText(screen, text, assets.TinyFont, op)
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+		screen.DrawImage(fullAttackBarImage, opBackground)
+		op.GeoM.Translate(0, 1)
+		utils.DrawText(screen, text, assets.TinyFont, op)
+	})
+	pipeline.AddDraw(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
+		normalMap.DrawImage(fullAttackBarImage, &ebiten.DrawImageOptions{GeoM: opBackground.GeoM, Blend: ebiten.BlendDestinationOut})
+	})
 }
 
-func (c *Comp) drawHeadHealthBar(screen *ebiten.Image, entityPos ebiten.GeoM, current, max, lag float64) {
+func (c *Comp) drawHeadHealthBar(pipeline *core.Pipeline, entityPos ebiten.GeoM, current, max, lag float64) {
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	barW := float64(headBar.Bounds().Dx())
-	op.GeoM.Translate((c.entityW-barW)/2, -10)
-	screen.DrawImage(headBar, op)
-	op.GeoM.Translate(1, 1)
-	screen.DrawImage(headInnerBar, op)
+	op.GeoM.Translate((c.entityW-barW)/2, -9)
+	normalOp := &ebiten.DrawImageOptions{GeoM: op.GeoM, Blend: ebiten.BlendDestinationOut}
+	pipeline.AddDraw(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
+		normalMap.DrawImage(headBar, normalOp)
+	})
 
-	if width := math.Floor((lag / max) * vars.EnemyBarW); width > 0 {
-		opScaler := &ebiten.DrawImageOptions{}
-		opScaler.GeoM.Scale(width, 1)
-		opScaler.GeoM.Concat(op.GeoM)
-		screen.DrawImage(headLagBar, opScaler)
-	}
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+		screen.DrawImage(headBar, op)
+		op.GeoM.Translate(1, 1)
+		screen.DrawImage(headInnerBar, op)
 
-	if width := math.Round((current / max) * vars.EnemyBarW); width > 0 {
-		opScaler := &ebiten.DrawImageOptions{}
-		opScaler.GeoM.Scale(width, 1)
-		opScaler.GeoM.Concat(op.GeoM)
-		screen.DrawImage(headFillerBar, opScaler)
-	}
+		if width := math.Floor((lag / max) * vars.EnemyBarW); width > 0 {
+			opScaler := &ebiten.DrawImageOptions{}
+			opScaler.GeoM.Scale(width, 1)
+			opScaler.GeoM.Concat(op.GeoM)
+			screen.DrawImage(headLagBar, opScaler)
+		}
+
+		if width := math.Round((current / max) * vars.EnemyBarW); width > 0 {
+			opScaler := &ebiten.DrawImageOptions{}
+			opScaler.GeoM.Scale(width, 1)
+			opScaler.GeoM.Concat(op.GeoM)
+			screen.DrawImage(headFillerBar, opScaler)
+		}
+	})
 }
 
-func (c *Comp) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Comp) debugDraw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	if !DebugDraw || c.NoDebug {
 		return
 	}
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -16)
-	utils.DrawText(screen, fmt.Sprintf("%0.2f/%0.2f/%0.2f", c.Health, c.Stamina, c.Poise), assets.TinyFont, op)
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+		utils.DrawText(screen, fmt.Sprintf("%0.2f/%0.2f/%0.2f", c.Health, c.Stamina, c.Poise), assets.TinyFont, op)
+	})
 }

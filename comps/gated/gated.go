@@ -37,9 +37,9 @@ func (c *Comp) Init(_ core.Entity) {
 	c.open = true
 }
 
-func (c *Comp) Update(_ float64)                    {}
-func (c *Comp) Remove()                             {}
-func (c *Comp) Draw(_ *ebiten.Image, _ ebiten.GeoM) {}
+func (c *Comp) Update(_ float64)                     {}
+func (c *Comp) Remove()                              {}
+func (c *Comp) Draw(_ *core.Pipeline, _ ebiten.GeoM) {}
 
 func (c *Comp) Open() {
 	if c.open {

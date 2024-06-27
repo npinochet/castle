@@ -33,7 +33,7 @@ func NewGrave(x, y, _, _ float64, props *core.Properties) *Grave {
 	text += " \n[Press Up to rest at the grave]"
 	grave := &Grave{
 		BaseEntity: entity,
-		render:     &render.Comp{Image: graveImage},
+		render:     &render.Comp{Image: graveImage, Layer: -1},
 		textbox: &textbox.Comp{
 			Text:      text,
 			Area:      func() bump.Rect { return bump.NewRect(entity.Rect()) },
@@ -44,7 +44,6 @@ func NewGrave(x, y, _, _ float64, props *core.Properties) *Grave {
 
 	return grave
 }
-func (g *Grave) Priority() int { return -1 }
 
 func (g *Grave) Init() {}
 
