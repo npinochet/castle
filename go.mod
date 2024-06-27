@@ -16,8 +16,14 @@ require (
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
 	github.com/ebitengine/purego v0.7.1 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
+	github.com/smartystreets/goconvey v1.8.1 // indirect
 	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
+)
+
+replace (
+	github.com/damienfamed75/aseprite v0.3.1 => github.com/npinochet/go-aseprite v0.3.2
+	github.com/lafriks/go-tiled v0.12.0 => github.com/npinochet/go-tiled v0.12.2
 )

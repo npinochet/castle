@@ -39,4 +39,4 @@ jobs:
           name: castle.exe
 
       - name: Run
-        run: ./castle.exe
+        run: ./castle.exe test

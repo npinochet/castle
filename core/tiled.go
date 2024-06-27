@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"math"
+	"path/filepath"
 	"strconv"
 
 	"github.com/disintegration/imaging"
@@ -310,7 +311,7 @@ func (m *Map) GetObjectsRects(objectGroupName string) ([]bump.Rect, bool) {
 func extractLayerAnimations(data *tiled.Map, fs fs.FS, layerIndex int) (map[uint32]*Animation, error) {
 	animationFrames := map[uint32]*Animation{}
 	for _, tileset := range data.Tilesets {
-		sf, err := fs.Open(tileset.GetFileFullPath(tileset.Image.Source))
+		sf, err := fs.Open(filepath.ToSlash(tileset.GetFileFullPath(tileset.Image.Source)))
 		if err != nil {
 			return nil, err
 		}
