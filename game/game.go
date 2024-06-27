@@ -28,6 +28,7 @@ const (
 
 var (
 	backgroundColor = color.RGBA{50, 60, 57, 255}
+	pipeline        = core.NewPipeline()
 	entityBinds     = map[uint32]core.EntityContructor{
 		26:  toEntityContructor(entity.NewKnight),
 		27:  toEntityContructor(entity.NewGhoul),
@@ -127,7 +128,8 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(backgroundColor)
-	vars.World.Draw(screen)
+	vars.World.Draw(pipeline)
+	pipeline.Compose(vars.PipelineScreenTag, screen)
 	shaderDrawLights(screen)
 	if restartTransition != nil {
 		restartTransition.Draw(screen)

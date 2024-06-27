@@ -64,7 +64,7 @@ func (c *Comp) Update(_ float64) {
 	c.active = active
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
+func (c *Comp) Draw(pipeline *core.Pipeline, _ ebiten.GeoM) {
 	if !c.active {
 		return
 	}
@@ -81,14 +81,16 @@ func (c *Comp) Draw(screen *ebiten.Image, _ ebiten.GeoM) {
 		px, py := x+w/2-float64(iw)/2, boxH
 		ix := math.Max(math.Min(px-cx, vars.BoxW+vars.BoxX-float64(iw)), vars.BoxX)
 		iop.GeoM.Translate(ix, boxY+py)
-		screen.DrawImage(indicatorImage, iop)
+		pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) { screen.DrawImage(indicatorImage, iop) })
 	}
 
-	op.GeoM.Translate(0, math.Max(math.Min(boxY, vars.BoxMaxY), vars.BoxMinY))
-	screen.DrawImage(c.drawBackground(), op)
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+		op.GeoM.Translate(0, math.Max(math.Min(boxY, vars.BoxMaxY), vars.BoxMinY))
+		screen.DrawImage(c.drawBackground(), op)
 
-	op.GeoM.Translate(0, 2)
-	utils.DrawText(screen, c.Text, assets.TinyFont, op)
+		op.GeoM.Translate(0, 2)
+		utils.DrawText(screen, c.Text, assets.TinyFont, op)
+	})
 }
 
 func (c *Comp) drawBackground() *ebiten.Image {

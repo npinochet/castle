@@ -6,6 +6,7 @@ import (
 	"game/core"
 	"game/libs/bump"
 	"game/utils"
+	"game/vars"
 	"image/color"
 	"math"
 
@@ -82,20 +83,22 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	if !DebugDraw || len(c.actionQueue) == 0 {
 		return
 	}
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -10)
-	utils.DrawText(screen, "AI:"+c.actionQueue[0].action.Name, assets.TinyFont, op)
-	if c.DebugRect != nil {
-		image := ebiten.NewImage(int(c.DebugRect.W), int(c.DebugRect.H))
-		image.Fill(color.NRGBA{255, 255, 0, 75})
-		op := &ebiten.DrawImageOptions{GeoM: entityPos}
-		op.GeoM.Translate(c.DebugRect.X, c.DebugRect.Y)
-		screen.DrawImage(image, op)
-	}
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+		utils.DrawText(screen, "AI:"+c.actionQueue[0].action.Name, assets.TinyFont, op)
+		if c.DebugRect != nil {
+			image := ebiten.NewImage(int(c.DebugRect.W), int(c.DebugRect.H))
+			image.Fill(color.NRGBA{255, 255, 0, 75})
+			op := &ebiten.DrawImageOptions{GeoM: entityPos}
+			op.GeoM.Translate(c.DebugRect.X, c.DebugRect.Y)
+			screen.DrawImage(image, op)
+		}
+	})
 }
 
 func (c *Comp) InTargetRange(minDist, maxDist float64) bool {

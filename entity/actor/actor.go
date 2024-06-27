@@ -205,7 +205,7 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 }
 
 func (c *Control) ShieldUp() {
-	if c.PausingState() || c.BlockingState() || c.stats.Stamina <= 0 {
+	if c.PausingState() || c.BlockingState() {
 		return
 	}
 	c.anim.SetState(vars.ParryBlockTag)

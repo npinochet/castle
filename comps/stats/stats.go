@@ -166,18 +166,23 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
-	c.debugDraw(screen, entityPos)
-	if c.Hud {
-		c.drawHud(screen)
+func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
+	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+		c.debugDraw(screen, entityPos)
+		if c.Hud {
+			c.drawHud(screen)
 
-		return
-	}
-	if c.Health >= c.MaxHealth || c.Health < 0 {
-		return
-	}
+			return
+		}
+		if c.Health >= c.MaxHealth || c.Health < 0 {
+			return
+		}
 
-	c.drawHeadHealthBar(screen, entityPos, c.Health, c.MaxHealth, c.healthLag)
+		c.drawHeadHealthBar(screen, entityPos, c.Health, c.MaxHealth, c.healthLag)
+	})
+	pipeline.AddDraw(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
+		// TODO: What to do here?
+	})
 }
 
 func (c *Comp) HealthPercent() float64  { return c.Health / c.MaxHealth }

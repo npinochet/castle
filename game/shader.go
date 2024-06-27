@@ -65,18 +65,19 @@ func shaderLoad(mapFile string, lightTileGID uint32) {
 func shaderUpdate(dt float64) { shaderTime += float32(dt) }
 
 func shaderDrawLights(screen *ebiten.Image) {
-	if !Lights {
+	/*if !Lights {
 		return
 	}
 
 	normalMapImage.Fill(normalNeutralColor)
 	diffuseImage.Fill(color.Black)
 	entitiesMask.Fill(color.Transparent)
-	normalTiledMap.Draw(normalMapImage, vars.World.Camera, nil)
-	vars.World.DrawEntites(entitiesMask)
-	normalMapImage.DrawImage(entitiesMask, &ebiten.DrawImageOptions{Blend: ebiten.BlendDestinationOut})
-	entitiesMask.Fill(normalNeutralColor)
-	normalMapImage.DrawImage(entitiesMask, &ebiten.DrawImageOptions{Blend: ebiten.BlendDestinationOver})
+	normalTiledMap.Draw(normalMapImage, vars.World.Camera, func() {
+		vars.World.DrawEntites(entitiesMask)
+		normalMapImage.DrawImage(entitiesMask, &ebiten.DrawImageOptions{Blend: ebiten.BlendDestinationOut})
+		entitiesMask.Fill(normalNeutralColor)
+		normalMapImage.DrawImage(entitiesMask, &ebiten.DrawImageOptions{Blend: ebiten.BlendDestinationOver})
+	})
 
 	cx, cy := vars.World.Camera.Position()
 	for i, light := range lights {
@@ -99,4 +100,5 @@ func shaderDrawLights(screen *ebiten.Image) {
 		diffuseImage.DrawRectShader(vars.ScreenWidth, vars.ScreenHeight, shader, op)
 	}
 	screen.DrawImage(diffuseImage, &ebiten.DrawImageOptions{CompositeMode: ebiten.CompositeModeMultiply})
+	*/
 }

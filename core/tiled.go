@@ -16,6 +16,8 @@ import (
 	"github.com/lafriks/go-tiled/render"
 )
 
+// TODO: Remove foregroundImage and backgroundImage, draw following the layers order and draw entities on the Entites layer, maybe autodetect the entities layer.
+
 const viewPropName = "view"
 
 const (
@@ -109,34 +111,36 @@ func (m *Map) Update(dt float64) {
 	}
 }
 
-func (m *Map) Draw(screen *ebiten.Image, camera *camera.Camera, betweenDraw func()) {
-	if m.backgroundImage != nil {
-		background, _ := m.backgroundImage.SubImage(camera.Bounds()).(*ebiten.Image)
-		screen.DrawImage(background, nil)
-		cx, cy := camera.Position()
-		for _, anim := range m.backgroundAnimations {
-			for _, pos := range anim.positions {
-				op := &ebiten.DrawImageOptions{}
-				op.GeoM.Translate(pos[0]-cx, pos[1]-cy)
-				screen.DrawImage(anim.frames[anim.current].image, op)
+func (m *Map) Draw(pipeline *Pipeline, camera *camera.Camera, entitesDraw func()) {
+	pipeline.AddDraw("screen", 0, func(screen *ebiten.Image) { // TODO: Work out this mess
+		if m.backgroundImage != nil {
+			background, _ := m.backgroundImage.SubImage(camera.Bounds()).(*ebiten.Image)
+			screen.DrawImage(background, nil)
+			cx, cy := camera.Position()
+			for _, anim := range m.backgroundAnimations {
+				for _, pos := range anim.positions {
+					op := &ebiten.DrawImageOptions{}
+					op.GeoM.Translate(pos[0]-cx, pos[1]-cy)
+					screen.DrawImage(anim.frames[anim.current].image, op)
+				}
 			}
 		}
-	}
-	if betweenDraw != nil {
-		betweenDraw()
-	}
-	if m.foregroundImage != nil {
-		foreground, _ := m.foregroundImage.SubImage(camera.Bounds()).(*ebiten.Image)
-		screen.DrawImage(foreground, nil)
-		cx, cy := camera.Position()
-		for _, anim := range m.foregroundAnimations {
-			for _, pos := range anim.positions {
-				op := &ebiten.DrawImageOptions{}
-				op.GeoM.Translate(pos[0]-cx, pos[1]-cy)
-				screen.DrawImage(anim.frames[anim.current].image, op)
+		if entitesDraw != nil {
+			entitesDraw()
+		}
+		if m.foregroundImage != nil {
+			foreground, _ := m.foregroundImage.SubImage(camera.Bounds()).(*ebiten.Image)
+			screen.DrawImage(foreground, nil)
+			cx, cy := camera.Position()
+			for _, anim := range m.foregroundAnimations {
+				for _, pos := range anim.positions {
+					op := &ebiten.DrawImageOptions{}
+					op.GeoM.Translate(pos[0]-cx, pos[1]-cy)
+					screen.DrawImage(anim.frames[anim.current].image, op)
+				}
 			}
 		}
-	}
+	})
 }
 
 func (m *Map) FindObjectID(id int) (*tiled.Object, error) {

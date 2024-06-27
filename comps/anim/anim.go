@@ -6,6 +6,7 @@ import (
 	"game/core"
 	"game/libs/bump"
 	"game/utils"
+	"game/vars"
 	"image/color"
 	"log"
 	"math"
@@ -35,6 +36,7 @@ type Comp struct {
 	OX, OY         float64
 	OXFlip, OYFlip float64
 	FlipX, FlipY   bool
+	Layer          int
 	ColorScale     color.Color
 	Fsm            *Fsm
 
@@ -117,7 +119,7 @@ func (c *Comp) Update(dt float64) {
 	}
 }
 
-func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
+func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}
 	var x, y, sx, sy, dx, dy float64 = c.OX, c.OY, 1, 1, 0, 0
 	if c.FlipX {
@@ -131,10 +133,15 @@ func (c *Comp) Draw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op.GeoM.Translate(dx, dy)
 	op.GeoM.Concat(entityPos)
 	op.ColorScale.ScaleWithColor(c.ColorScale)
-	sprite, _ := c.Image.SubImage(c.Data.FrameBoundaries().Rectangle()).(*ebiten.Image)
-	screen.DrawImage(sprite, op)
+	pipeline.AddDraw(vars.PipelineScreenTag, c.Layer, func(screen *ebiten.Image) {
+		sprite, _ := c.Image.SubImage(c.Data.FrameBoundaries().Rectangle()).(*ebiten.Image)
+		screen.DrawImage(sprite, op)
+	})
+	pipeline.AddDraw(vars.PipelineNormalMapTag, c.Layer, func(normalMap *ebiten.Image) {
+		// TODO: find our what to do here
+	})
 	if DebugDraw {
-		c.debugDraw(screen, entityPos)
+		pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) { c.debugDraw(screen, entityPos) })
 	}
 }
 

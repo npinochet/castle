@@ -18,7 +18,7 @@ const (
 	ghoulAnimFile                               = "ghoul"
 	ghoulWidth, ghoulHeight                     = 9, 13
 	ghoulOffsetX, ghoulOffsetY, ghoulOffsetFlip = -6.5, -4, 14
-	ghoulSpeed, ghoulMaxSpeed                   = 100, 45
+	ghoulSpeed, ghoulMaxSpeed                   = 100, 40
 	ghoulHealth                                 = 70
 	ghoulDamage, ghoulPoise                     = 18, 21
 	ghoulExp                                    = 20

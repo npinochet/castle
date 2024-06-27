@@ -50,7 +50,7 @@ func NewDoor(x, y, _, _ float64, props *core.Properties) *Door {
 	image := doorCloseImage.SubImage(image.Rect(0, 0, tileSize, h)).(*ebiten.Image)
 	door := &Door{
 		BaseEntity:     &core.BaseEntity{X: x, Y: y, W: doorW, H: float64(h)},
-		render:         &render.Comp{X: imageOffset, Image: image, FlipX: props.FlipX},
+		render:         &render.Comp{X: imageOffset, Image: image, FlipX: props.FlipX, Layer: -1},
 		body:           &body.Comp{Solid: true, Tags: []bump.Tag{"solid"}},
 		hitbox:         &hitbox.Comp{},
 		opensFromRight: props.FlipX,
@@ -60,7 +60,6 @@ func NewDoor(x, y, _, _ float64, props *core.Properties) *Door {
 
 	return door
 }
-func (d *Door) Priority() int { return -1 }
 
 func (d *Door) Init() {
 	d.hitbox.HitFunc = d.doorHurt
