@@ -117,14 +117,14 @@ func (m *Map) Draw(pipeline *Pipeline, camera *camera.Camera) {
 		}
 		for _, set := range m.layersSet {
 			localImage, _ := set[i].image.SubImage(camera.Bounds()).(*ebiten.Image)
-			pipeline.AddDraw(set[i].imageTag, layerDepth, func(screen *ebiten.Image) { screen.DrawImage(localImage, nil) })
+			pipeline.Add(set[i].imageTag, layerDepth, func(screen *ebiten.Image) { screen.DrawImage(localImage, nil) })
 			cx, cy := camera.Position()
 			for _, anim := range set[i].animations {
 				for _, pos := range anim.positions {
 					op := &ebiten.DrawImageOptions{}
 					op.GeoM.Translate(pos[0]-cx, pos[1]-cy)
 					localAnim := anim
-					pipeline.AddDraw(set[i].imageTag, layerDepth, func(screen *ebiten.Image) {
+					pipeline.Add(set[i].imageTag, layerDepth, func(screen *ebiten.Image) {
 						screen.DrawImage(localAnim.frames[localAnim.current].image, op)
 					})
 				}

@@ -42,8 +42,6 @@ import (
 	- Lower stamina for player
 		- Need to create a 2 phase fight, where one you do action, second you defend while waiting for stamina to recover
 	- New map
-	- Implement light shader
-		- Normal maps can be made after the demo
 
 	- Add a new enemy (low priority)
 */

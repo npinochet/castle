@@ -81,20 +81,20 @@ func (c *Comp) Draw(pipeline *core.Pipeline, _ ebiten.GeoM) {
 		px, py := x+w/2-float64(iw)/2, boxH
 		ix := math.Max(math.Min(px-cx, vars.BoxW+vars.BoxX-float64(iw)), vars.BoxX)
 		iop.GeoM.Translate(ix, boxY+py)
-		pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) { screen.DrawImage(indicatorImage, iop) })
+		pipeline.Add(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) { screen.DrawImage(indicatorImage, iop) })
 
 		normalOp := &ebiten.DrawImageOptions{GeoM: iop.GeoM, Blend: ebiten.BlendDestinationOut}
-		pipeline.AddDraw(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
+		pipeline.Add(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
 			normalMap.DrawImage(indicatorImage, normalOp)
 		})
 	}
 
 	op.GeoM.Translate(0, math.Max(math.Min(boxY, vars.BoxMaxY), vars.BoxMinY))
 	normalOp := &ebiten.DrawImageOptions{GeoM: op.GeoM, Blend: ebiten.BlendDestinationOut}
-	pipeline.AddDraw(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
+	pipeline.Add(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
 		normalMap.DrawImage(c.drawBackground(), normalOp)
 	})
-	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+	pipeline.Add(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
 		screen.DrawImage(c.drawBackground(), op)
 		op.GeoM.Translate(0, 2)
 		utils.DrawText(screen, c.Text, assets.TinyFont, op)

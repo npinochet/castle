@@ -11,6 +11,7 @@ import (
 	"game/vars"
 	"image/color"
 	"log"
+	"math"
 	"slices"
 	"strings"
 )
@@ -34,7 +35,7 @@ type Control struct {
 	hitbox               *hitbox.Comp
 	stats                *stats.Comp
 	ai                   *ai.Comp
-	paused               bool
+	Paused               bool
 	dieTimer, flashTimer float64
 }
 
@@ -131,10 +132,11 @@ func (c *Control) Block(other core.Entity, damage, reactForce float64, contactTy
 }
 
 func (c *Control) Die(dt float64) {
-	c.paused = true
+	c.Paused = true
 	c.Stagger(0, false, 1)
+	const minAlpha = 50
 	if c.dieTimer -= dt; c.dieTimer > 0 {
-		alpha := uint8(50 + 205*float32(c.dieTimer)/dieSeconds)
+		alpha := uint8(minAlpha + (math.MaxUint8-minAlpha)*float32(c.dieTimer)/dieSeconds)
 		c.anim.ColorScale = color.RGBA{alpha, alpha, alpha, alpha}
 
 		return
@@ -161,14 +163,14 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 	c.ShieldDown()
 	c.anim.SetState(attackTag)
 	c.anim.SetStateEffect(func() func() {
-		c.paused = true
+		c.Paused = true
 
-		return func() { c.paused = false }
+		return func() { c.Paused = false }
 	})
 
 	if c.anim.Data.Animation(attackTag+"C") != nil {
 		lastFrame := c.anim.Data.CurrentAnimation.To - c.anim.Data.CurrentAnimation.From
-		c.anim.OnFrame(lastFrame, func() { c.paused = false })
+		c.anim.OnFrame(lastFrame, func() { c.Paused = false })
 	}
 
 	var contactType hitbox.ContactType
@@ -178,6 +180,7 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 	c.anim.OnSlicePresent(vars.HitboxSliceName, func(slice bump.Rect, segmented bool) {
 		if segmented {
 			contacted = nil
+			shakeNum = 0
 		}
 		contactType, contacted = c.hitbox.HitFromHitBox(slice, damage, contacted)
 		if c.actor == vars.Player && shakeNum != len(contacted) { // TODO: This is an ugly hack
@@ -238,7 +241,7 @@ func (c *Control) ShieldDown() {
 }
 
 func (c *Control) PausingState() bool {
-	return c.paused || slices.Contains([]string{vars.StaggerTag, vars.ConsumeTag}, c.anim.State)
+	return c.Paused || slices.Contains([]string{vars.StaggerTag, vars.ConsumeTag}, c.anim.State)
 }
 
 func (c *Control) BlockingState() bool {

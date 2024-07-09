@@ -235,6 +235,7 @@ Lore:
 - Art.
 - Have an enemy which is made from diferent bodyparts stiched together, like frankenstein's monster.
 - Have an enemy which is are aristocrats with deer of some other animal heads. A type of grafted enemy.
+- Add some small dynamic difficulty by having an internal death count that makes the player receive more skill points or badge slots if they're struggling. Do not discuss this to the player.
 
 Level design tips that might be useful to keep in mind:
 

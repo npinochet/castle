@@ -130,6 +130,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	vars.World.Draw(pipeline)
 	pipeline.Compose(vars.PipelineScreenTag, screen)
 	shaderDrawLights(pipeline, screen)
+	pipeline.DisposeAll()
 	if restartTransition != nil {
 		restartTransition.Draw(screen)
 	}

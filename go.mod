@@ -5,10 +5,10 @@ go 1.22
 require (
 	github.com/damienfamed75/aseprite v0.3.1
 	github.com/disintegration/imaging v1.6.2
-	github.com/hajimehoshi/ebiten/v2 v2.7.4
+	github.com/hajimehoshi/ebiten/v2 v2.7.7
 	github.com/lafriks/go-tiled v0.12.0
 	github.com/tanema/gween v0.0.0-20221212145351-621cc8a459d1
-	golang.org/x/image v0.16.0
+	golang.org/x/image v0.18.0
 )
 
 require (
@@ -19,8 +19,8 @@ require (
 	github.com/smartystreets/goconvey v1.8.1 // indirect
 	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
+	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 )
 
 replace (

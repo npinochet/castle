@@ -133,13 +133,13 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	op.GeoM.Concat(entityPos)
 	op.ColorScale.ScaleWithColor(c.ColorScale)
 	sprite, _ := c.Image.SubImage(c.Data.FrameBoundaries().Rectangle()).(*ebiten.Image)
-	pipeline.AddDraw(vars.PipelineScreenTag, c.Layer, func(screen *ebiten.Image) { screen.DrawImage(sprite, op) })
+	pipeline.Add(vars.PipelineScreenTag, c.Layer, func(screen *ebiten.Image) { screen.DrawImage(sprite, op) })
 	normalOp := &colorm.DrawImageOptions{GeoM: op.GeoM}
-	pipeline.AddDraw(vars.PipelineNormalMapTag, c.Layer, func(normalMap *ebiten.Image) {
+	pipeline.Add(vars.PipelineNormalMapTag, c.Layer, func(normalMap *ebiten.Image) {
 		colorm.DrawImage(normalMap, sprite, FillNormalMaskColorM, normalOp)
 	})
 	if DebugDraw {
-		pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) { c.debugDraw(screen, entityPos) })
+		pipeline.Add(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) { c.debugDraw(screen, entityPos) })
 	}
 }
 

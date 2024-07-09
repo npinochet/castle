@@ -49,8 +49,6 @@ func shaderUpdate(dt float64) { shaderTime += float32(dt) }
 
 func shaderDrawLights(pipeline *core.Pipeline, screen *ebiten.Image) {
 	if !Lights {
-		pipeline.Dispose(vars.PipelineNormalMapTag)
-
 		return
 	}
 

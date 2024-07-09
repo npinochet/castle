@@ -67,7 +67,7 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	if !DebugDraw {
 		return
 	}
-	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+	pipeline.Add(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
 		for _, box := range c.hurtBoxes {
 			image := ebiten.NewImage(int(box.rect.W), int(box.rect.H))
 			image.Fill(color.NRGBA{0, 0, 255, 75})

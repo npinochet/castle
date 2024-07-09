@@ -60,9 +60,9 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	op.GeoM.Translate(c.X, c.Y)
 	op.GeoM.Translate(dx, dy)
 	op.GeoM.Concat(entityPos)
-	pipeline.AddDraw(vars.PipelineScreenTag, c.Layer, func(screen *ebiten.Image) { screen.DrawImage(c.Image, op) })
+	pipeline.Add(vars.PipelineScreenTag, c.Layer, func(screen *ebiten.Image) { screen.DrawImage(c.Image, op) })
 	normalOp := &colorm.DrawImageOptions{GeoM: op.GeoM}
-	pipeline.AddDraw(vars.PipelineNormalMapTag, c.Layer, func(normalMap *ebiten.Image) {
+	pipeline.Add(vars.PipelineNormalMapTag, c.Layer, func(normalMap *ebiten.Image) {
 		colorm.DrawImage(normalMap, c.Image, anim.FillNormalMaskColorM, normalOp)
 	})
 }

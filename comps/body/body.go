@@ -76,7 +76,7 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	image := ebiten.NewImage(int(ew), int(eh))
 	image.Fill(color.NRGBA{255, 0, 0, 75})
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
-	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+	pipeline.Add(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
 		screen.DrawImage(image, op)
 		op.GeoM.Translate(-5, -22)
 		utils.DrawText(screen, fmt.Sprintf(`FRIC:%v`, friction), assets.TinyFont, op)

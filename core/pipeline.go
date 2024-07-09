@@ -12,7 +12,6 @@ type DrawFunc func(image *ebiten.Image)
 
 type Pipeline struct {
 	layers map[string][]layerDraw
-	sizes  map[string]int
 }
 
 type layerDraw struct {
@@ -20,27 +19,25 @@ type layerDraw struct {
 	drawFunc DrawFunc
 }
 
-func NewPipeline() *Pipeline {
-	return &Pipeline{layers: map[string][]layerDraw{}, sizes: map[string]int{}}
-}
+func NewPipeline() *Pipeline { return &Pipeline{layers: map[string][]layerDraw{}} }
 
-func (p *Pipeline) AddDraw(imageTag string, layer int, drawFunc DrawFunc) {
-	if size := p.sizes[imageTag]; len(p.layers[imageTag]) > size {
-		p.layers[imageTag][size] = layerDraw{layer, drawFunc}
-	} else {
-		p.layers[imageTag] = append(p.layers[imageTag], layerDraw{layer, drawFunc})
-	}
-
-	p.sizes[imageTag]++
+func (p *Pipeline) Add(imageTag string, layer int, drawFunc DrawFunc) {
+	p.layers[imageTag] = append(p.layers[imageTag], layerDraw{layer, drawFunc})
 }
 
 func (p *Pipeline) Compose(imageTag string, image *ebiten.Image) {
+	defer p.Dispose(imageTag)
+
 	layer := p.layers[imageTag] // TODO: sort layers correctly, optimize
 	slices.SortStableFunc(layer, func(a, b layerDraw) int { return a.layer - b.layer })
-	for i := 0; i < p.sizes[imageTag]; i++ {
-		layer[i].drawFunc(image)
+	for _, layer := range p.layers[imageTag] {
+		layer.drawFunc(image)
 	}
-	p.sizes[imageTag] = 0
 }
 
-func (p *Pipeline) Dispose(imageTag string) { p.sizes[imageTag] = 0 }
+func (p *Pipeline) Dispose(imageTag string) { p.layers[imageTag] = p.layers[imageTag][:0] }
+func (p *Pipeline) DisposeAll() {
+	for imageTag := range p.layers {
+		p.Dispose(imageTag)
+	}
+}

@@ -89,7 +89,7 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	}
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -10)
-	pipeline.AddDraw(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
+	pipeline.Add(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
 		utils.DrawText(screen, "AI:"+c.actionQueue[0].action.Name, assets.TinyFont, op)
 		if c.DebugRect != nil {
 			image := ebiten.NewImage(int(c.DebugRect.W), int(c.DebugRect.H))
