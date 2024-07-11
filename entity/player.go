@@ -13,6 +13,7 @@ import (
 	"game/vars"
 	"log"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -39,6 +40,7 @@ type Player struct {
 
 	speed, jumpSpeed            float64
 	reactForce, attackPushForce float64
+	attackLevel                 float64
 }
 
 func NewPlayer(x, y float64) *Player {
@@ -85,12 +87,35 @@ func (p *Player) Init() {
 func (p *Player) Update(dt float64) {
 	if p.stats.Health > 0 {
 		p.input(dt)
+		p.heavyAttackUpdate()
 	}
 	p.SimpleUpdate(dt)
 	if p.stats.Health > 0 {
 		if moving := vars.Pad.KeyDown(utils.KeyLeft) || vars.Pad.KeyDown(utils.KeyRight); !moving && p.anim.State == vars.WalkTag {
 			p.anim.SetState(vars.IdleTag)
 		}
+	}
+}
+
+func (p *Player) heavyAttackUpdate() {
+	if attacking := strings.HasPrefix(p.anim.State, vars.AttackTag); !attacking {
+		return
+	}
+	holdAnim := p.anim.Data.Animation(p.anim.State + "Hold") // TODO: define a name
+	if holdAnim == nil {
+		return
+	}
+
+	startingFrames := holdAnim.From - p.anim.Data.CurrentAnimation.From
+	frame := p.anim.Data.CurrentFrame
+	if inHold := frame >= holdAnim.From && frame <= holdAnim.To; inHold {
+		p.attackLevel = float64(frame-holdAnim.From+startingFrames) / float64(holdAnim.To-holdAnim.From+startingFrames) // 0, 0.5, 1 || 0, 0.33, 0.66, 1
+		if vars.Pad.KeyReleased(utils.KeyAction) {
+			p.anim.Data.CurrentFrame = holdAnim.To + 2
+			p.anim.Data.FrameCounter = 0
+		}
+	} else if p.anim.Data.CurrentFrame == holdAnim.From-startingFrames && vars.Pad.KeyReleased(utils.KeyAction) {
+		p.anim.Data.CurrentFrame = holdAnim.To + 1
 	}
 }
 
@@ -102,7 +127,7 @@ func (p *Player) input(dt float64) {
 		return
 	}
 	if actionPressed() {
-		p.Attack(vars.AttackTag, playerDamage, playerDamage, p.reactForce, p.attackPushForce)
+		p.MultAttack(vars.AttackTag, playerDamage, playerDamage, p.reactForce, p.attackPushForce, &p.attackLevel)
 	}
 	if healPressed() {
 		p.Heal()

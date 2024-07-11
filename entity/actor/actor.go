@@ -150,8 +150,13 @@ func (c *Control) Die(dt float64) {
 	}
 }
 
-// TODO: This is a mess...
 func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pushForce float64) {
+	mult := 0.0
+	c.MultAttack(attackTag, damage, staminaDamage, reactForce, pushForce, &mult)
+}
+
+// TODO: This is a mess...
+func (c *Control) MultAttack(attackTag string, damage, staminaDamage, reactForce, pushForce float64, mult *float64) {
 	if c.PausingState() || c.stats.Stamina <= 0 {
 		return
 	}
@@ -182,19 +187,21 @@ func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pu
 			contacted = nil
 			shakeNum = 0
 		}
-		contactType, contacted = c.hitbox.HitFromHitBox(slice, damage, contacted)
+		attackMult := *mult + 1
+		totalDamage := damage * attackMult
+		contactType, contacted = c.hitbox.HitFromHitBox(slice, totalDamage, contacted)
 		if c.actor == vars.Player && shakeNum != len(contacted) { // TODO: This is an ugly hack
 			shakeNum = len(contacted)
-			vars.World.Camera.Shake(0.1, 0.5)
+			vars.World.Camera.Shake(0.1*float32(attackMult), 0.5*(attackMult))
 		}
 		if contactType == hitbox.ParryBlock {
-			if c.stats.AddPoise(-damage); c.stats.Poise <= 0 {
-				c.Stagger(reactForce*(damage/c.stats.MaxHealth), true, 1)
+			if c.stats.AddPoise(-totalDamage); c.stats.Poise <= 0 {
+				c.Stagger(reactForce*(totalDamage/c.stats.MaxHealth), true, 1)
 			}
 		}
 		if !once {
 			once = true
-			c.stats.AddStamina(-staminaDamage)
+			c.stats.AddStamina(-staminaDamage * attackMult)
 			force := pushForce
 			if contactType >= hitbox.Block {
 				force = reactForce
