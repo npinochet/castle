@@ -4,9 +4,7 @@ import (
 	"game/game"
 	"game/vars"
 	"log"
-	"os"
 	"runtime"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -57,13 +55,6 @@ func main() {
 	if runtime.GOOS == "darwin" {
 		op.GraphicsLibrary = ebiten.GraphicsLibraryOpenGL
 	}
-	if os.Args[len(os.Args)-1] == "test" {
-		go func() {
-			time.Sleep(2 * time.Second)
-			os.Exit(0)
-		}()
-	}
-
 	if err := ebiten.RunGameWithOptions(&game.Game{}, op); err != nil {
 		log.Fatal(err)
 	}
