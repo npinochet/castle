@@ -308,7 +308,13 @@ func extractLayers(data *tiled.Map, imageTag string, fs fs.FS, last bool) ([]*la
 	}
 
 	layersData := make([]*layerData, len(data.Layers))
+	skipped := 0
 	for i, layer := range data.Layers {
+		if !layer.Visible {
+			skipped++
+
+			continue
+		}
 		anims, err := extractLayerAnimations(data, fs, i, last)
 		if err != nil {
 			return nil, fmt.Errorf("map: error extracting %s animations: %w", layer.Name, err)
@@ -317,8 +323,9 @@ func extractLayers(data *tiled.Map, imageTag string, fs fs.FS, last bool) ([]*la
 		if err := renderer.RenderLayer(i); err != nil {
 			return nil, fmt.Errorf("map: tiled layer %s unsupported for rendering: %w", layer.Name, err)
 		}
-		layersData[i] = &layerData{ebiten.NewImageFromImage(renderer.Result), anims, imageTag}
+		layersData[i-skipped] = &layerData{ebiten.NewImageFromImage(renderer.Result), anims, imageTag}
 	}
+	layersData = layersData[:len(layersData)-skipped]
 
 	return layersData, nil
 }

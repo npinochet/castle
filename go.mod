@@ -6,7 +6,7 @@ require (
 	github.com/damienfamed75/aseprite v0.3.1
 	github.com/disintegration/imaging v1.6.2
 	github.com/hajimehoshi/ebiten/v2 v2.7.7
-	github.com/lafriks/go-tiled v0.12.0
+	github.com/lafriks/go-tiled v0.13.0
 	github.com/tanema/gween v0.0.0-20221212145351-621cc8a459d1
 	golang.org/x/image v0.18.0
 )
@@ -23,7 +23,4 @@ require (
 	golang.org/x/text v0.16.0 // indirect
 )
 
-replace (
-	github.com/damienfamed75/aseprite v0.3.1 => github.com/npinochet/go-aseprite v0.3.2
-	github.com/lafriks/go-tiled v0.12.0 => github.com/npinochet/go-tiled v0.12.2
-)
+replace github.com/damienfamed75/aseprite v0.3.1 => github.com/npinochet/go-aseprite v0.3.3

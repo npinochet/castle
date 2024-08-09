@@ -40,6 +40,7 @@ import (
 	- Lower stamina for player
 		- Need to create a 2 phase fight, where one you do action, second you defend while waiting for stamina to recover
 	- New map
+		- Breakable walls
 
 	- Add a new enemy (low priority)
 */

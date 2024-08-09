@@ -133,18 +133,19 @@ func GetWithTag[T Component](entity Entity, tag string) T {
 
 func (w *World) Remove(entity Entity) {
 	for i, e := range w.entities {
-		if entity == e {
-			for _, c := range e.Components() {
-				c.Remove()
-			}
-			w.entities = append(w.entities[:i], w.entities[i+1:]...)
-			if id, ok := w.entityToID[e]; ok {
-				delete(w.idToEntity, id)
-			}
-			delete(w.entityToID, e)
-
-			break
+		if entity != e {
+			continue
 		}
+		for _, c := range e.Components() {
+			c.Remove()
+		}
+		w.entities = append(w.entities[:i], w.entities[i+1:]...)
+		if id, ok := w.entityToID[e]; ok {
+			delete(w.idToEntity, id)
+		}
+		delete(w.entityToID, e)
+
+		break
 	}
 }
 

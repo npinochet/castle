@@ -3,7 +3,6 @@ package bump
 import (
 	"math"
 	"slices"
-	"sort"
 	"sync"
 )
 
@@ -44,24 +43,31 @@ const (
 	Slide
 )
 
+type cell [2]int
+type location struct {
+	tag  Tag
+	cell cell
+}
+
 func NewRect(x, y, w, h float64) Rect                 { return Rect{X: x, Y: y, W: w, H: h} }
 func DefaultResponseFilter(_, _ Item) (ColType, bool) { return Slide, true }
 func NilFilter(_, _ Item) (ColType, bool)             { return 0, false }
 func DefaultSimpleFilter(_ Item) bool                 { return true }
 
 type Space struct {
-	rects     map[Item]Rect
-	tags      map[Item]map[Tag]bool
-	responses map[ColType]Response
-	cells     map[[2]int]map[Item]bool
-	mutex     sync.Mutex
+	rects       map[Item]Rect
+	responses   map[ColType]Response
+	tags        map[Item][]Tag
+	searchSpace map[location]map[Item]bool
+	mutex       sync.RWMutex
 }
 
 func NewSpace() *Space {
-	space := &Space{}
-	space.rects = map[Item]Rect{}
-	space.tags = map[Item]map[Tag]bool{}
-	space.cells = map[[2]int]map[Item]bool{}
+	space := &Space{
+		rects:       map[Item]Rect{},
+		tags:        map[Item][]Tag{},
+		searchSpace: map[location]map[Item]bool{},
+	}
 	space.responses = map[ColType]Response{
 		Touch: func(_ Vec2, col *Collision, _ Filter, _ ...Tag) (Vec2, []*Collision) {
 			return col.Touch, nil
@@ -105,43 +111,47 @@ func (s *Space) Set(item Item, rect Rect, tags ...Tag) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if oldRect, ok := s.rects[item]; ok {
-		for _, cell := range cellCoords(CellSize, oldRect) {
-			delete(s.cells[cell], item)
-			if len(s.cells[cell]) == 0 {
-				delete(s.cells, cell)
+	oldRect, ok := s.rects[item]
+	s.rects[item] = rect
+	if len(tags) > 0 {
+		s.tags[item] = tags
+	}
+	cells, oldCells := cellCoords(CellSize, rect), cellCoords(CellSize, oldRect)
+	for _, tag := range append(s.tags[item], "") {
+		if ok {
+			for _, cell := range oldCells {
+				loc := location{tag, cell}
+				if delete(s.searchSpace[loc], item); len(s.searchSpace[loc]) == 0 {
+					delete(s.searchSpace, loc)
+				}
 			}
 		}
-	}
-	for _, cell := range cellCoords(CellSize, rect) {
-		if s.cells[cell] == nil {
-			s.cells[cell] = map[Item]bool{}
+		for _, cell := range cells {
+			loc := location{tag, cell}
+			if s.searchSpace[loc] == nil {
+				s.searchSpace[loc] = map[Item]bool{}
+			}
+			s.searchSpace[loc][item] = true
 		}
-		s.cells[cell][item] = true
-	}
-	s.rects[item] = rect
-	if s.tags[item] == nil {
-		s.tags[item] = map[Tag]bool{}
-	}
-	for _, tag := range tags {
-		s.tags[item][tag] = true
 	}
 }
 
 func (s *Space) Rect(item Item) Rect {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
 
 	return s.rects[item]
 }
 
 func (s *Space) Has(item Item, tags ...Tag) bool {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
 
-	for _, tag := range tags {
-		if !s.tags[item][tag] {
-			return false
+	for _, cell := range cellCoords(CellSize, s.rects[item]) {
+		for _, tag := range tags {
+			if !s.searchSpace[location{tag, cell}][item] {
+				return false
+			}
 		}
 	}
 
@@ -155,14 +165,25 @@ func (s *Space) Remove(item Item) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	delete(s.rects, item)
+	if rect, ok := s.rects[item]; ok {
+		for _, cell := range cellCoords(CellSize, rect) {
+			for _, tag := range append(s.tags[item], "") {
+				loc := location{tag, cell}
+				if delete(s.searchSpace[loc], item); len(s.searchSpace[loc]) == 0 {
+					delete(s.searchSpace, loc)
+				}
+			}
+		}
+	}
 	delete(s.tags, item)
+	delete(s.rects, item)
 }
 
 func (s *Space) Move(item Item, targetGoal Vec2, filter Filter, tags ...Tag) (Vec2, []*Collision) {
 	goal, cols := s.Check(item, targetGoal, filter, tags...)
 	rect := s.Rect(item)
-	s.Set(item, Rect{goal.X, goal.Y, rect.W, rect.H, rect.Priority, rect.Slope})
+	rect.X, rect.Y = goal.X, goal.Y
+	s.Set(item, rect)
 
 	return goal, cols
 }
@@ -181,10 +202,7 @@ func (s *Space) Check(item Item, goal Vec2, filter Filter, tags ...Tag) (Vec2, [
 		return filter(item, other)
 	}
 
-	rect := s.Rect(item)
-	projectedCols := s.Project(item, rect, goal, visitedFilter, tags...)
-	sort.Slice(projectedCols, func(i, _ int) bool { return projectedCols[i].Normal.Y != 0 })
-
+	projectedCols := s.Project(item, s.Rect(item), goal, visitedFilter, tags...)
 	var cols []*Collision
 	for len(projectedCols) > 0 {
 		col := projectedCols[0]
@@ -200,29 +218,23 @@ func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter, tags ...
 	if filter == nil {
 		filter = DefaultResponseFilter
 	}
-	s.mutex.Lock()
+	if len(tags) == 0 {
+		tags = []Tag{""}
+	}
+	s.mutex.RLock()
 	var items []Item
 	for _, cell := range cellCoords(CellSize, rect) {
-		for other := range s.cells[cell] {
-			if item == other {
-				continue
-			}
-			if len(tags) == 0 {
-				items = append(items, other)
-
-				continue
-			}
-			for _, tag := range tags {
-				if s.tags[other][tag] {
-					items = append(items, other)
-
-					break
+		for _, tag := range tags {
+			for other := range s.searchSpace[location{tag, cell}] {
+				if item == other {
+					continue
 				}
+				items = append(items, other)
 			}
 		}
 	}
 	slices.SortFunc(items, func(a, b Item) int { return s.rects[b].Priority - s.rects[a].Priority })
-	s.mutex.Unlock()
+	s.mutex.RUnlock()
 
 	var cols []*Collision
 	for _, other := range items {
@@ -253,45 +265,41 @@ func Overlaps(r1, r2 Rect) bool {
 }
 
 // Liang-Barsky algorithm.
-func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (i1, i2 float64, normal Vec2, ok bool) {
+func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (float64, float64, Vec2, bool) {
 	dx, dy := p2.X-p1.X, p2.Y-p1.Y
 	p := [4]float64{-dx, dx, -dy, dy} // left, right, top, bottom.
 	q := [4]float64{p1.X - rect.X, rect.X + rect.W - p1.X, p1.Y - rect.Y, rect.Y + rect.H - p1.Y}
-	nx := [4]float64{-1, 1, 0, 0}
-	ny := [4]float64{0, 0, -1, 1}
+	n := [4]Vec2{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
 
-	i1, i2 = math.Inf(-1), math.Inf(1)
-	normal = Vec2{}
+	i1, i2 := math.Inf(-1), math.Inf(1)
+	normal := Vec2{}
 
 	for i := 0; i < 4; i++ {
 		if p[i] == 0 {
 			if q[i] <= 0 {
-				return i1, i2, normal, ok
+				return i1, i2, normal, false
 			}
 
 			continue
 		}
 		r := q[i] / p[i]
-		if p[i] < 0 {
+		if p[i] < 0 { //nolint:nestif
 			if r > i2 {
-				return i1, i2, normal, ok
+				return i1, i2, normal, false
 			} else if r > i1 {
 				i1 = r
-				normal = Vec2{nx[i], ny[i]}
+				normal = n[i]
 			}
-
-			continue
-		}
-		if r < i1 {
-			return i1, i2, normal, ok
-		} else if r < i2 {
-			i2 = r
+		} else {
+			if r < i1 {
+				return i1, i2, normal, false
+			} else if r < i2 {
+				i2 = r
+			}
 		}
 	}
 
-	ok = true
-
-	return i1, i2, normal, ok
+	return i1, i2, normal, true
 }
 
 func detectCollision(rect1, rect2 Rect, goal Vec2) (*Collision, bool) {
@@ -300,13 +308,10 @@ func detectCollision(rect1, rect2 Rect, goal Vec2) (*Collision, bool) {
 	col.ItemRect, col.OtherRect = rect1, rect2
 	interRect := rectDiff(rect1, rect2)
 
-	if !detectCollisionPhase1(interRect, rect1, col) {
+	if !detectCollisionFirstPhase(interRect, rect1, col) {
 		return col, false
 	}
-
 	if !col.Overlaps {
-		col.Touch = Vec2{rect1.X + col.Move.X*col.Intersection, rect1.Y + col.Move.Y*col.Intersection}
-
 		return col, true
 	}
 
@@ -333,22 +338,22 @@ func detectCollision(rect1, rect2 Rect, goal Vec2) (*Collision, bool) {
 	return col, true
 }
 
-func detectCollisionPhase1(interRect, rect1 Rect, col *Collision) bool {
+func detectCollisionFirstPhase(interRect, rect1 Rect, col *Collision) bool {
 	collisioned := false
 	if rectContainsPoint(interRect, Vec2{}) {
+		collisioned = true
 		p := rectNearestCorner(interRect, Vec2{})
 		wi, hi := math.Min(rect1.W, math.Abs(p.X)), math.Min(rect1.H, math.Abs(p.Y))
 		col.Intersection = -wi * hi
 		col.Overlaps = true
-		collisioned = true
 	} else {
-		i1, i2, normal, found := lineSegmentIntersection(interRect, Vec2{}, col.Move)
-		if found && i1 < 1 && math.Abs(i1-i2) >= DELTA && (i1 > -DELTA || i1 == 0 && i2 > 0) {
+		i1, i2, normal, ok := lineSegmentIntersection(interRect, Vec2{}, col.Move)
+		if ok && i1 < 1 && math.Abs(i1-i2) >= DELTA && (i1 > -DELTA || i1 == 0 && i2 > 0) {
+			collisioned = true
 			col.Normal = normal
 			col.Intersection = i1
 			col.Overlaps = false
-			collisioned = true
-			col.Touch = Vec2{rect1.X + col.Move.X*col.Intersection, rect1.Y + col.Move.Y*col.Intersection}
+			col.Touch = Vec2{rect1.X + col.Move.X*i1, rect1.Y + col.Move.Y*i1}
 		}
 	}
 
@@ -366,25 +371,24 @@ func rectContainsPoint(r Rect, p Vec2) bool {
 
 func rectNearestCorner(rect Rect, p Vec2) Vec2 {
 	nearest := func(x, a, b float64) float64 {
-		ret := b
 		if math.Abs(a-x) < math.Abs(b-x) {
-			ret = a
+			return a
 		}
 
-		return ret
+		return b
 	}
 
 	return Vec2{nearest(p.X, rect.X, rect.X+rect.W), nearest(p.Y, rect.Y, rect.Y+rect.H)}
 }
 
-func cellCoords(cellSize float64, rect Rect) [][2]int {
+func cellCoords(cellSize float64, rect Rect) []cell {
 	cx, cy := int(rect.X/cellSize)+1, int(rect.Y/cellSize)+1
 	cr, cb := math.Ceil((rect.X+rect.W)/cellSize), math.Ceil((rect.Y+rect.H)/cellSize)
 
-	var coords [][2]int
+	var coords []cell
 	for y := cy; y <= int(cb+1); y++ {
 		for x := cx; x <= int(cr+1); x++ {
-			coords = append(coords, [2]int{x, y})
+			coords = append(coords, cell{x, y})
 		}
 	}
 

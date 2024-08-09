@@ -58,10 +58,10 @@ github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfV
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
-github.com/npinochet/go-aseprite v0.3.2 h1:PRx4W9b3R2wbDJf6qmmjEb0PwBv5oRg1M2qIxZxaZeg=
-github.com/npinochet/go-aseprite v0.3.2/go.mod h1:nx4crILqRmo3wkaPtcyd4/jN57TubwF0UY9ITfRik7Y=
-github.com/npinochet/go-tiled v0.12.2 h1:BqckV78yTEEGK4B6JXHb9K6g1f0wqtnb9Jkej2huvMY=
-github.com/npinochet/go-tiled v0.12.2/go.mod h1:IHWHgj0XyNNLJEHdDaE0M1bKU9h3n+2FhVstJ7OL+X0=
+github.com/lafriks/go-tiled v0.13.0 h1:xZE2rEKCNJPya+g92FCIjzEH4fZLQcZVqvpw174P2MY=
+github.com/lafriks/go-tiled v0.13.0/go.mod h1:FRhv/27R9S9IOmDl7+XrSUjFrV0uCUCu23rTCHRuj5c=
+github.com/npinochet/go-aseprite v0.3.3 h1:vfKukV1BMQiCJmBj1AGtjFq5pESerV99qxRhyTjU7Ps=
+github.com/npinochet/go-aseprite v0.3.3/go.mod h1:nx4crILqRmo3wkaPtcyd4/jN57TubwF0UY9ITfRik7Y=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
