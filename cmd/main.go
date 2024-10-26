@@ -19,7 +19,6 @@ import (
 	- Add quick step! Like a Dogde/dash, but small and fast that let you dodge or approach enemies quickly
 		- This ^ but only the enemies
 - Clean up actor.ManageAnim and body.Vx code, make it dry with player and other Actors.
-- Add enemy that can only be hit from behind.
 - Add enemy that jumps around.
 - Experiment with partial blocking (a block does not negate all damage)
 	and a system where you can attack back for a short period and gain the lost health
@@ -42,10 +41,13 @@ import (
 	- Lower stamina for player
 		- Need to create a 2 phase fight, where one you do action, second you defend while waiting for stamina to recover
 	- New map
+		- I struggle with this
 	- Implement light shader
 		- Normal maps can be made after the demo
 
 	- Add a new enemy (low priority)
+		- Can be a small enemy, like a bat or rat
+		- Or maybe add enemy that can only be hit from behind.
 */
 
 func main() {

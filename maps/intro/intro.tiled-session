@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "intro.tmx",
+    "activeFile": "intro_full.tmx",
     "automapping.whileDrawing": true,
     "expandedProjectPaths": [
         "."
@@ -75,11 +75,19 @@
             "expandedObjectLayers": [
                 4
             ],
-            "scale": 1.9907,
+            "scale": 0.1727,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 1674.7877630984076,
-                "y": 2407.444617471241
+                "x": 1916.6184134337,
+                "y": -49.21829762594098
+            }
+        },
+        "intro_full.tmx": {
+            "scale": 0.0897,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 2508.3612040133776,
+                "y": 2402.452619843924
             }
         },
         "tiles.tsx": {
@@ -93,8 +101,8 @@
             "scale": 4.1506,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 119.98265311039368,
-                "y": 79.8679708957741
+                "x": 199.9710885173228,
+                "y": 199.85062400616778
             }
         },
         "tiles_rules.tsx": {
@@ -109,13 +117,15 @@
     "map.tileWidth": 8,
     "openFiles": [
         "intro.tmx",
-        "tiles_rules.tmx"
+        "tiles_rules.tmx",
+        "intro_full.tmx"
     ],
     "project": "intro.tiled-project",
     "property.type": "object",
     "recentFiles": [
-        "tiles_rules.tmx",
         "intro.tmx",
+        "tiles_rules.tmx",
+        "intro_full.tmx",
         "tiles.tsx",
         "tiles_rules.tsx",
         ":/automap-tiles.tsx",
