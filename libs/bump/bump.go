@@ -3,6 +3,7 @@ package bump
 import (
 	"math"
 	"slices"
+	"sort"
 	"sync"
 )
 
@@ -203,6 +204,9 @@ func (s *Space) Check(item Item, goal Vec2, filter Filter, tags ...Tag) (Vec2, [
 	}
 
 	projectedCols := s.Project(item, s.Rect(item), goal, visitedFilter, tags...)
+	// This sort prevents colliding with uncontiguos collisions on the ground, like walking though the top of stairs.
+	sort.Slice(projectedCols, func(i, _ int) bool { return projectedCols[i].Normal.Y != 0 })
+
 	var cols []*Collision
 	for len(projectedCols) > 0 {
 		col := projectedCols[0]
