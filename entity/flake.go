@@ -8,9 +8,11 @@ import (
 	"game/core"
 	"game/libs/bump"
 	"game/vars"
+	"image"
 	"math/rand"
 	"time"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/tanema/gween"
 	"github.com/tanema/gween/ease"
@@ -18,12 +20,19 @@ import (
 
 const (
 	flakeSize                            = 3
+	flakeAnimDuration                    = 0.2
 	flakeSpawnMinTime, flakeSpawnMaxTime = 500 * time.Millisecond, 1000 * time.Millisecond
 	flakeSpawnMinX, flakeSpawnMaxX       = -100, 100
 	flakeSpawnMinY, flakeSpawnMaxY       = -50, -100
 )
 
-var flakeImage, _, _ = ebitenutil.NewImageFromFileSystem(assets.FS, "flake.png")
+var (
+	flakeImage, _, _ = ebitenutil.NewImageFromFileSystem(assets.FS, "flake.png")
+	flakeImages      = []*ebiten.Image{
+		flakeImage.SubImage(image.Rect(0, 0, flakeSize, flakeSize)).(*ebiten.Image),
+		flakeImage.SubImage(image.Rect(flakeSize, 0, flakeSize*2, flakeSize*2)).(*ebiten.Image),
+	}
+)
 
 type Flake struct {
 	*core.BaseEntity
@@ -33,6 +42,8 @@ type Flake struct {
 	from, target             core.Entity
 	startX, startY           float64
 	randTargetW, randTargetH float64
+	timer                    float64
+	imageIndex               int
 }
 
 func NewFlake(from core.Entity) *Flake {
@@ -40,10 +51,11 @@ func NewFlake(from core.Entity) *Flake {
 	flake := &Flake{
 		BaseEntity:  &core.BaseEntity{X: x + w/2, Y: y + h/2, W: flakeSize, H: flakeSize},
 		body:        &body.Comp{Tags: []bump.Tag{}, QueryTags: []bump.Tag{"map"}},
-		render:      &render.Comp{Image: flakeImage},
+		render:      &render.Comp{Image: flakeImages[0]},
 		from:        from,
 		target:      vars.Player,
 		randTargetW: rand.Float64(), randTargetH: rand.Float64(),
+		timer: rand.Float64() * flakeAnimDuration,
 	}
 	flake.Add(flake.body, flake.render)
 
@@ -64,6 +76,11 @@ func (f *Flake) Init() {
 }
 
 func (f *Flake) Update(dt float64) {
+	if f.timer += dt; f.timer >= flakeAnimDuration {
+		f.timer = 0
+		f.imageIndex = (f.imageIndex + 1) % len(flakeImages)
+		f.render.Image = flakeImages[f.imageIndex]
+	}
 	if f.captureTween == nil {
 		return
 	}
