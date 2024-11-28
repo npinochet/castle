@@ -11,13 +11,13 @@ import (
 
 /* TODO
 - Don't cap max speed when guarding in mid-air.
-- Combos for attacks.
-- Change background color and characters outline color.
+- Change background color and characters outline color. Experiment more.
 - Experiment implementing a backstepping (kind of like rolling). (think about adding I frames or not, maybe just shrink the hurtbox).
 	- Add quick step! Like a Dogde/dash, but small and fast that let you dodge or approach enemies quickly
 		- This ^ but only the enemies
 - Clean up actor.ManageAnim and body.Vx code, make it dry with player and other Actors.
 - Add enemy that jumps around.
+	- Rat?
 - Experiment with partial blocking (a block does not negate all damage)
 	and a system where you can attack back for a short period and gain the lost health
 - Experiment hiding the enemy health bar, even for bosses.
@@ -28,7 +28,7 @@ import (
 	- Dread of loosing and urgency to get to the next checkpoint
 - Add item that restores your dropped loot, but spawns a high level enemy at the loot spot.
 	To encourage taking other routes.
-- Maybe separate waling from running (costs stamina), maybe double tapping the direction?
+- Maybe separate walking from running (costs stamina), maybe double tapping the direction?
 	This way enemies can run towards you and reach you, dificulting escaping.
 - Think of ways to make the game more brutal
 	- Add a cripple mechanic when you are low on health, you move slower
@@ -54,7 +54,7 @@ import (
 			- A big tower where the rooms are the same
 			- A looping liberynth
 			- Have an imposing enemy be swarmed by small rats / bats
-			
+
 	- Add a new enemy (low priority)
 		- Add enemy that can only be hit from behind.
 		- Small enemy like a bat or rat

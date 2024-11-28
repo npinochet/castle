@@ -11,8 +11,6 @@ import (
 	"github.com/lafriks/go-tiled"
 )
 
-const blockPriority = 1
-
 var DebugDraw = false
 
 type ContactType int
@@ -91,9 +89,6 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 }
 
 func (c *Comp) PushHitbox(rect bump.Rect, block ContactType, updateContactType func() ContactType) {
-	if block != Hit {
-		rect.Priority = blockPriority
-	}
 	box := &Hitbox{rect, c, block, updateContactType}
 	c.space.Set(box, rect, "hitbox")
 	c.hurtBoxes = append(c.hurtBoxes, box)
@@ -155,7 +150,7 @@ func (c *Comp) HitFromHitBox(rect bump.Rect, damage float64, filterOut []*Comp) 
 	return contact, append(filterOut, contacted...)
 }
 
-func (c *Comp) hitFilter() bump.SimpleFilter {
+func (c *Comp) hitFilter() bump.SelectFilter {
 	return func(item bump.Item) bool {
 		if box, ok := item.(*Hitbox); ok {
 			return box.comp != c

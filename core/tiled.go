@@ -21,10 +21,7 @@ import (
 
 const viewPropName = "view"
 
-const (
-	defaultCollisionPriority = -2
-	secondToMillisecond      = 1000
-)
+const secondToMillisecond = 1000
 
 var LayerIndex = 2
 
@@ -205,26 +202,42 @@ func (m *Map) LoadBumpObjects(space *bump.Space, objectGroupName string) {
 
 	for _, obj := range objects {
 		if obj.Polygons != nil {
-			left, right, up, down := 0.0, 0.0, 0.0, 0.0
+			left, right, top, bottom := 0.0, 0.0, 0.0, 0.0
 			for _, p := range *obj.Polygons[0].Points {
-				left, right, up, down = math.Min(left, p.X), math.Max(right, p.X), math.Min(up, p.Y), math.Max(down, p.Y)
+				left, right, top, bottom = math.Min(left, p.X), math.Max(right, p.X), math.Min(top, p.Y), math.Max(bottom, p.Y)
 			}
-			slope := bump.Slope{L: 1, R: 1}
+			contains := [4]bool{} // topLeft, topRight, bottomLeft, bottomRight.
 			for _, p := range *obj.Polygons[0].Points {
-				if p.Y == up {
-					if p.X == left {
-						slope.L = 0
-					} else {
-						slope.R = 0
-					}
+				switch {
+				case p.X == left && p.Y == top:
+					contains[0] = true
+				case p.X == right && p.Y == top:
+					contains[1] = true
+				case p.X == left && p.Y == bottom:
+					contains[2] = true
+				case p.X == right && p.Y == bottom:
+					contains[3] = true
 				}
 			}
-			rect := bump.Rect{
-				X: obj.X + left, Y: obj.Y + up,
-				W: right - left, H: down - up,
-				Priority: defaultCollisionPriority + 1,
-				Slope:    slope,
+			slope := bump.Full
+			for i, ok := range contains {
+				if ok {
+					continue
+				}
+				switch i {
+				case 0:
+					slope = bump.BottomRightSlope
+				case 1:
+					slope = bump.BottomLeftSlope
+				case 2:
+					slope = bump.TopRightSlope
+				case 3:
+					slope = bump.TopLeftSlope
+				}
+
+				break
 			}
+			rect := bump.Rect{X: obj.X + left, Y: obj.Y + top, W: right - left, H: bottom - top, Type: slope}
 			space.Set(obj, rect, "map", "slope")
 
 			continue
@@ -236,7 +249,7 @@ func (m *Map) LoadBumpObjects(space *bump.Space, objectGroupName string) {
 		if obj.Class == "passthrough" || obj.Type == "passthrough" {
 			tags = append(tags, "passthrough")
 		}
-		space.Set(obj, bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height, Priority: defaultCollisionPriority}, tags...)
+		space.Set(obj, bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height, Type: bump.Full}, tags...)
 	}
 }
 
@@ -274,7 +287,22 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 					props.Custom[prop.Name] = prop.Value
 				}
 			}
-			world.AddWithID(construct(obj.X, obj.Y, obj.Width, obj.Height, props), uint(obj.ID))
+			entity := construct(obj.X, obj.Y, obj.Width, obj.Height, props)
+			x, y, _, h := entity.Rect()
+			entity.SetPosition(x, y-h+float64(m.data.TileHeight)) // TODO: Adjust the Y on doors and other broken objects
+			world.AddWithID(entity, uint(obj.ID))
+
+			/*
+				TODO: Adjust the X when flipped too
+				if props.FlipX {
+					imageOffset = doorW - tileSize
+					x -= imageOffset
+				}
+				if props.FlipX {
+					imageOffset = chestW - tileSize*2
+					x -= chestW - tileSize
+				}
+			*/
 		}
 	}
 }

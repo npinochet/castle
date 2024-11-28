@@ -28,7 +28,6 @@ type Gram struct {
 }
 
 func NewGram(x, y, _, _ float64, props *core.Properties) *Gram {
-	y -= gramHeight - tileSize
 	gram := &Gram{
 		BaseEntity: &core.BaseEntity{X: x, Y: y, W: gramWidth, H: gramHeight},
 		anim:       &anim.Comp{FilesName: gramAnimFile, OX: gramOffsetX, OY: gramOffsetY, OXFlip: gramOffsetFlip, FlipX: props.FlipX},

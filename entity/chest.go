@@ -37,7 +37,6 @@ type Chest struct {
 }
 
 func NewChest(x, y, _, _ float64, props *core.Properties) *Chest {
-	y += tileSize - chestH
 	imageOffset := 0.0
 	if props.FlipX {
 		imageOffset = chestW - tileSize*2

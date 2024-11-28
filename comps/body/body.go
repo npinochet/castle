@@ -126,7 +126,7 @@ func (c *Comp) updateMovement(dt float64, noForceApplied bool) {
 			if col.Normal.X != 0 {
 				c.Vx = 0
 			}
-			if col.Normal.Y != 0 {
+			if col.Normal.Y < 0 || (col.Normal.Y > 0 && c.Vy < 0) {
 				c.Vy = 0
 			}
 			c.Ground = c.Ground || col.Normal.Y < 0
@@ -154,7 +154,9 @@ func (c *Comp) applyOverlapForce(col *bump.Collision) {
 	irect, orect := col.ItemRect, col.OtherRect
 	overlap := (math.Min(irect.X+irect.W, orect.X+orect.W) - math.Max(irect.X, orect.X)) / math.Min(irect.W, orect.W)
 	side := col.ItemRect.X + col.ItemRect.W/2 - (col.OtherRect.X + col.OtherRect.W/2)
-	c.Vx = math.Min(vars.GroundFriction, math.Max(-vars.GroundFriction, c.Vx))
+	if side > 0 && c.Vx < 0 || side < 0 && c.Vx > 0 {
+		c.Vx = math.Min(vars.GroundFriction, math.Max(-vars.GroundFriction, c.Vx))
+	}
 	c.Vx += math.Copysign(overlap*vars.CollisionStiffness, side) * vars.GroundFriction
 }
 

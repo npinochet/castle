@@ -3,6 +3,7 @@ linters:
   disable:
     - depguard
     - dogsled
+    - err113
     - errchkjson
     - exhaustivestruct
     - exhaustruct
@@ -11,7 +12,6 @@ linters:
     - gochecknoglobals
     - gochecknoinits
     - godox
-    - goerr113
     - gofumpt
     - ireturn
     - nonamedreturns
@@ -31,7 +31,7 @@ linters-settings:
     statements: 50
   godot:
     scope: all
-  gomnd:
+  mnd:
     ignored-numbers:
       - "2"
       - "4"

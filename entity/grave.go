@@ -24,7 +24,6 @@ type Grave struct {
 }
 
 func NewGrave(x, y, _, _ float64, props *core.Properties) *Grave {
-	y += tileSize - graveH
 	entity := &core.BaseEntity{X: x, Y: y, W: graveW, H: graveH}
 	text := props.Custom["text"]
 	if text == "" {
