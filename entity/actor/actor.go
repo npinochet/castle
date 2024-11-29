@@ -144,7 +144,7 @@ func (c *Control) Die(dt float64) {
 
 	vars.World.Remove(c.actor)
 	if DieParticle != nil {
-		for i := 0; i < c.stats.Exp; i++ {
+		for range c.stats.Exp {
 			vars.World.Add(DieParticle(c.actor))
 		}
 	}

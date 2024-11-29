@@ -30,14 +30,17 @@ var (
 	backgroundColor = color.RGBA{50, 60, 57, 255}
 	pipeline        = core.NewPipeline()
 	entityBinds     = map[uint32]core.EntityContructor{
-		26:  toEntityContructor(entity.NewKnight),
-		27:  toEntityContructor(entity.NewGhoul),
-		28:  toEntityContructor(entity.NewSkeleman),
-		29:  toEntityContructor(entity.NewCrawler),
+		26: toEntityContructor(entity.NewKnight),
+		27: toEntityContructor(entity.NewGhoul),
+		28: toEntityContructor(entity.NewSkeleman),
+		29: toEntityContructor(entity.NewCrawler),
+		30: toEntityContructor(entity.NewRat),
+		//31:  toEntityContructor(entity.NewBat),
 		87:  toEntityContructor(entity.NewGram),
 		149: toEntityContructor(entity.NewChest),
 		150: toEntityContructor(entity.NewGrave),
 		151: toEntityContructor(entity.NewDoor),
+		152: toEntityContructor(entity.NewSpike),
 	}
 	restartTransition, deathTransition Transition
 )

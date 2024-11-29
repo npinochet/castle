@@ -112,7 +112,7 @@ func (k *Knight) ThrowRock() {
 	k.anim.OnFrame(2, func() { vars.World.Add(NewRock(k.X-2, k.Y-4, k)) })
 }
 
-// nolint: nolintlint, gomnd
+//nolint:mnd
 func (k *Knight) aiScript(view *bump.Rect) {
 	speed := 100.0
 	maxSpeed := vars.DefaultMaxX

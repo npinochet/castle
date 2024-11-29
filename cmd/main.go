@@ -34,6 +34,7 @@ import (
 	- Add a cripple mechanic when you are low on health, you move slower
 	- Add a bleed mechanic when you get hit by a heavy attack, you lose health over time
 - Hold attack has some bugs, the bonus damaged carries over to the normal attack sometimes, it does not reset.
+- Make hurtbox change depending on frame.
 
 - Video playtest things: https://drive.google.com/file/d/1GZ48vG0wAzkD09A6MYnGKDKIRahOqUev/view
 	- Pixel font too hard to read

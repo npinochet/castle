@@ -77,7 +77,7 @@ func (c *Chest) Open(reward bool) {
 	time.AfterFunc(500*time.Millisecond, func() {
 		c.render.Image = chestOpenImage
 		c.render.Y = 0
-		for i := 0; i < c.reward; i++ {
+		for range c.reward {
 			vars.World.Add(NewFlake(c))
 		}
 	})

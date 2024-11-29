@@ -109,7 +109,7 @@ func (g *Ghoul) jumpAttackAction() *ai.Action {
 	}
 }
 
-// nolint: nolintlint, gomnd
+//nolint:mnd
 func (g *Ghoul) aiScript(view *bump.Rect, poacher bool) {
 	g.ai.Add(0, actor.IdleAction(g.Control, view))
 	if poacher && g.rocks > 0 {

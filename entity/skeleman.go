@@ -99,7 +99,7 @@ func (s *Skeleman) jumpAttackAction() *ai.Action {
 	}
 }
 
-// nolint: nolintlint, gomnd
+//nolint:mnd
 func (s *Skeleman) aiScript(view *bump.Rect) {
 	s.ai.Add(0, actor.IdleAction(s.Control, view))
 	s.ai.Add(0, actor.ApproachAction(s.Control, skelemanSpeed, skelemanMaxSpeed, 0))

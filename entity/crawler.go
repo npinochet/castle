@@ -68,7 +68,7 @@ func (c *Crawler) Update(dt float64) {
 	c.SimpleUpdate(dt)
 }
 
-// nolint: nolintlint, gomnd
+//nolint:mnd
 func (c *Crawler) aiScript(view *bump.Rect) {
 	c.ai.Add(0, actor.IdleAction(c.Control, view))
 	c.ai.Add(0, actor.ApproachAction(c.Control, crawlerSpeed, vars.DefaultMaxX, 0))

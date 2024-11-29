@@ -1,4 +1,4 @@
-// nolint:nolintlint, golint, revive
+//nolint:golint, revive
 package vars
 
 import (

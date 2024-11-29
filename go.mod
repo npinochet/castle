@@ -1,6 +1,6 @@
 module game
 
-go 1.22
+go 1.23
 
 require (
 	github.com/damienfamed75/aseprite v0.3.1
