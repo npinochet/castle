@@ -22,25 +22,26 @@ import (
 )
 
 const (
-	playerID  = 25
-	tourchGID = 378
+	playerID = 25
+	torchGID = 378
 )
 
 var (
 	backgroundColor = color.RGBA{50, 60, 57, 255}
 	pipeline        = core.NewPipeline()
 	entityBinds     = map[uint32]core.EntityContructor{
-		26: toEntityContructor(entity.NewKnight),
-		27: toEntityContructor(entity.NewGhoul),
-		28: toEntityContructor(entity.NewSkeleman),
-		29: toEntityContructor(entity.NewCrawler),
-		30: toEntityContructor(entity.NewRat),
-		//31:  toEntityContructor(entity.NewBat),
+		26:  toEntityContructor(entity.NewKnight),
+		27:  toEntityContructor(entity.NewGhoul),
+		28:  toEntityContructor(entity.NewSkeleman),
+		29:  toEntityContructor(entity.NewCrawler),
+		30:  toEntityContructor(entity.NewRat),
+		31:  toEntityContructor(entity.NewBat),
 		87:  toEntityContructor(entity.NewGram),
 		149: toEntityContructor(entity.NewChest),
 		150: toEntityContructor(entity.NewGrave),
 		151: toEntityContructor(entity.NewDoor),
 		152: toEntityContructor(entity.NewSpike),
+		153: toEntityContructor(entity.NewFakeWall),
 	}
 	restartTransition, deathTransition Transition
 )
@@ -61,7 +62,7 @@ func Load() {
 	vars.World = core.NewWorld(float64(vars.ScreenWidth), float64(vars.ScreenHeight))
 	vars.World.SetMap(worldMap, "rooms")
 	worldMap.LoadBumpObjects(vars.World.Space, "collisions")
-	shaderLoad(worldMap, tourchGID)
+	shaderLoad(worldMap, torchGID)
 	Reset()
 }
 
@@ -123,6 +124,11 @@ func (g *Game) Update() error {
 			return ebiten.Termination
 		}
 		debugControls()
+		if inpututil.IsKeyJustPressed(ebiten.KeyR) { // TODO: remove this
+			for range 20 {
+				vars.World.Add(entity.NewSmoke(vars.Player))
+			}
+		}
 	}
 
 	return nil

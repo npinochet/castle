@@ -58,7 +58,7 @@ import (
 
 	- Add a new enemy (low priority)
 		- Add enemy that can only be hit from behind.
-		- Small enemy like a bat or rat
+		- Small enemy like a bat
 		- Enemies that explode on death?
 		- Small enemy that rushes into you and deals damage when touching you
 */

@@ -136,7 +136,7 @@ func (c *Control) Die(dt float64) {
 	c.Stagger(0, false, 1)
 	const minAlpha = 50
 	if c.dieTimer -= dt; c.dieTimer > 0 {
-		alpha := uint8(minAlpha + (math.MaxUint8-minAlpha)*float32(c.dieTimer)/dieSeconds)
+		alpha := uint8(minAlpha + (math.MaxUint8-minAlpha)*c.dieTimer/dieSeconds)
 		c.anim.ColorScale = color.RGBA{alpha, alpha, alpha, alpha}
 
 		return

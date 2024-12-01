@@ -102,6 +102,9 @@ func (r *Rat) jumpAttackAction() *ai.Action {
 			})
 		},
 		Next: func(dt float64) bool {
+			if r.anim.State != "Attack" {
+				return true
+			}
 			if !r.body.Ground {
 				lifted = true
 			}
@@ -115,7 +118,7 @@ func (r *Rat) jumpAttackAction() *ai.Action {
 				r.anim.SetState(vars.IdleTag)
 			}
 
-			return r.anim.State != "Attack"
+			return false
 		},
 		Exit: func() { r.body.MaxX = ratMaxSpeed },
 	}
@@ -130,7 +133,7 @@ func (r *Rat) aiScript(view *bump.Rect) {
 
 	ai.Choices{
 		{2, func() {
-			r.ai.Add(10, r.jumpAttackAction())
+			r.ai.Add(3, r.jumpAttackAction())
 			r.ai.Add(0.5, actor.WaitAction())
 		}},
 		{0.5, func() { r.ai.Add(1, actor.BackUpAction(r.Control, ratSpeed, -rangeAdjustment)) }},

@@ -4,6 +4,7 @@ import (
 	"game/comps/anim"
 	"game/core"
 	"game/vars"
+	"image/color"
 	"math"
 	"time"
 
@@ -14,11 +15,12 @@ import (
 type Comp struct {
 	Image        *ebiten.Image
 	X, Y         float64
+	R            float64
 	FlipX, FlipY bool
 	Layer        int
+	ColorScale   color.Color
 	RollingTime  time.Duration
 	rollingTimer *time.Timer
-	r            float64
 	w, h         float64
 }
 
@@ -26,9 +28,12 @@ func (c *Comp) Init(_ core.Entity) {
 	is := c.Image.Bounds().Size()
 	w, h := is.X, is.Y
 	c.w, c.h = float64(w), float64(h)
+	if c.ColorScale == nil {
+		c.ColorScale = color.White
+	}
 	if c.RollingTime != 0 {
 		c.rollingTimer = time.AfterFunc(c.RollingTime, func() {
-			c.r += math.Pi / 2
+			c.R += math.Pi / 2
 			if c.rollingTimer != nil {
 				c.rollingTimer.Reset(c.RollingTime)
 			}
@@ -55,11 +60,12 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	}
 	op.GeoM.Scale(sx, sy)
 	op.GeoM.Translate(-c.w/2, -c.h/2)
-	op.GeoM.Rotate(c.r)
+	op.GeoM.Rotate(c.R)
 	op.GeoM.Translate(c.w/2, c.h/2)
 	op.GeoM.Translate(c.X, c.Y)
 	op.GeoM.Translate(dx, dy)
 	op.GeoM.Concat(entityPos)
+	op.ColorScale.ScaleWithColor(c.ColorScale)
 	pipeline.Add(vars.PipelineScreenTag, c.Layer, func(screen *ebiten.Image) { screen.DrawImage(c.Image, op) })
 	normalOp := &colorm.DrawImageOptions{GeoM: op.GeoM}
 	pipeline.Add(vars.PipelineNormalMapTag, c.Layer, func(normalMap *ebiten.Image) {
