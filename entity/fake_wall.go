@@ -14,6 +14,7 @@ type FakeWall struct {
 	render *render.Comp
 }
 
+// TODO: finish this
 func NewFakeWall(x, y, _, _ float64, props *core.Properties) *FakeWall {
 	wall := &FakeWall{
 		BaseEntity: &core.BaseEntity{X: x, Y: y, W: tileSize, H: tileSize},

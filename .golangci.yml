@@ -34,6 +34,7 @@ linters-settings:
   mnd:
     ignored-numbers:
       - "2"
+      - "3"
       - "4"
       - "5"
       - "8"
