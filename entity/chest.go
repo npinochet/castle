@@ -14,7 +14,10 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-const chestW, chestH = 14, 9
+const (
+	chestW, chestH       = 14, 9
+	chestOpenRewardDelay = 500 * time.Millisecond
+)
 
 var (
 	chestImage, _, _                                    = ebitenutil.NewImageFromFileSystem(assets.FS, "chest.png")
@@ -58,7 +61,7 @@ func (c *Chest) Init() {
 	c.hitbox.HitFunc = c.chestHurt
 	c.hitbox.PushHitbox(bump.Rect{W: chestW, H: chestH}, hitbox.Hit, nil)
 	if c.open {
-		c.Open(false)
+		c.Open()
 	}
 }
 
@@ -66,15 +69,16 @@ func (c *Chest) Update(_ float64) {}
 
 func (c *Chest) Opened() bool { return c.open }
 
-func (c *Chest) Open(reward bool) {
+func (c *Chest) Open() {
 	c.open = true
 	c.hitbox.Remove()
 	c.render.Image = chestSemiOpenImage
 	c.render.Y = chestH - float64(chestSemiOpenImage.Bounds().Dy())
-	if !reward {
-		return
-	}
-	time.AfterFunc(500*time.Millisecond, func() {
+}
+
+func (c *Chest) OpenWithReward() {
+	c.Open()
+	time.AfterFunc(chestOpenRewardDelay, func() {
 		c.render.Image = chestOpenImage
 		c.render.Y = 0
 		for range c.reward {
@@ -87,6 +91,5 @@ func (c *Chest) chestHurt(other core.Entity, _ *bump.Collision, _ float64, _ hit
 	if c.open || !core.GetFlag(other, vars.PlayerTeamFlag) {
 		return
 	}
-
-	c.Open(true)
+	c.OpenWithReward()
 }

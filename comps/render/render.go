@@ -20,6 +20,7 @@ type Comp struct {
 	Layer        int
 	ColorScale   color.Color
 	RollingTime  time.Duration
+	Normal       bool
 	rollingTimer *time.Timer
 	w, h         float64
 }
@@ -66,9 +67,14 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	op.GeoM.Translate(dx, dy)
 	op.GeoM.Concat(entityPos)
 	op.ColorScale.ScaleWithColor(c.ColorScale)
-	pipeline.Add(vars.PipelineScreenTag, c.Layer, func(screen *ebiten.Image) { screen.DrawImage(c.Image, op) })
-	normalOp := &colorm.DrawImageOptions{GeoM: op.GeoM}
-	pipeline.Add(vars.PipelineNormalMapTag, c.Layer, func(normalMap *ebiten.Image) {
-		colorm.DrawImage(normalMap, c.Image, anim.FillNormalMaskColorM, normalOp)
-	})
+	imageTag := vars.PipelineScreenTag
+	if !c.Normal {
+		normalOp := &colorm.DrawImageOptions{GeoM: op.GeoM}
+		pipeline.Add(vars.PipelineNormalMapTag, c.Layer, func(normalMap *ebiten.Image) {
+			colorm.DrawImage(normalMap, c.Image, anim.FillNormalMaskColorM, normalOp)
+		})
+	} else {
+		imageTag = vars.PipelineNormalMapTag
+	}
+	pipeline.Add(imageTag, c.Layer, func(screen *ebiten.Image) { screen.DrawImage(c.Image, op) })
 }

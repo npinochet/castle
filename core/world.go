@@ -4,6 +4,7 @@ import (
 	"game/libs/bump"
 	"game/libs/camera"
 	"log"
+	"math"
 	"reflect"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -36,6 +37,7 @@ type World struct {
 	idToEntity map[uint]Entity
 	entityToID map[Entity]uint
 	toInit     []Entity
+	toRemove   []Entity
 
 	freezeTimer float64
 }
@@ -72,21 +74,39 @@ func (w *World) Update(dt float64) {
 		w.entities = append(w.entities, entity)
 	}
 	w.toInit = nil
+
 	dt *= w.Speed
 	w.Camera.Update(dt)
 	if w.freezeTimer -= dt; w.freezeTimer >= 0 {
 		return
 	}
 	w.Map.Update(dt)
-	// Copy entities to prevent inconsistencies when adding/removing entities during update.
-	entities := make([]Entity, len(w.entities))
-	copy(entities, w.entities)
-	for _, e := range entities {
+	for _, e := range w.entities {
 		for _, c := range e.Components() {
 			c.Update(dt)
 		}
 		e.Update(dt)
 	}
+
+	for _, entity := range w.toRemove {
+		for i, e := range w.entities {
+			if entity != e {
+				continue
+			}
+			for _, c := range e.Components() {
+				c.Remove()
+			}
+			w.entities[i] = w.entities[len(w.entities)-1]
+			w.entities = w.entities[:len(w.entities)-1]
+			delete(w.entityToID, e)
+			if id, ok := w.entityToID[e]; ok {
+				delete(w.idToEntity, id)
+			}
+
+			break
+		}
+	}
+	w.toRemove = nil
 }
 
 func (w *World) Draw(pipeline *Pipeline) {
@@ -96,7 +116,7 @@ func (w *World) Draw(pipeline *Pipeline) {
 	for _, e := range w.entities {
 		x, y := e.Position()
 		entityPos.Reset()
-		entityPos.Translate(x-cx, y-cy)
+		entityPos.Translate(math.Ceil(x-cx), math.Ceil(y-cy))
 		for _, c := range e.Components() {
 			c.Draw(pipeline, entityPos)
 		}
@@ -132,21 +152,7 @@ func GetWithTag[T Component](entity Entity, tag string) T {
 }
 
 func (w *World) Remove(entity Entity) {
-	for i, e := range w.entities {
-		if entity != e {
-			continue
-		}
-		for _, c := range e.Components() {
-			c.Remove()
-		}
-		w.entities = append(w.entities[:i], w.entities[i+1:]...)
-		if id, ok := w.entityToID[e]; ok {
-			delete(w.idToEntity, id)
-		}
-		delete(w.entityToID, e)
-
-		break
-	}
+	w.toRemove = append(w.toRemove, entity)
 }
 
 func (w *World) RemoveAll() {

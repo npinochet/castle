@@ -105,30 +105,6 @@ func NewMap(mapPath string, backLayersNum int, fs fs.FS, drawImagesTags ...strin
 	return m
 }
 
-func (m *Map) render() error {
-	skipped := 0
-	for i, layer := range m.data.Layers {
-		if !layer.Visible {
-			skipped++
-
-			continue
-		}
-		for _, layers := range m.layers {
-			layerIndex := i - skipped
-			renderer, err := render.NewRendererWithFileSystem(m.data, layers[layerIndex].fs)
-			if err != nil {
-				return fmt.Errorf("map: tiled map unsupported for rendering: %w", err)
-			}
-			if err := renderer.RenderLayer(i); err != nil {
-				return fmt.Errorf("map: tiled layer %s unsupported for rendering: %w", m.data.Layers[i].Name, err)
-			}
-			layers[layerIndex].image = ebiten.NewImageFromImage(renderer.Result)
-		}
-	}
-
-	return nil
-}
-
 func (m *Map) Update(dt float64) {
 	for _, layers := range m.layers {
 		for _, layer := range layers {
@@ -155,7 +131,7 @@ func (m *Map) Draw(pipeline *Pipeline, camera *camera.Camera) {
 			for _, anim := range layer.animations {
 				for _, pos := range anim.positions {
 					op := &ebiten.DrawImageOptions{}
-					op.GeoM.Translate(pos[0]-cx, pos[1]-cy)
+					op.GeoM.Translate(math.Ceil(pos[0]-cx), math.Ceil(pos[1]-cy))
 					pipeline.Add(imageTag, layerDepth, func(screen *ebiten.Image) {
 						screen.DrawImage(anim.frames[anim.current].image, op)
 					})
@@ -231,15 +207,18 @@ loop:
 	return positions
 }
 
-func (m *Map) TilesFromPosition(x, y float64, removeTiles bool) ([]*Tile, error) {
+func (m *Map) TilesFromPosition(x, y float64, removeTiles bool) (map[string]*Tile, error) {
 	mapX, mapY := int(x)/m.data.TileWidth, int(y)/m.data.TileHeight
 	if mapX < 0 || mapY < 0 || mapX >= m.data.Width || mapY >= m.data.Height {
 		return nil, fmt.Errorf("map: position out of bounds: %f, %f", x, y)
 	}
 	position := mapY*m.data.Width + mapX
+	skipped := 0
 	for layerIndex := len(m.data.Layers) - 1; layerIndex >= 0; layerIndex-- {
 		layer := m.data.Layers[layerIndex]
 		if !layer.Visible {
+			skipped++
+
 			continue
 		}
 		tile := layer.Tiles[position]
@@ -247,25 +226,32 @@ func (m *Map) TilesFromPosition(x, y float64, removeTiles bool) ([]*Tile, error)
 			continue
 		}
 
-		tiles := make([]*Tile, 0, len(m.layers))
+		tiles := map[string]*Tile{}
 		for imageTag := range m.layers {
 			tileImage := &Tile{
 				X: float64(mapX * m.data.TileWidth), Y: float64(mapY * m.data.TileHeight),
 				Image:    m.tileset[imageTag][tile.Tileset.FirstGID+tile.ID],
 				ImageTag: imageTag,
 			}
-			tiles = append(tiles, tileImage)
+			tiles[imageTag] = tileImage
 		}
 		if removeTiles {
-			layer.Tiles[position] = tiled.NilLayerTile
+			// TODO: This should work, but it's really slow and RAM consuming
+			// layer.Tiles[position] = tiled.NilLayerTile
+			// if err := m.render(); err != nil { // TODO: This takes to much time, and RAM
+			// 	return nil, err
+			// }
+
+			for _, layers := range m.layers {
+				imageLayerIndex := len(m.layers) - 1 - (len(m.data.Layers) - 1 - layerIndex + skipped)
+				emptyTile := ebiten.NewImage(m.data.TileWidth, m.data.TileHeight)
+				op := &ebiten.DrawImageOptions{Blend: ebiten.BlendCopy}
+				op.GeoM.Translate(float64(mapX*m.data.TileWidth), float64(mapY*m.data.TileHeight))
+				layers[imageLayerIndex].image.DrawImage(emptyTile, op)
+			}
 		}
 
 		return tiles, nil
-	}
-	if removeTiles {
-		if err := m.render(); err != nil {
-			return nil, err
-		}
 	}
 
 	return nil, fmt.Errorf("map: no tile found at position: %f, %f", x, y)
@@ -410,6 +396,33 @@ func (m *Map) GetObjectsRects(objectGroupName string) ([]bump.Rect, bool) {
 	return rects, true
 }
 
+func (m *Map) render() error {
+	skipped := 0
+	for i, layer := range m.data.Layers {
+		if !layer.Visible {
+			skipped++
+
+			continue
+		}
+		for _, layers := range m.layers {
+			layerIndex := i - skipped
+			renderer, err := render.NewRendererWithFileSystem(m.data, layers[layerIndex].fs)
+			if err != nil {
+				return fmt.Errorf("map: tiled map unsupported for rendering: %w", err)
+			}
+			if err := renderer.RenderLayer(i); err != nil {
+				return fmt.Errorf("map: tiled layer %s unsupported for rendering: %w", m.data.Layers[i].Name, err)
+			}
+			if layers[layerIndex].image != nil {
+				layers[layerIndex].image.Deallocate()
+			}
+			layers[layerIndex].image = ebiten.NewImageFromImage(renderer.Result)
+		}
+	}
+
+	return nil
+}
+
 func buildLayers(data *tiled.Map, fs fs.FS, tileImages []*ebiten.Image, removeAnimatedTiles bool) ([]*layerData, error) {
 	layersData := []*layerData{}
 	for i, layer := range data.Layers {
@@ -440,7 +453,7 @@ func buildTileset(data *tiled.Map, fs fs.FS) ([]*ebiten.Image, error) {
 			return nil, err
 		}
 
-		for tileID := range uint32(tileset.TileCount) {
+		for tileID := range uint32(tileset.TileCount) { //nolint: gosec
 			tileImages = append(tileImages, ebiten.NewImageFromImage(cropImage(img, tileset.GetTileRect(tileID))))
 		}
 	}

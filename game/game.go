@@ -124,11 +124,6 @@ func (g *Game) Update() error {
 			return ebiten.Termination
 		}
 		debugControls()
-		if inpututil.IsKeyJustPressed(ebiten.KeyR) { // TODO: remove this
-			for range 20 {
-				vars.World.Add(entity.NewSmoke(vars.Player))
-			}
-		}
 	}
 
 	return nil

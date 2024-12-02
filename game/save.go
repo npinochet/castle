@@ -22,6 +22,11 @@ const (
 
 var saveDataCache []byte
 
+type Opener interface {
+	Open()
+	Opened() bool
+}
+
 type PlayerData struct {
 	X   float64 `json:"x"`
 	Y   float64 `json:"y"`
@@ -111,11 +116,8 @@ func ApplySaveData(sd *SaveData) {
 	core.Get[*stats.Comp](vars.Player).Exp = sd.PlayerData.Exp
 	vars.Pad = sd.Pad
 	for _, opened := range sd.Opened {
-		if chest, ok := vars.World.Get(opened).(*entity.Chest); ok {
-			chest.Open(false)
-		}
-		if door, ok := vars.World.Get(opened).(*entity.Door); ok {
-			door.Open()
+		if opener, ok := vars.World.Get(opened).(Opener); ok {
+			opener.Open()
 		}
 	}
 }
@@ -131,10 +133,7 @@ func populateSaveData(sd *SaveData) {
 		if id == 0 {
 			continue
 		}
-		if chest, ok := e.(*entity.Chest); ok && chest.Opened() {
-			sd.Opened = append(sd.Opened, id)
-		}
-		if door, ok := e.(*entity.Door); ok && door.Opened() {
+		if opener, ok := e.(Opener); ok && opener.Opened() {
 			sd.Opened = append(sd.Opened, id)
 		}
 	}
