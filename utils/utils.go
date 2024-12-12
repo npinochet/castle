@@ -1,13 +1,13 @@
 package utils
 
 import (
+	"game/assets"
 	"math"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/hajimehoshi/ebiten/v2/text" // TODO: Fix this import
-	"golang.org/x/image/font"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 type ControlPack [9][]ebiten.Key
@@ -97,20 +97,22 @@ func Distante(x1, y1, x2, y2 float64) float64 {
 	return math.Sqrt(math.Pow(x1-x2, 2) + math.Pow(y1-y2, 2))
 }
 
-func TextSize(text string, face font.Face) (int, int) {
-	size, _ := font.BoundString(face, text)
+func TextSize(txt string, face *text.GoTextFace) (float64, float64) {
+	w, h := text.Measure(txt, face, face.Size+1)
 
-	return size.Max.X.Ceil(), -size.Min.Y.Floor()
+	return w - 1, h
 }
 
-func DrawText(img *ebiten.Image, txt string, face font.Face, op *ebiten.DrawImageOptions) (int, int) {
-	if op == nil {
-		op = &ebiten.DrawImageOptions{}
+func DrawText(img *ebiten.Image, txt string, face *text.GoTextFace, imgOp *ebiten.DrawImageOptions) (float64, float64) {
+	op := &text.DrawOptions{}
+	if imgOp != nil {
+		op.DrawImageOptions = *imgOp
 	}
-	w, h := TextSize(txt, face)
-	op.GeoM.Translate(0, float64(h))
-	text.DrawWithOptions(img, txt, face, op)
-	op.GeoM.Translate(0, -float64(h))
+	if face == assets.NanoFont {
+		op.GeoM.Translate(0, 1)
+	}
+	op.LineSpacing = face.Size + 1
+	text.Draw(img, txt, face, op)
 
-	return w, h
+	return TextSize(txt, face)
 }

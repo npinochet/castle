@@ -217,5 +217,5 @@ func (c *Comp) allocateSlices() {
 func (c *Comp) debugDraw(screen *ebiten.Image, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -22)
-	utils.DrawText(screen, "ANIM:"+c.State, assets.TinyFont, op)
+	utils.DrawText(screen, "ANIM:"+c.State, assets.NanoFont, op)
 }

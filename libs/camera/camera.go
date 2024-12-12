@@ -53,10 +53,7 @@ func (c *Camera) Translate(x, y float64) {
 }
 
 func (c *Camera) Bounds() image.Rectangle {
-	min := image.Point{int(c.x), int(c.y)}
-	max := image.Point{int(math.Max(c.x, 0) + c.w), int(math.Max(c.y, 0) + c.h)}
-
-	return image.Rectangle{min, max}
+	return image.Rect(int(c.x), int(c.y), int(c.x+c.w), int(c.y+c.h))
 }
 
 func (c *Camera) Update(dt float64) {

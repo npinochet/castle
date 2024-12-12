@@ -16,8 +16,6 @@ import (
 	- Add quick step! Like a Dogde/dash, but small and fast that let you dodge or approach enemies quickly
 		- This ^ but only the enemies
 - Clean up actor.ManageAnim and body.Vx code, make it dry with player and other Actors.
-- Add enemy that jumps around.
-	- Rat?
 - Experiment with partial blocking (a block does not negate all damage)
 	and a system where you can attack back for a short period and gain the lost health
 - Experiment hiding the enemy health bar, even for bosses.
@@ -46,7 +44,7 @@ import (
 	- New map
 		- I struggle with this
 		- more hazards, like spikes
-		- Breakable walls
+			- Maybe one more hazard?
 		- Limbo map that you have to clear everytime you die 3 times (more info in mobile notes...)
 		- Posible cool events/encounters brainstorm:
 			- A huge dark monster enemy that you have to avoid, give them huge health bars, make the player learn they are a part of the ecosystem and have to survive
@@ -58,9 +56,15 @@ import (
 
 	- Add a new enemy (low priority)
 		- Add enemy that can only be hit from behind.
-		- Small enemy like a bat
+		- Small enemy like a bat - Semi-completed
 		- Enemies that explode on death?
 		- Small enemy that rushes into you and deals damage when touching you
+	- Make the text box more readable and scrollable (showing a down arrow when there is more text, and pressing down or up to advance)
+
+- Demo 3 Roadmap/ideas?:
+	- Add status effects
+		- One where the hud hides the current health and/or stamina
+	- Add items and inventory, a menu where you can see items and status effects
 */
 
 func main() {

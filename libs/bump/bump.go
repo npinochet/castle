@@ -86,7 +86,7 @@ func NewSpace() *Space {
 		},
 		RectSlide: func(goal Vec2, col *Collision, filter Filter, tags ...Tag) (Vec2, []*Collision) {
 			col.PreviousGoal = goal
-			if col.Move.X != 0 || col.Move.Y != 0 {
+			if (col.Move != Vec2{}) {
 				if col.Normal.X != 0 {
 					goal.X = col.Touch.X
 				} else {
@@ -229,25 +229,6 @@ func (s *Space) Check(item Item, goal Vec2, filter Filter, tags ...Tag) (Vec2, [
 	}
 
 	projectedCols := s.Project(item, s.Rect(item), goal, visitedFilter, tags...)
-	slices.SortFunc(projectedCols, func(a, b *Collision) int { // TODO: What the fuck is this?
-		//sort in order of slopes, normal.y != 0, rest
-		var ai, bi int
-		if a.OtherRect.Type != Full {
-			ai += 2
-		}
-		if b.OtherRect.Type != Full {
-			bi += 2
-		}
-		if a.Normal.Y != 0 {
-			ai++
-		}
-		if b.Normal.Y != 0 {
-			bi++
-		}
-
-		return bi - ai
-	})
-
 	var cols []*Collision
 	for len(projectedCols) > 0 {
 		col := projectedCols[0]
@@ -290,6 +271,21 @@ func (s *Space) Project(item Item, rect Rect, goal Vec2, filter Filter, tags ...
 			}
 		}
 	}
+	slices.SortFunc(cols, func(a, b *Collision) int {
+		if a.Intersection == b.Intersection {
+			ir := a.ItemRect
+			if rectSquareDistance(ir, a.OtherRect) < rectSquareDistance(ir, b.OtherRect) {
+				return -1
+			}
+
+			return 1
+		}
+		if a.Intersection < b.Intersection {
+			return -1
+		}
+
+		return 1
+	})
 
 	return cols
 }
@@ -343,7 +339,7 @@ func lineSegmentIntersection(rect Rect, p1, p2 Vec2) (float64, float64, Vec2, bo
 	i1, i2 := math.Inf(-1), math.Inf(1)
 	normal := Vec2{}
 
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		if p[i] == 0 {
 			if q[i] <= 0 {
 				return i1, i2, normal, false
@@ -436,6 +432,13 @@ func rectDiff(r1, r2 Rect) Rect {
 
 func rectContainsPoint(r Rect, p Vec2) bool {
 	return p.X-r.X > DELTA && p.Y-r.Y > DELTA && r.X+r.W-p.X > DELTA && r.Y+r.H-p.Y > DELTA
+}
+
+func rectSquareDistance(r1, r2 Rect) float64 {
+	dx := r1.X - r2.X + (r1.W-r2.W)/2
+	dy := r1.Y - r2.Y + (r1.H-r2.H)/2
+
+	return dx*dx + dy*dy
 }
 
 func rectNearestCorner(rect Rect, p Vec2) Vec2 {

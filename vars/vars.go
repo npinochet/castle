@@ -63,9 +63,9 @@ const (
 	// Textbox.
 	BoxX, DefaultBoxY            = 6.0, 30.0
 	BoxMarginY, BoxMinY, BoxMaxY = 5, 25, 96 - BoxH - BoxMarginY
-	BoxInnerW                    = 160
-	BoxW, BoxH                   = BoxInnerW - BoxX*2, 3.0
-	LineWidth, LineHeight        = (BoxW - 4) / 4, 5 + 1
+	BoxW, BoxH                   = ScreenWidth - BoxX*2, 3.0
+	LineWidth, LineHeight        = (BoxW - 6), 6 + 1
+	MaxLines                     = 4
 )
 
 var (

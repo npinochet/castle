@@ -297,7 +297,7 @@ func (c *Comp) drawSegment(pipeline *core.Pipeline, geoM ebiten.GeoM, y, current
 
 func (c *Comp) drawCount(pipeline *core.Pipeline, geoM ebiten.GeoM, y float64, count int, offset float64) {
 	text := strconv.Itoa(count)
-	w, _ := utils.TextSize(text, assets.TinyFont)
+	w, _ := utils.TextSize(text, assets.NanoFont)
 	op := &ebiten.DrawImageOptions{GeoM: geoM}
 	op.GeoM.Translate(vars.HudIconsX, vars.BarMiddleH*y+offset)
 
@@ -307,7 +307,7 @@ func (c *Comp) drawCount(pipeline *core.Pipeline, geoM ebiten.GeoM, y float64, c
 	pipeline.Add(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
 		screen.DrawImage(fullCountBar, opBackground)
 		op.GeoM.Translate(0, 2)
-		utils.DrawText(screen, text, assets.TinyFont, op)
+		utils.DrawText(screen, text, assets.NanoFont, op)
 	})
 	pipeline.Add(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
 		normalMap.DrawImage(fullCountBar, &ebiten.DrawImageOptions{GeoM: opBackground.GeoM, Blend: ebiten.BlendDestinationOut})
@@ -323,14 +323,14 @@ func (c *Comp) drawAttackMult(pipeline *core.Pipeline, geoM ebiten.GeoM) {
 	op.GeoM.Translate(c.MaxHealth+vars.BarMiddleH+endImgW, 0)
 
 	text := fmt.Sprintf("x%.1fATK", 1+c.AttackMult)
-	w, _ := utils.TextSize(text, assets.TinyFont)
+	w, _ := utils.TextSize(text, assets.NanoFont)
 	opBackground := &ebiten.DrawImageOptions{}
 	opBackground.GeoM.Scale(float64(w)+2, 1)
 	opBackground.GeoM.Concat(op.GeoM)
 	pipeline.Add(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
 		screen.DrawImage(fullAttackBarImage, opBackground)
 		op.GeoM.Translate(0, 1)
-		utils.DrawText(screen, text, assets.TinyFont, op)
+		utils.DrawText(screen, text, assets.NanoFont, op)
 	})
 	pipeline.Add(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
 		normalMap.DrawImage(fullAttackBarImage, &ebiten.DrawImageOptions{GeoM: opBackground.GeoM, Blend: ebiten.BlendDestinationOut})
@@ -374,6 +374,6 @@ func (c *Comp) debugDraw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	op.GeoM.Translate(-5, -16)
 	pipeline.Add(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
-		utils.DrawText(screen, fmt.Sprintf("%0.2f/%0.2f/%0.2f", c.Health, c.Stamina, c.Poise), assets.TinyFont, op)
+		utils.DrawText(screen, fmt.Sprintf("%0.2f/%0.2f/%0.2f", c.Health, c.Stamina, c.Poise), assets.NanoFont, op)
 	})
 }

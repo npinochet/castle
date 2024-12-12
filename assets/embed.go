@@ -1,11 +1,11 @@
 package assets
 
 import (
+	"bytes"
 	embed "embed"
 	"log"
 
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/opentype"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 var (
@@ -17,37 +17,28 @@ var (
 	m5x7File []byte
 	//go:embed m6x11.ttf
 	m6x11File []byte
-	//go:embed bitty.ttf
-	bittyFile []byte
-	//go:embed teeny_tiny.otf
-	tinyFile []byte
+	//go:embed nano.ttf
+	nanoFile []byte
 )
 
 var (
-	M5x7Font                font.Face
-	M6x11Font               font.Face
-	BittyFont               font.Face
-	TinyFont                font.Face
-	defaultDPI, defaultSize = 96.0, 12.0
+	M5x7Font  *text.GoTextFace
+	M6x11Font *text.GoTextFace
+	NanoFont  *text.GoTextFace
 )
 
+//nolint:mnd
 func init() {
-	loadFont(m5x7File, &M5x7Font, nil)
-	loadFont(m6x11File, &M6x11Font, nil)
-	loadFont(bittyFile, &BittyFont, nil)
-	loadFont(tinyFile, &TinyFont, &opentype.FaceOptions{Size: 3, DPI: 120})
+	M5x7Font = loadFont(m5x7File, 16)
+	M6x11Font = loadFont(m6x11File, 16)
+	NanoFont = loadFont(nanoFile, 6)
 }
 
-func loadFont(data []byte, target *font.Face, opt *opentype.FaceOptions) {
-	tt, err := opentype.Parse(data)
+func loadFont(data []byte, size float64) *text.GoTextFace {
+	face, err := text.NewGoTextFaceSource(bytes.NewReader(data))
 	if err != nil {
 		log.Panic(err)
 	}
-	if opt == nil {
-		opt = &opentype.FaceOptions{Size: defaultSize, DPI: defaultDPI}
-	}
-	*target, err = opentype.NewFace(tt, opt)
-	if err != nil {
-		log.Panic(err)
-	}
+
+	return &text.GoTextFace{Source: face, Size: size}
 }
