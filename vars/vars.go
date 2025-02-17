@@ -1,4 +1,4 @@
-//nolint:golint, revive
+//nolint:revive, mnd
 package vars
 
 import (
@@ -10,7 +10,7 @@ const (
 	// Config.
 	Scale                     = 4
 	ScreenWidth, ScreenHeight = 160, 96 // 320, 240.
-	Debug                     = true
+	Debug                     = debug
 
 	// Pipeline Layers and Tags.
 	PipelineUILayer      = 10

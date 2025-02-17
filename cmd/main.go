@@ -35,31 +35,50 @@ import (
 - Make hurtbox change depending on frame.
 
 - Video playtest things: https://drive.google.com/file/d/1GZ48vG0wAzkD09A6MYnGKDKIRahOqUev/view
-	- Pixel font too hard to read
 
 - Demo 2 Roadmap:
-	- Ajust combat flow speed
-	- Lower stamina for player
-		- Need to create a 2 phase fight, where one you do action, second you defend while waiting for stamina to recover
-	- New map
-		- I struggle with this
-		- more hazards, like spikes
-			- Maybe one more hazard?
-		- Limbo map that you have to clear everytime you die 3 times (more info in mobile notes...)
+	- Two Phases:
+		- As a short term goal, finish the demo with is already done
+		- As a long term goal, add the rest of the features listed here
+
+	- Phase 1:
+		- Ajust combat flow speed
+		- Lower stamina for player
+			- Need to create a 2 phase fight, where one you do action, second you defend while waiting for stamina to recover
+		- Add an intro, make just a textbox that tells you how the castle is infamous for being a place where people go in and never come out
+		- Draw
+			- Enemy that floats
+			- More static NPCs
+		- New map
+			- I struggle with this
+			- Add ruble somehow? Make it more ruined
+				- Add grass maybe? more cracks?
+			- more hazards, like spikes
+				- Maybe one more hazard?
+			- Limbo map that you have to clear everytime you die 3 times (more info in mobile notes...)
+			- Add a new enemy (low priority)
+			- Add enemy that can only be hit from behind.
+			- Small enemy like a bat - Semi-completed
+			- Enemies that explode on death?
+			- Small enemy that rushes into you and deals damage when touching you
+			- Posible cool events/encounters brainstorm:
+				- A not good hidden secret that has a chest that makes (statues move/enemies appear) for a surprise.
+				- Empty room with something creepy:
+					- A big mirror that shows you a reflection of you, but with a different weapon (sure copilot)
+					- A big dark hollow face on the wall
+					- A big dark figure that disappears when you get close
+
+	- Phase 2:
 		- Posible cool events/encounters brainstorm:
 			- A huge dark monster enemy that you have to avoid, give them huge health bars, make the player learn they are a part of the ecosystem and have to survive
-			- A not good hidden secret that has a chest that makes (statues move/enemies appear) for a surprise.
-			- A room with poison dripping from the floor, have corpses that have mushroom head. If you touch the dripping liquid, a 10 minutes timer starts where you get a mushroom head and die
+			- A room with poison dripping from the floor, have corpses that have mushroom head. If you touch the dripping liquid, a 5 minutes timer starts where you get a mushroom head and die
 			- A big tower where the rooms are the same
-			- A looping liberynth
+			- A looping laberynth
 			- Have an imposing enemy be swarmed by small rats / bats
+			- A dying knight that you can kill and loot for a good item
+			- A room with a big enemy that is sleeping, you can kill it or sneak past it
 
-	- Add a new enemy (low priority)
-		- Add enemy that can only be hit from behind.
-		- Small enemy like a bat - Semi-completed
-		- Enemies that explode on death?
-		- Small enemy that rushes into you and deals damage when touching you
-	- Make the text box more readable and scrollable (showing a down arrow when there is more text, and pressing down or up to advance)
+	-- Character ideas: https://route1rodent.itch.io/16x16-rpg-character-sprite-sheet
 
 - Demo 3 Roadmap/ideas?:
 	- Add status effects

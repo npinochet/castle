@@ -47,6 +47,15 @@ func (c *Camera) Follow(e Recter) {
 	c.SetRoomBorders(false)
 }
 
+func (c *Camera) InFrame(e Recter, widthMult, heightMult float64) bool {
+	frameWidth, frameHeight := c.w*widthMult, c.h*heightMult
+	frame := bump.Rect{X: c.x - frameWidth, Y: c.y - frameHeight, W: 2 * frameWidth, H: 2 * frameHeight}
+	x, y, w, h := e.Rect()
+	rect := bump.Rect{X: x, Y: y, W: w, H: h}
+
+	return bump.Overlaps(rect, frame)
+}
+
 func (c *Camera) Translate(x, y float64) {
 	c.x += x
 	c.y += y

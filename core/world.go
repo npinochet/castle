@@ -38,6 +38,7 @@ type World struct {
 	entityToID map[Entity]uint
 	toInit     []Entity
 	toRemove   []Entity
+	removed    []Entity
 
 	freezeTimer float64
 }
@@ -82,6 +83,9 @@ func (w *World) Update(dt float64) {
 	}
 	w.Map.Update(dt)
 	for _, e := range w.entities {
+		if !w.Camera.InFrame(e, 1, 1) {
+			continue
+		}
 		for _, c := range e.Components() {
 			c.Update(dt)
 		}
@@ -98,10 +102,7 @@ func (w *World) Update(dt float64) {
 			}
 			w.entities[i] = w.entities[len(w.entities)-1]
 			w.entities = w.entities[:len(w.entities)-1]
-			delete(w.entityToID, e)
-			if id, ok := w.entityToID[e]; ok {
-				delete(w.idToEntity, id)
-			}
+			w.removed = append(w.removed, e)
 
 			break
 		}
@@ -114,6 +115,9 @@ func (w *World) Draw(pipeline *Pipeline) {
 	cx, cy := w.Camera.Position()
 	entityPos := ebiten.GeoM{}
 	for _, e := range w.entities {
+		if !w.Camera.InFrame(e, 1, 1) {
+			continue
+		}
 		x, y := e.Position()
 		entityPos.Reset()
 		entityPos.Translate(math.Ceil(x-cx), math.Ceil(y-cy))
@@ -125,7 +129,6 @@ func (w *World) Draw(pipeline *Pipeline) {
 
 func (w *World) SetMap(tiledMap *Map, roomsLayer string) {
 	w.Map = tiledMap
-
 	rooms, ok := tiledMap.GetObjectsRects(roomsLayer)
 	if !ok {
 		log.Println("world: room layer not found")
@@ -136,6 +139,7 @@ func (w *World) SetMap(tiledMap *Map, roomsLayer string) {
 func (w *World) Get(id uint) Entity       { return w.idToEntity[id] }
 func (w *World) GetID(entity Entity) uint { return w.entityToID[entity] }
 func (w *World) GetAll() []Entity         { return w.entities }
+func (w *World) GetRemoved() []Entity     { return w.removed }
 
 func Get[T Component](entity Entity) T {
 	var t T

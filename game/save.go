@@ -1,6 +1,7 @@
 package game
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"game/comps/stats"
@@ -66,8 +67,15 @@ func Save() error {
 
 	populateSaveData(saveData)
 
-	if saveDataCache, err = json.MarshalIndent(saveData, "", "	"); err != nil {
+	if saveDataCache, err = json.Marshal(saveData); err != nil {
 		return err
+	}
+	if vars.Debug {
+		buffer := bytes.NewBuffer([]byte{})
+		if err := json.Indent(buffer, saveDataCache, "", "	"); err != nil {
+			return err
+		}
+		saveDataCache = buffer.Bytes()
 	}
 	if !Persistent {
 		return nil
@@ -129,6 +137,16 @@ func populateSaveData(sd *SaveData) {
 	sd.Pad = vars.Pad
 
 	for _, e := range vars.World.GetAll() {
+		id := vars.World.GetID(e)
+		if id == 0 {
+			continue
+		}
+		if opener, ok := e.(Opener); ok && opener.Opened() {
+			sd.Opened = append(sd.Opened, id)
+		}
+	}
+
+	for _, e := range vars.World.GetRemoved() {
 		id := vars.World.GetID(e)
 		if id == 0 {
 			continue

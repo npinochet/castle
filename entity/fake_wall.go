@@ -57,12 +57,11 @@ func (fw *FakeWall) Update(_ float64) {}
 
 func (fw *FakeWall) Opened() bool { return fw.open }
 
-func (fw *FakeWall) Open() {
+func (fw *FakeWall) OpenInChain() {
 	if fw.open {
 		return
 	}
-	fw.open = true
-	vars.World.Remove(fw)
+	fw.Open()
 	vars.World.Camera.Shake(0.1, 0.1)
 	for range 5 + rand.IntN(5) {
 		vars.World.Add(NewSmoke(fw))
@@ -71,14 +70,22 @@ func (fw *FakeWall) Open() {
 		horizonal := ext.QueryItems(fw, bump.Rect{X: fw.X - tileSize/2, Y: fw.Y, W: tileSize * 2, H: tileSize}, "fakeWall")
 		vertical := ext.QueryItems(fw, bump.Rect{X: fw.X, Y: fw.Y - tileSize/2, W: tileSize, H: tileSize * 2}, "fakeWall")
 		for _, neighbor := range append(horizonal, vertical...) {
-			neighbor.Open()
+			neighbor.OpenInChain()
 		}
 	})
+}
+
+func (fw *FakeWall) Open() {
+	if fw.open {
+		return
+	}
+	fw.open = true
+	vars.World.Remove(fw)
 }
 
 func (fw *FakeWall) hurt(other core.Entity, _ *bump.Collision, _ float64, _ hitbox.ContactType) {
 	if fw.open || !core.GetFlag(other, vars.PlayerTeamFlag) {
 		return
 	}
-	fw.Open()
+	fw.OpenInChain()
 }
