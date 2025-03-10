@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="8" tileheight="8" infinite="0" backgroundcolor="#323c39" nextlayerid="9" nextobjectid="522">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="8" tileheight="8" infinite="0" backgroundcolor="#323c39" nextlayerid="9" nextobjectid="524">
  <editorsettings>
   <chunksize width="8" height="8"/>
  </editorsettings>
@@ -1516,7 +1516,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup color="#3fffffff" id="3" name="collisions" locked="1">
+ <objectgroup color="#3fffffff" id="3" name="collisions">
   <object id="321" x="2392" y="280" width="16" height="64"/>
   <object id="322" x="2400" y="192" width="8" height="88"/>
   <object id="323" x="2416" y="280" width="152" height="8"/>
@@ -1579,9 +1579,6 @@
   <object id="381" x="2136" y="360" width="32" height="16"/>
   <object id="382" x="2064" y="536" width="8" height="8"/>
   <object id="383" x="2040" y="544" width="32" height="8"/>
-  <object id="384" x="2136" y="360">
-   <polygon points="0,0 0,16 -32,16"/>
-  </object>
   <object id="385" x="2016" y="560">
    <polygon points="0,0 0,8 -16,8"/>
   </object>
@@ -1623,6 +1620,9 @@
   <object id="484" x="2072" y="2392" width="16" height="72"/>
   <object id="485" x="2088" y="2392" width="16" height="8"/>
   <object id="508" x="1928" y="480" width="48" height="24"/>
+  <object id="522" x="2136" y="360">
+   <polygon points="0,0 0,16 -32,16"/>
+  </object>
  </objectgroup>
  <objectgroup color="#4fa63b" id="4" name="entities" locked="1">
   <object id="11" name="Player" gid="26" x="1960" y="352" width="8" height="8"/>

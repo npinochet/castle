@@ -134,6 +134,7 @@ func (w *World) SetMap(tiledMap *Map, roomsLayer string) {
 		log.Println("world: room layer not found")
 	}
 	w.Camera.SetRooms(rooms)
+	tiledMap.LoadTilesetCollisionObjects(w.Space)
 }
 
 func (w *World) Get(id uint) Entity       { return w.idToEntity[id] }

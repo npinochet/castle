@@ -58,7 +58,8 @@ func toEntityContructor[T core.Entity](contructor func(float64, float64, float64
 
 func Load() {
 	actor.DieParticle = func(e core.Entity) core.Entity { return entity.NewFlake(e) }
-	worldMap := core.NewMap("intro/intro.tmx", 1, maps.IntroFS, vars.PipelineScreenTag, vars.PipelineNormalMapTag)
+	//worldMap := core.NewMap("intro/intro.tmx", 1, maps.IntroFS, vars.PipelineScreenTag, vars.PipelineNormalMapTag)
+	worldMap := core.NewMap("intro/playground_imp.tmx", 1, maps.IntroFS, vars.PipelineScreenTag, vars.PipelineNormalMapTag)
 	vars.World = core.NewWorld(float64(vars.ScreenWidth), float64(vars.ScreenHeight))
 	vars.World.SetMap(worldMap, "rooms")
 	worldMap.LoadBumpObjects(vars.World.Space, "collisions")

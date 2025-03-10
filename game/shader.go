@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	Lights    = true
+	Lights    = false
 	lightSize = 16
 )
 
@@ -60,7 +60,8 @@ func shaderDrawLights(pipeline *core.Pipeline, screen *ebiten.Image) {
 		x, y := light.x-cx, light.y-cy
 		w, h := float64(vars.ScreenWidth), float64(vars.ScreenHeight)
 		if x < -2*w || y < -2*h || x > 3*w || y > 3*h {
-			continue
+			// TODO: This continue breaks shader if there are no lights near, the screen turns black.
+			//continue
 		}
 
 		op := &ebiten.DrawRectShaderOptions{

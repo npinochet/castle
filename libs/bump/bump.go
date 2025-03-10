@@ -8,7 +8,10 @@ import (
 
 // Collision detection and resolution library based on bump.lua by kikito.
 
-var CellSize = 32.0
+var (
+	CellSize   = 32.0
+	SlopePivot = 0.5 // goes from 0 to 0.5, 0.5 being the center of the rect.
+)
 
 const DELTA = 1e-10 // floating-point margin of error.
 
@@ -105,15 +108,17 @@ func NewSpace() *Space {
 			col.Normal = Vec2{0, 0}
 			col.Touch.Y = goal.Y
 
-			// TODO: should customize pivot point ? (e.g. col.ItemRect.W/2)
-			height := col.OtherRect.slopeHeight(goal.X + col.ItemRect.W/2)
+			pivotLeft := goal.X + col.ItemRect.W*SlopePivot
+			pivotRight := goal.X + col.ItemRect.W*(1-SlopePivot)
 			switch col.OtherRect.Type {
 			case TopRightSlope, TopLeftSlope:
+				height := max(col.OtherRect.slopeHeight(pivotLeft), col.OtherRect.slopeHeight(pivotRight))
 				if goal.Y < height {
 					goal.Y = height
 					col.Normal = Vec2{0, 1}
 				}
 			case BottomRightSlope, BottomLeftSlope:
+				height := min(col.OtherRect.slopeHeight(pivotLeft), col.OtherRect.slopeHeight(pivotRight))
 				if goal.Y > height-col.ItemRect.H {
 					goal.Y = height - col.ItemRect.H
 					col.Normal = Vec2{0, -1}

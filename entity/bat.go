@@ -10,6 +10,7 @@ import (
 	"game/entity/actor"
 	"game/libs/bump"
 	"game/vars"
+	"math"
 )
 
 const (
@@ -77,29 +78,85 @@ func (r *Bat) Update(dt float64) {
 	if r.SimpleUpdate(dt); r.awake && r.anim.State == vars.IdleTag {
 		r.anim.SetState(vars.WalkTag)
 	}
-	// TODO: make better movement AI
-	if r.ai != nil && r.ai.Target != nil {
-		_, ty, _, th := r.ai.Target.Rect()
-		_, y, _, h := r.Rect()
-		if ty+th/2 > y+h/2 {
-			r.body.Vy += batSpeed * dt
-		} else {
-			r.body.Vy -= batSpeed * dt
-		}
-	}
 }
 
 //nolint:mnd
 func (r *Bat) aiScript(view *bump.Rect) {
-	rangeAdjustment := 10.0
 	idle := actor.IdleAction(r.Control, view)
 	idle.Exit = func() { r.awake = true }
 	r.ai.Add(0, idle)
-	r.ai.Add(0, actor.ApproachAction(r.Control, batSpeed, batMaxSpeed, rangeAdjustment))
-	r.ai.Add(0.1, actor.WaitAction())
-
 	ai.Choices{
-		{0.5, func() { r.ai.Add(1, actor.BackUpAction(r.Control, batSpeed, -rangeAdjustment)) }},
-		{1, func() { r.ai.Add(0.5, actor.WaitAction()) }},
+		{0.3, func() { r.ai.Add(3, r.Stalk(20)) }},
+		{0.3, func() { r.ai.Add(5, r.Stalk(25)) }},
+		{0.3, func() { r.ai.Add(4, r.Stalk(28)) }},
 	}.Play()
+	r.ai.Add(5, r.Attack())
+}
+
+func (r *Bat) Attack() *ai.Action {
+	// TODO: If the bat hits or reaches it's target, it end the attack
+	action := actor.AttackAction(r.Control, "Attack", batDamage)
+	originalEntry := action.Entry
+	originalNext := action.Next
+	action.Entry = func() {
+		originalEntry()
+		r.anim.OnFrame(1, func() { r.body.Vx, r.body.Vy = r.targetAngleComps() })
+	}
+	action.Next = func(dt float64) bool {
+		if r.ai.Target == nil {
+			return true
+		}
+
+		compX, compY := r.targetAngleComps()
+		r.body.Vx += compX * dt
+		r.body.Vy += compY * dt
+
+		tx, _, tw, _ := r.ai.Target.Rect()
+		r.anim.FlipX = tx+tw/2 > r.X+r.W/2
+
+		return originalNext(dt)
+	}
+
+	return action
+}
+
+func (r *Bat) Stalk(rangeAdjustment float64) *ai.Action {
+	return &ai.Action{
+		Name:  "Stalk",
+		Entry: func() { r.body.MaxX, r.body.MaxY = batMaxSpeed, batMaxSpeed },
+		Next: func(dt float64) bool {
+			if r.ai.Target == nil {
+				return true
+			}
+			if r.PausingState() {
+				return false
+			}
+
+			compX, compY := r.targetAngleComps()
+			backUp := r.ai.InTargetRange(0, rangeAdjustment)
+			if backUp {
+				r.body.Vx -= compX * dt
+				r.body.Vy -= (batSpeed / 4) * dt
+			} else {
+				r.body.Vx += compX * dt
+				if _, ty, _, _ := r.ai.Target.Rect(); r.Y+r.H > ty {
+					r.body.Vy -= batSpeed * 2 * dt
+				} else {
+					r.body.Vy += compY * dt
+				}
+			}
+
+			return false
+		},
+	}
+}
+
+func (r *Bat) targetAngleComps() (float64, float64) {
+	if r.ai.Target == nil {
+		return 0, 0
+	}
+	tx, ty, tw, _ := r.ai.Target.Rect()
+	angle := math.Atan2((ty)-(r.Y+r.H), (tx+tw/2)-(r.X+r.W/2))
+
+	return batSpeed * math.Cos(angle), batSpeed * math.Sin(angle)
 }

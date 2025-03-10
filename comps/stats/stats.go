@@ -26,10 +26,9 @@ var (
 	middleBarImage, _ = hudImage.SubImage(image.Rect(vars.MiddleBarX1, 0, vars.MiddleBarX2, vars.BarH)).(*ebiten.Image)
 	healthColor       = color.RGBA{172, 50, 50, 255}
 	staminaColor      = color.RGBA{55, 148, 110, 255}
-	// poiseColor        = color.RGBA{91, 110, 225, 255}
-	borderColor = color.RGBA{34, 32, 52, 255}
-	emptyColor  = color.RGBA{89, 86, 82, 255}
-	lagColor    = color.RGBA{251, 242, 54, 255}
+	borderColor       = color.RGBA{34, 32, 52, 255}
+	emptyColor        = color.RGBA{89, 86, 82, 255}
+	lagColor          = color.RGBA{251, 242, 54, 255}
 
 	fullEmptyBarImage  = ebiten.NewImage(1, vars.InnerBarH)
 	fullBarImage       = ebiten.NewImage(1, vars.InnerBarH)
@@ -247,7 +246,6 @@ func (c *Comp) drawHud(pipeline *core.Pipeline) {
 		pipeline, op.GeoM, 1, c.Stamina*staminaVisualScale, c.MaxStamina*staminaVisualScale, c.staminaLag*staminaVisualScale, staminaColor,
 	)
 	c.drawAttackMult(pipeline, op.GeoM)
-	// c.drawSegment(pipeline, op.GeoM, 2, c.Poise, c.MaxPoise, c.poiseLag, poiseColor)
 	c.drawCount(pipeline, op.GeoM, 2, c.Heal, 0)
 	c.drawCount(pipeline, op.GeoM, 3, c.Exp, 2)
 }

@@ -42,9 +42,14 @@ type animationFrame struct {
 	duration float64
 }
 
+type animationPosition struct {
+	x, y                float64
+	flipX, flipY, flipR bool
+}
+
 type animation struct {
 	frames    []*animationFrame
-	positions [][2]float64
+	positions []animationPosition
 	timer     float64
 	current   int
 }
@@ -131,7 +136,24 @@ func (m *Map) Draw(pipeline *Pipeline, camera *camera.Camera) {
 			for _, anim := range layer.animations {
 				for _, pos := range anim.positions {
 					op := &ebiten.DrawImageOptions{}
-					op.GeoM.Translate(math.Ceil(pos[0]-cx), math.Ceil(pos[1]-cy))
+					var sx, sy, dx, dy float64 = 1, 1, 0, 0
+					if pos.flipR {
+						op.GeoM.Rotate(math.Pi / 2)
+						sx = -1
+					}
+					if pos.flipX {
+						sx, dx = -1, float64(m.data.TileWidth)
+						if pos.flipR {
+							sx = 1
+						}
+					}
+					if pos.flipY {
+						sy, dy = -1, float64(m.data.TileHeight)
+					}
+					pos.x += dx
+					pos.y += dy
+					op.GeoM.Scale(sx, sy)
+					op.GeoM.Translate(math.Ceil(pos.x-cx), math.Ceil(pos.y-cy))
 					pipeline.Add(imageTag, layerDepth, func(screen *ebiten.Image) {
 						screen.DrawImage(anim.frames[anim.current].image, op)
 					})
@@ -188,7 +210,9 @@ loop:
 	for _, layers := range m.layers {
 		for _, layer := range layers {
 			if anim, ok := layer.animations[gid]; ok {
-				positions = append(positions, anim.positions...)
+				for _, pos := range anim.positions {
+					positions = append(positions, [2]float64{pos.x, pos.y})
+				}
 
 				break loop
 			}
@@ -196,7 +220,7 @@ loop:
 	}
 	for _, layer := range m.data.Layers {
 		for y := range m.data.Height {
-			for x := range m.data.Height {
+			for x := range m.data.Width {
 				if tile := layer.Tiles[y*m.data.Width+x]; !tile.IsNil() && tile.Tileset.FirstGID+tile.ID == gid {
 					positions = append(positions, [2]float64{float64(x * m.data.TileWidth), float64(y * m.data.TileHeight)})
 				}
@@ -257,6 +281,41 @@ func (m *Map) TilesFromPosition(x, y float64, removeTiles bool) (map[string]*Til
 	return nil, fmt.Errorf("map: no tile found at position: %f, %f", x, y)
 }
 
+func (m *Map) LoadTilesetCollisionObjects(space *bump.Space) {
+	for _, tileset := range m.data.Tilesets {
+		for _, tile := range tileset.Tiles {
+			if len(tile.ObjectGroups) == 0 {
+				continue
+			}
+			obj := tile.ObjectGroups[0].Objects[0]
+			rect := bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height}
+			tags := []bump.Tag{"map"}
+			if obj.Class == "ladder" || obj.Type == "ladder" {
+				tags = append(tags, "passthrough", "ladder")
+			}
+			if obj.Class == "passthrough" || obj.Type == "passthrough" {
+				tags = append(tags, "passthrough")
+			}
+			if obj.Polygons != nil {
+				rect = polygonRect(obj)
+				tags = append(tags, "slope")
+			}
+			for _, layer := range m.data.Layers {
+				for y := range m.data.Height {
+					for x := range m.data.Width {
+						layerTile := layer.Tiles[y*m.data.Width+x]
+						if !layerTile.IsNil() && layerTile.Tileset == tileset && layerTile.ID == tile.ID {
+							x, y := float64(x*m.data.TileWidth), float64(y*m.data.TileHeight)
+							tileRect := bump.Rect{X: rect.X + x, Y: rect.Y + y, W: rect.W, H: rect.H, Type: rect.Type}
+							space.Set(layerTile, tileRect, tags...)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 func (m *Map) LoadBumpObjects(space *bump.Space, objectGroupName string) {
 	var objects []*tiled.Object
 	for _, group := range m.data.ObjectGroups {
@@ -268,55 +327,19 @@ func (m *Map) LoadBumpObjects(space *bump.Space, objectGroupName string) {
 	}
 
 	for _, obj := range objects {
-		if obj.Polygons != nil {
-			left, right, top, bottom := 0.0, 0.0, 0.0, 0.0
-			for _, p := range *obj.Polygons[0].Points {
-				left, right, top, bottom = math.Min(left, p.X), math.Max(right, p.X), math.Min(top, p.Y), math.Max(bottom, p.Y)
-			}
-			contains := [4]bool{} // topLeft, topRight, bottomLeft, bottomRight.
-			for _, p := range *obj.Polygons[0].Points {
-				switch {
-				case p.X == left && p.Y == top:
-					contains[0] = true
-				case p.X == right && p.Y == top:
-					contains[1] = true
-				case p.X == left && p.Y == bottom:
-					contains[2] = true
-				case p.X == right && p.Y == bottom:
-					contains[3] = true
-				}
-			}
-			slope := bump.Full
-			for i, ok := range contains {
-				if ok {
-					continue
-				}
-				switch i {
-				case 0:
-					slope = bump.BottomRightSlope
-				case 1:
-					slope = bump.BottomLeftSlope
-				case 2:
-					slope = bump.TopRightSlope
-				case 3:
-					slope = bump.TopLeftSlope
-				}
-
-				break
-			}
-			rect := bump.Rect{X: obj.X + left, Y: obj.Y + top, W: right - left, H: bottom - top, Type: slope}
-			space.Set(obj, rect, "map", "slope")
-
-			continue
-		}
+		rect := bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height, Type: bump.Full}
 		tags := []bump.Tag{"map"}
+		if obj.Polygons != nil {
+			rect = polygonRect(obj)
+			tags = append(tags, "slope")
+		}
 		if obj.Class == "ladder" || obj.Type == "ladder" {
 			tags = append(tags, "passthrough", "ladder")
 		}
 		if obj.Class == "passthrough" || obj.Type == "passthrough" {
 			tags = append(tags, "passthrough")
 		}
-		space.Set(obj, bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height, Type: bump.Full}, tags...)
+		space.Set(obj, rect, tags...)
 	}
 }
 
@@ -491,7 +514,11 @@ func extractLayerAnimations(data *tiled.Map, tileImages []*ebiten.Image, layerIn
 			tile := layer.Tiles[tileID]
 			gid := tile.Tileset.FirstGID + tile.ID
 			if animation, ok := animationFrames[gid]; ok {
-				animation.positions = append(animation.positions, [2]float64{float64(x * data.TileWidth), float64(y * data.TileHeight)})
+				position := animationPosition{
+					x: float64(x * data.TileWidth), y: float64(y * data.TileHeight),
+					flipX: tile.HorizontalFlip, flipY: tile.VerticalFlip, flipR: tile.DiagonalFlip,
+				}
+				animation.positions = append(animation.positions, position)
 				if removeAnimatedTiles {
 					layer.Tiles[tileID] = tiled.NilLayerTile
 				}
@@ -501,6 +528,47 @@ func extractLayerAnimations(data *tiled.Map, tileImages []*ebiten.Image, layerIn
 	}
 
 	return animationFrames, nil
+}
+
+func polygonRect(object *tiled.Object) bump.Rect {
+	left, right, top, bottom := 0.0, 0.0, 0.0, 0.0
+	points := *object.Polygons[0].Points
+	for _, p := range points {
+		left, right, top, bottom = math.Min(left, p.X), math.Max(right, p.X), math.Min(top, p.Y), math.Max(bottom, p.Y)
+	}
+	contains := [4]bool{} // topLeft, topRight, bottomLeft, bottomRight.
+	for _, p := range points {
+		switch {
+		case p.X == left && p.Y == top:
+			contains[0] = true
+		case p.X == right && p.Y == top:
+			contains[1] = true
+		case p.X == left && p.Y == bottom:
+			contains[2] = true
+		case p.X == right && p.Y == bottom:
+			contains[3] = true
+		}
+	}
+	slope := bump.Full
+	for i, ok := range contains {
+		if ok {
+			continue
+		}
+		switch i {
+		case 0:
+			slope = bump.BottomRightSlope
+		case 1:
+			slope = bump.BottomLeftSlope
+		case 2:
+			slope = bump.TopRightSlope
+		case 3:
+			slope = bump.TopLeftSlope
+		}
+
+		break
+	}
+
+	return bump.Rect{X: object.X + left, Y: object.Y + top, W: right - left, H: bottom - top, Type: slope}
 }
 
 func cropImage(img image.Image, crop image.Rectangle) image.Image {

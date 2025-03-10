@@ -37,6 +37,9 @@ import (
 - Video playtest things: https://drive.google.com/file/d/1GZ48vG0wAzkD09A6MYnGKDKIRahOqUev/view
 
 - Demo 2 Roadmap:
+	- Hide HUD when player is over it
+	- Add a pattern for a background, find something sutle that fits the game
+	- Try a shader with half pixels, where the pixels can be diagonal triangles
 	- Two Phases:
 		- As a short term goal, finish the demo with is already done
 		- As a long term goal, add the rest of the features listed here
