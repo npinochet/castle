@@ -9,6 +9,27 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+/* Tasks
+- Phase 1:
+	- Map: Finish defining events -> The most dificult
+	- Map: Allow for bigger, empty corridors, a lot seems to be packed in
+	- Map: Define where to put the paralax corridor
+	- Map: Define NPC and dialogs
+	- Decide: If the second world goes or not?
+	- Imp: Mage
+	- Map: Add more detail, finish it
+	- Imp: Events one by one: Split into multiple tasks after events are defined
+	- Imp: Paralax corridor
+	- Art: Draw a Boss
+	- Art: Animate Boss
+	- Imp: This new boss
+
+- Phase 3:
+	- Implement everything -> TODO
+
+- Phase 3:
+	- Polish
+
 /* TODO
 - Don't cap max speed when guarding in mid-air.
 - Change background color and characters outline color. Experiment more.
@@ -41,7 +62,7 @@ import (
 	- Add a pattern for a background, find something sutle that fits the game
 	- Try a shader with half pixels, where the pixels can be diagonal triangles
 	- Two Phases:
-		- As a short term goal, finish the demo with is already done
+		- As a short term goal, finish the demo with whats already done
 		- As a long term goal, add the rest of the features listed here
 
 	- Phase 1:
@@ -61,7 +82,6 @@ import (
 			- Limbo map that you have to clear everytime you die 3 times (more info in mobile notes...)
 			- Add a new enemy (low priority)
 			- Add enemy that can only be hit from behind.
-			- Small enemy like a bat - Semi-completed
 			- Enemies that explode on death?
 			- Small enemy that rushes into you and deals damage when touching you
 			- Posible cool events/encounters brainstorm:
@@ -80,10 +100,13 @@ import (
 			- Have an imposing enemy be swarmed by small rats / bats
 			- A dying knight that you can kill and loot for a good item
 			- A room with a big enemy that is sleeping, you can kill it or sneak past it
+			- A room where you walk on top of a beautiful dark lake, there are enemies that approach you from the water and you have to jump to avoid them from taking you under the water and drowning you
 
 	-- Character ideas: https://route1rodent.itch.io/16x16-rpg-character-sprite-sheet
 
 - Demo 3 Roadmap/ideas?:
+	- Boss fight:
+		- A boss that similar to you, but can dash after charging an attack to surprise you, can also block and fake you atacking to it´s back
 	- Add status effects
 		- One where the hud hides the current health and/or stamina
 	- Add items and inventory, a menu where you can see items and status effects
