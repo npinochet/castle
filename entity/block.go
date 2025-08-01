@@ -3,6 +3,7 @@ package entity
 import (
 	"game/comps/body"
 	"game/comps/hitbox"
+	"game/comps/render"
 	"game/core"
 	"game/libs/bump"
 	"image/color"
@@ -16,6 +17,7 @@ type Block struct {
 	*core.BaseEntity
 	body   *body.Comp
 	hitbox *hitbox.Comp
+	render *render.Comp
 }
 
 func NewBlock(x, y, w, h float64, _ *core.Properties) *Block {
@@ -26,8 +28,9 @@ func NewBlock(x, y, w, h float64, _ *core.Properties) *Block {
 		BaseEntity: &core.BaseEntity{X: x, Y: y, W: blockSize, H: blockSize},
 		body:       &body.Comp{},
 		hitbox:     &hitbox.Comp{},
+		render:     &render.Comp{Image: image},
 	}
-	block.Add(block.body, block.hitbox)
+	block.Add(block.body, block.hitbox, block.render)
 
 	return block
 }

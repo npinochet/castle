@@ -21,7 +21,10 @@ import (
 const viewPropName = "view"
 const secondToMillisecond = 1000
 
-var LayerIndex = 2
+var (
+	LayerIndex    = 2
+	entityObjects = map[string]EntityContructor{}
+)
 
 type Properties struct {
 	FlipX, FlipY bool
@@ -79,6 +82,10 @@ func (fs *extVariationFS) Open(name string) (fs.File, error) {
 	}
 
 	return fs.fs.Open(name)
+}
+
+func RegisterEntityName[T Entity](name string, constructor func(x, y, w, h float64, p *Properties) T) {
+	entityObjects[name] = func(x, y, w, h float64, p *Properties) Entity { return constructor(x, y, w, h, p) }
 }
 
 func NewMap(mapPath string, backLayersNum int, fs fs.FS, drawImagesTags ...string) *Map {
@@ -354,46 +361,58 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 	}
 
 	for _, obj := range objects {
-		tile, err := m.data.TileGIDToTile(obj.GID)
-		if err != nil || tile.IsNil() {
+		var construct EntityContructor
+		props := &Properties{Custom: map[string]string{}}
+		if obj.GID != 0 {
+			tile, err := m.data.TileGIDToTile(obj.GID)
+			if err != nil || tile.IsNil() {
+				continue
+			}
+			props.FlipX = tile.HorizontalFlip
+			props.FlipY = tile.VerticalFlip
+			construct = entityBindMap[tile.ID]
+		}
+		if construct == nil {
+			construct = entityObjects[obj.Name]
+		}
+		if construct == nil {
+			var tid uint32
+			if tile, err := m.data.TileGIDToTile(obj.GID); err == nil {
+				tid = tile.ID
+			}
+			log.Printf("Warning: entity name %s or ID %d not found, skipping\n", obj.Name, tid)
+
 			continue
 		}
-		if construct, ok := entityBindMap[tile.ID]; ok {
-			props := &Properties{
-				FlipX:  tile.HorizontalFlip,
-				FlipY:  tile.VerticalFlip,
-				Custom: map[string]string{},
+		for _, prop := range obj.Properties {
+			switch prop.Name {
+			case viewPropName:
+				id, _ := strconv.Atoi(prop.Value)
+				obj, err := m.FindObjectID(id)
+				if err != nil {
+					panic("tiled: cannot find view object with id " + prop.Value)
+				}
+				props.View = obj
+			default:
+				props.Custom[prop.Name] = prop.Value
 			}
-			for _, prop := range obj.Properties {
-				switch prop.Name {
-				case viewPropName:
-					id, _ := strconv.Atoi(prop.Value)
-					obj, err := m.FindObjectID(id)
-					if err != nil {
-						panic("tiled: cannot find view object with id " + prop.Value)
-					}
-					props.View = obj
-				default:
-					props.Custom[prop.Name] = prop.Value
-				}
-			}
-			entity := construct(obj.X, obj.Y, obj.Width, obj.Height, props)
-			x, y, _, h := entity.Rect()
-			entity.SetPosition(x, y-h+float64(m.data.TileHeight)) // TODO: Adjust the Y on doors and other broken objects
-			world.AddWithID(entity, uint(obj.ID))
-
-			/*
-				TODO: Adjust the X when flipped too
-				if props.FlipX {
-					imageOffset = doorW - tileSize
-					x -= imageOffset
-				}
-				if props.FlipX {
-					imageOffset = chestW - tileSize*2
-					x -= chestW - tileSize
-				}
-			*/
 		}
+		entity := construct(obj.X, obj.Y, obj.Width, obj.Height, props)
+		x, y, _, h := entity.Rect()
+		entity.SetPosition(x, y+obj.Height-h)
+		world.AddWithID(entity, uint(obj.ID))
+
+		/*
+			TODO: Adjust the X when flipped too
+			if props.FlipX {
+				imageOffset = doorW - tileSize
+				x -= imageOffset
+			}
+			if props.FlipX {
+				imageOffset = chestW - tileSize*2
+				x -= chestW - tileSize
+			}
+		*/
 	}
 }
 

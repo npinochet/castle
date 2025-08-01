@@ -12,10 +12,13 @@ import (
 /* Tasks
 - Phase 1:
 	- Map: Finish defining events -> The most dificult
+		- Starting events:
+			- When you appear a door closing animation should play behind the player
+			- When you apporach the first NPC, Ferragus, he should tell you the context and ask for some money, but be very rude about it
 	- Map: Allow for bigger, empty corridors, a lot seems to be packed in
 	- Map: Define where to put the paralax corridor
 	- Map: Define NPC and dialogs
-	- Decide: If the second world goes or not?
+	- Decide: If the second world goes or not? No for now
 	- Imp: Mage
 	- Map: Add more detail, finish it
 	- Imp: Events one by one: Split into multiple tasks after events are defined

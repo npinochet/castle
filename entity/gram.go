@@ -35,16 +35,16 @@ func NewGram(x, y, _, _ float64, props *core.Properties) *Gram {
 		hitbox:     &hitbox.Comp{},
 		stats:      &stats.Comp{},
 	}
-	text := "Hewwo, I Gramr nice to mit yu, i have no idea wat i doing here, lol im so random, rawr"
+	text := "Hello, I'm Gramr, nice to meet you"
 	if props.Custom["text"] != "" {
 		text = props.Custom["text"]
 	}
 	textbox := &textbox.Comp{
-		Text: text,
+		Text:      text,
+		Indicator: true,
 		Area: func() bump.Rect {
 			return bump.NewRect(gram.X-gramWidth*2, gram.Y-gramHeight, gramWidth*4, gramHeight*2)
 		},
-		Indicator: true,
 	}
 	gram.stats.MaxPoise, gram.stats.Poise = 100, 100
 	gram.Add(gram.anim, gram.body, gram.hitbox, gram.stats, textbox)

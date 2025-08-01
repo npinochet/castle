@@ -64,7 +64,7 @@ const (
 	BoxX, DefaultBoxY            = 6.0, 30.0
 	BoxMarginY, BoxMinY, BoxMaxY = 5, 25, 96 - BoxH - BoxMarginY
 	BoxW, BoxH                   = ScreenWidth - BoxX*2, 3.0
-	LineWidth, LineHeight        = (BoxW - 6), 6 + 1
+	LineWidth, LineHeight        = (BoxW - 8), 6 + 1
 	MaxLines                     = 4
 )
 

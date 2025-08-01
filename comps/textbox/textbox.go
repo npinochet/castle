@@ -43,19 +43,42 @@ type Comp struct {
 func (c *Comp) Init(entity core.Entity) {
 	c.entity = entity
 	c.camera = vars.World.Camera
-	words := strings.Split(c.Text, " ")
-	c.Text = ""
+	text := c.Text
+	text = strings.ReplaceAll(text, "\n\n", " \r ")
+	text = strings.ReplaceAll(text, "\n", " \n ")
 
 	var lines []string
 	currentLine := ""
 	advanceW := float64(advanceImage.Bounds().Size().X)
-	for _, word := range words {
-		normalizedWord := strings.ReplaceAll(word, "\n", "")
-		if w, _ := utils.TextSize(currentLine+" "+normalizedWord, assets.NanoFont); w > vars.LineWidth-advanceW || strings.Contains(word, "\n") {
+	for word := range strings.SplitSeq(text, " ") {
+		newLines := 0
+		if word == "\n" {
+			newLines = 1
+		}
+		if word == "\r" {
+			newLines = vars.MaxLines - (len(lines) % vars.MaxLines)
+		}
+		if newLines > 0 {
+			for range newLines {
+				lines = append(lines, currentLine)
+				currentLine = ""
+			}
+
+			continue
+		}
+
+		maxLineWidth := vars.LineWidth
+		if len(lines)%vars.MaxLines == vars.MaxLines-1 {
+			maxLineWidth -= advanceW
+		}
+		if w, _ := utils.TextSize(currentLine+" "+word, assets.NanoFont); w > maxLineWidth {
 			lines = append(lines, currentLine)
 			currentLine = ""
 		}
-		currentLine += " " + normalizedWord
+		if len(currentLine) > 0 {
+			currentLine += " "
+		}
+		currentLine += word
 	}
 	lines = append(lines, currentLine)
 	c.Text = strings.Join(lines, "\n")
@@ -109,7 +132,7 @@ func (c *Comp) Draw(pipeline *core.Pipeline, _ ebiten.GeoM) {
 	})
 	c.textImage.Fill(color.Transparent)
 	textOp := &ebiten.DrawImageOptions{}
-	textOp.GeoM.Translate(1, -float64((c.boxH-3)*c.advanceState))
+	textOp.GeoM.Translate(4, -float64((c.boxH-3)*c.advanceState))
 	utils.DrawText(c.textImage, c.Text, assets.NanoFont, textOp)
 
 	textOnBGOp := &ebiten.DrawImageOptions{}
@@ -134,7 +157,7 @@ func (c *Comp) drawIndicator(pipeline *core.Pipeline) float64 {
 	boxH := float64(vars.BoxH + min(vars.MaxLines, c.lines)*vars.LineHeight)
 	cx, cy := c.camera.Position()
 	x, y, w, _ := c.entity.Rect()
-	boxY := y - cy - vars.BoxMarginY - boxH
+	boxY := y - cy - vars.BoxMarginY - boxH - 1
 	iop := &ebiten.DrawImageOptions{}
 	iw := float64(indicatorImage.Bounds().Size().X)
 	px, py := x+w/2-iw/2, boxH

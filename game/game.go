@@ -26,6 +26,24 @@ const (
 	torchGID = 378
 )
 
+/*
+package main
+
+type Entity interface{ Name() string }
+type Constructor func(name string) Entity
+
+type Player struct{ name string }
+
+func (p *Player) Name() string      { return p.name }
+func NewPlayer(name string) *Player { return &Player{name} }
+
+var entities = map[string]Constructor{}
+
+func AddEntity(entityID string, constructor Constructor) { entities[entityID] = constructor }
+
+func main() { AddEntity("Hero", NewPlayer) }
+*/
+
 var (
 	backgroundColor = color.RGBA{50, 60, 57, 255}
 	pipeline        = core.NewPipeline()
@@ -37,6 +55,7 @@ var (
 		30:  toEntityContructor(entity.NewRat),
 		31:  toEntityContructor(entity.NewBat),
 		87:  toEntityContructor(entity.NewGram),
+		88:  toEntityContructor(entity.NewFerragus),
 		149: toEntityContructor(entity.NewChest),
 		150: toEntityContructor(entity.NewGrave),
 		151: toEntityContructor(entity.NewDoor),
@@ -52,8 +71,8 @@ type Transition interface {
 	Draw(screen *ebiten.Image)
 }
 
-func toEntityContructor[T core.Entity](contructor func(float64, float64, float64, float64, *core.Properties) T) core.EntityContructor {
-	return func(x, y, w, h float64, props *core.Properties) core.Entity { return contructor(x, y, w, h, props) }
+func toEntityContructor[T core.Entity](contructor func(x, y, w, h float64, p *core.Properties) T) core.EntityContructor {
+	return func(x, y, w, h float64, p *core.Properties) core.Entity { return contructor(x, y, w, h, p) }
 }
 
 func Load() {

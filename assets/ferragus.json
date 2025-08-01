@@ -1,0 +1,28 @@
+{ "frames": {
+   "ferragus.aseprite": {
+    "frame": { "x": 1, "y": 1, "w": 10, "h": 16 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 5, "y": 4, "w": 10, "h": 16 },
+    "sourceSize": { "w": 20, "h": 20 },
+    "duration": 1
+   }
+ },
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.x-dev",
+  "image": "ferragus.png",
+  "format": "RGBA8888",
+  "size": { "w": 12, "h": 18 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "Idle", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "Layer 1", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+   { "name": "hurtbox", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 6, "y": 5, "w": 8, "h": 15 } }] }
+  ]
+ }
+}
