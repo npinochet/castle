@@ -50,6 +50,7 @@ const (
 	AttackMultPerHeal     = 0.2
 	DefaultRecoverRate    = 26
 	DefaultRecoverSeconds = 3
+	HeadHealthShowSeconds = 60
 
 	// HUD consts.
 	HudIconsX                = 7

@@ -71,6 +71,7 @@ type Comp struct {
 	healthLag, staminaLag, poiseLag                        float64
 	poiseTimer                                             *time.Timer
 	entityW                                                float64
+	headHealthTimer                                        float64
 }
 
 func (c *Comp) Init(entity core.Entity) {
@@ -92,7 +93,7 @@ func (c *Comp) Init(entity core.Entity) {
 	if c.AttackMultPerHeal == 0 {
 		c.AttackMultPerHeal = vars.AttackMultPerHeal
 	}
-	if c.Health < c.MaxHealth {
+	if c.Health == 0 {
 		c.Health = c.MaxHealth
 	}
 	if c.Stamina < c.MaxStamina {
@@ -123,12 +124,14 @@ func (c *Comp) Remove() {
 }
 
 func (c *Comp) Update(dt float64) {
+	c.headHealthTimer -= dt
 	if c.healthTween != nil {
 		if lag, done := c.healthTween.Update(float32(dt)); done {
 			c.healthTween = nil
 			c.healthLag = c.Health
 		} else {
 			c.healthLag = float64(lag)
+			c.headHealthTimer = vars.HeadHealthShowSeconds
 		}
 	}
 
@@ -172,7 +175,10 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 
 		return
 	}
-	if c.Health >= c.MaxHealth || c.Health < 0 {
+	if c.Health >= c.MaxHealth || c.Health <= 0 {
+		return
+	}
+	if c.headHealthTimer <= 0 {
 		return
 	}
 	c.drawHeadHealthBar(pipeline, entityPos, c.Health, c.MaxHealth, c.healthLag)
@@ -338,7 +344,7 @@ func (c *Comp) drawAttackMult(pipeline *core.Pipeline, geoM ebiten.GeoM) {
 func (c *Comp) drawHeadHealthBar(pipeline *core.Pipeline, entityPos ebiten.GeoM, current, max, lag float64) {
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	barW := float64(headBar.Bounds().Dx())
-	op.GeoM.Translate((c.entityW-barW)/2, -9)
+	op.GeoM.Translate((c.entityW-barW)/2, -7)
 	normalOp := &ebiten.DrawImageOptions{GeoM: op.GeoM, Blend: ebiten.BlendDestinationOut}
 	pipeline.Add(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
 		normalMap.DrawImage(headBar, normalOp)

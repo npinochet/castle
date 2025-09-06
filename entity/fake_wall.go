@@ -24,7 +24,7 @@ type FakeWall struct {
 
 // TODO: add to opened in savefile (?) this can not be done as is is destroyed when open
 func NewFakeWall(x, y, _, _ float64, _ *core.Properties) *FakeWall {
-	tiles, err := vars.World.Map.TilesFromPosition(x, y, true)
+	tiles, err := vars.World.Map.TilesFromPosition(x, y, true, vars.World.Space)
 	if err != nil {
 		panic("fake wall: Failed to get tiles from position")
 	}

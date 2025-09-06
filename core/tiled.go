@@ -238,7 +238,7 @@ loop:
 	return positions
 }
 
-func (m *Map) TilesFromPosition(x, y float64, removeTiles bool) (map[string]*Tile, error) {
+func (m *Map) TilesFromPosition(x, y float64, removeTiles bool, space *bump.Space) (map[string]*Tile, error) {
 	mapX, mapY := int(x)/m.data.TileWidth, int(y)/m.data.TileHeight
 	if mapX < 0 || mapY < 0 || mapX >= m.data.Width || mapY >= m.data.Height {
 		return nil, fmt.Errorf("map: position out of bounds: %f, %f", x, y)
@@ -279,6 +279,9 @@ func (m *Map) TilesFromPosition(x, y float64, removeTiles bool) (map[string]*Til
 				op := &ebiten.DrawImageOptions{Blend: ebiten.BlendCopy}
 				op.GeoM.Translate(float64(mapX*m.data.TileWidth), float64(mapY*m.data.TileHeight))
 				layers[imageLayerIndex].image.DrawImage(emptyTile, op)
+			}
+			if space != nil {
+				space.Remove(tile)
 			}
 		}
 

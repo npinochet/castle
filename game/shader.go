@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	Lights    = false
+	Lights    = true
 	lightSize = 16
 )
 

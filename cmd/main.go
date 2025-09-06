@@ -23,12 +23,13 @@ import (
 	- Map: Add more detail, finish it
 	- Imp: Events one by one: Split into multiple tasks after events are defined
 	- Imp: Paralax corridor
-	- Art: Draw a Boss
+	- Art: Design and draw a Boss
 	- Art: Animate Boss
 	- Imp: This new boss
+	- Map: Add lights
 
 - Phase 3:
-	- Implement everything -> TODO
+	- Implement everything else -> TODO
 
 - Phase 3:
 	- Polish

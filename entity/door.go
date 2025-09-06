@@ -10,23 +10,14 @@ import (
 	"game/libs/bump"
 	"game/vars"
 	"image"
-	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-const doorW, doorH = 3, tileSize * 3
+const doorW = 3
 
-var (
-	doorImage, _, _               = ebitenutil.NewImageFromFileSystem(assets.FS, "door.png")
-	doorCloseImage, doorOpenImage *ebiten.Image
-)
-
-func init() {
-	doorCloseImage = doorImage.SubImage(image.Rect(0, 0, tileSize, doorH)).(*ebiten.Image)
-	doorOpenImage = doorImage.SubImage(image.Rect(tileSize, 0, tileSize*2, doorH)).(*ebiten.Image)
-}
+var doorImage, _, _ = ebitenutil.NewImageFromFileSystem(assets.FS, "door.png")
 
 type Door struct {
 	*core.BaseEntity
@@ -37,25 +28,21 @@ type Door struct {
 	opensFromRight bool
 }
 
-func NewDoor(x, y, _, _ float64, props *core.Properties) *Door {
+func NewDoor(x, y, _, h float64, props *core.Properties) *Door {
 	imageOffset := 0.0
 	if props.FlipX {
 		imageOffset = -tileSize + doorW
 		x -= imageOffset
 	}
-	h := doorH
-	if size, _ := strconv.Atoi(props.Custom["size"]); size != 0 {
-		h = tileSize * size
-	}
-	image := doorCloseImage.SubImage(image.Rect(0, 0, tileSize, h)).(*ebiten.Image)
 	door := &Door{
-		BaseEntity:     &core.BaseEntity{X: x, Y: y, W: doorW, H: float64(h)},
-		render:         &render.Comp{X: imageOffset, Image: image, FlipX: props.FlipX, Layer: -1},
+		BaseEntity:     &core.BaseEntity{X: x, Y: y, W: doorW, H: h},
+		render:         &render.Comp{X: imageOffset, FlipX: props.FlipX, Layer: -1},
 		body:           &body.Comp{Solid: true, Tags: []bump.Tag{"solid"}},
 		hitbox:         &hitbox.Comp{},
 		opensFromRight: props.FlipX,
 		open:           props.Custom["open"] == "true",
 	}
+	door.render.Image = door.image()
 	door.Add(door.render, door.body, door.hitbox)
 
 	return door
@@ -63,7 +50,7 @@ func NewDoor(x, y, _, _ float64, props *core.Properties) *Door {
 
 func (d *Door) Init() {
 	d.hitbox.HitFunc = d.doorHurt
-	d.hitbox.PushHitbox(bump.Rect{W: doorW, H: doorH}, hitbox.Hit, nil)
+	d.hitbox.PushHitbox(bump.Rect{W: doorW, H: d.H}, hitbox.Hit, nil)
 	if d.open {
 		d.open = false
 		d.Open()
@@ -81,7 +68,7 @@ func (d *Door) Open() {
 	d.open = true
 	d.body.Remove()
 	d.hitbox.Remove()
-	d.render.Image = doorOpenImage.SubImage(image.Rect(tileSize, 0, tileSize*2, int(d.H))).(*ebiten.Image)
+	d.render.Image = d.image()
 	// Open subsequent doors.
 	for _, door := range ext.QueryFront(d, tileSize, d.H, !d.opensFromRight) {
 		door.Open()
@@ -95,10 +82,33 @@ func (d *Door) Close() {
 	d.open = false
 	d.body.Init(d)
 	d.hitbox.Init(d)
-	d.render.Image = doorCloseImage.SubImage(image.Rect(0, 0, tileSize, int(d.H))).(*ebiten.Image)
+	d.render.Image = d.image()
+	// Close subsequent doors.
 	for _, door := range ext.QueryFront(d, tileSize, d.H, !d.opensFromRight) {
 		door.Close()
 	}
+}
+
+func (d *Door) image() *ebiten.Image {
+	img := ebiten.NewImage(tileSize, int(d.H))
+	w := 0
+	if d.open {
+		w = tileSize
+	}
+	doorTop := doorImage.SubImage(image.Rect(w, 0, w+tileSize, tileSize)).(*ebiten.Image)
+	doorFill := doorImage.SubImage(image.Rect(w, 2*tileSize, w+tileSize, 3*tileSize)).(*ebiten.Image)
+	doorBase := doorImage.SubImage(image.Rect(w, tileSize, w+tileSize, 3*tileSize)).(*ebiten.Image)
+	op := &ebiten.DrawImageOptions{}
+	img.DrawImage(doorTop, op)
+	op.GeoM.Translate(0, tileSize)
+
+	for size := d.H - tileSize; size > 2*tileSize; size -= tileSize {
+		img.DrawImage(doorFill, op)
+		op.GeoM.Translate(0, tileSize)
+	}
+	img.DrawImage(doorBase, op)
+
+	return img
 }
 
 func (d *Door) doorHurt(other core.Entity, _ *bump.Collision, _ float64, _ hitbox.ContactType) {

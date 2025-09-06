@@ -45,4 +45,39 @@
    <object id="1" x="0" y="0" width="8" height="8"/>
   </objectgroup>
  </tile>
+ <tile id="1272">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="8" height="8"/>
+  </objectgroup>
+ </tile>
+ <tile id="1273">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="8" height="8"/>
+  </objectgroup>
+ </tile>
+ <tile id="1335">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="8" height="8"/>
+  </objectgroup>
+ </tile>
+ <tile id="1364">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="8" height="8"/>
+  </objectgroup>
+ </tile>
+ <tile id="1365">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="8" height="8"/>
+  </objectgroup>
+ </tile>
+ <tile id="1366">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="8" height="8"/>
+  </objectgroup>
+ </tile>
+ <tile id="1367">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="8" height="8"/>
+  </objectgroup>
+ </tile>
 </tileset>

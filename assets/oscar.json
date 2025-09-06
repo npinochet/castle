@@ -1,0 +1,37 @@
+{ "frames": {
+   "oscar 0.aseprite": {
+    "frame": { "x": 1, "y": 1, "w": 14, "h": 13 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 6, "y": 12, "w": 14, "h": 13 },
+    "sourceSize": { "w": 25, "h": 25 },
+    "duration": 100
+   },
+   "oscar 1.aseprite": {
+    "frame": { "x": 17, "y": 1, "w": 14, "h": 13 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 6, "y": 12, "w": 14, "h": 13 },
+    "sourceSize": { "w": 25, "h": 25 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.x-dev",
+  "image": "oscar.png",
+  "format": "RGBA8888",
+  "size": { "w": 32, "h": 15 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "Idle", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" },
+   { "name": "Stagger", "from": 1, "to": 1, "direction": "forward", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "Layer 1", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+   { "name": "hurtbox", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 9, "y": 13, "w": 7, "h": 12 } }, { "frame": 1, "bounds": {"x": 9, "y": 13, "w": 7, "h": 12 } }] }
+  ]
+ }
+}

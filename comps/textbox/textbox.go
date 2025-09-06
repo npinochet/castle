@@ -56,7 +56,7 @@ func (c *Comp) Init(entity core.Entity) {
 			newLines = 1
 		}
 		if word == "\r" {
-			newLines = vars.MaxLines - (len(lines) % vars.MaxLines)
+			newLines = vars.MaxLines - (len(lines) % vars.MaxLines) - 1
 		}
 		if newLines > 0 {
 			for range newLines {
@@ -171,4 +171,10 @@ func (c *Comp) drawIndicator(pipeline *core.Pipeline) float64 {
 	})
 
 	return boxY
+}
+
+func (c *Comp) NewText(text string) {
+	c.Text = text
+	c.advanceState = 0
+	c.Init(c.entity)
 }
