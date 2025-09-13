@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"reflect"
+	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -39,6 +40,7 @@ type World struct {
 	toInit     []Entity
 	toRemove   []Entity
 	removed    []Entity
+	mutex      sync.Mutex
 
 	freezeTimer float64
 }
@@ -54,6 +56,9 @@ func NewWorld(width, height float64) *World {
 }
 
 func (w *World) Add(entity Entity) Entity {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+
 	w.toInit = append(w.toInit, entity)
 
 	return entity
@@ -67,6 +72,7 @@ func (w *World) AddWithID(entity Entity, id uint) Entity {
 }
 
 func (w *World) Update(dt float64) {
+	w.mutex.Lock()
 	for _, entity := range w.toInit {
 		for _, c := range entity.Components() {
 			c.Init(entity)
@@ -75,6 +81,7 @@ func (w *World) Update(dt float64) {
 		w.entities = append(w.entities, entity)
 	}
 	w.toInit = nil
+	w.mutex.Unlock()
 
 	dt *= w.Speed
 	w.Camera.Update(dt)
@@ -92,6 +99,8 @@ func (w *World) Update(dt float64) {
 		e.Update(dt)
 	}
 
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
 	for _, entity := range w.toRemove {
 		for i, e := range w.entities {
 			if entity != e {
@@ -115,7 +124,7 @@ func (w *World) Draw(pipeline *Pipeline) {
 	cx, cy := w.Camera.Position()
 	entityPos := ebiten.GeoM{}
 	for _, e := range w.entities {
-		if !w.Camera.InFrame(e, 1, 1) {
+		if !w.Camera.InFrame(e, 0.1, 0.1) {
 			continue
 		}
 		x, y := e.Position()
@@ -157,10 +166,16 @@ func GetWithTag[T Component](entity Entity, tag string) T {
 }
 
 func (w *World) Remove(entity Entity) {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+
 	w.toRemove = append(w.toRemove, entity)
 }
 
 func (w *World) RemoveAll() {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+
 	for _, e := range w.entities {
 		for _, c := range e.Components() {
 			c.Remove()

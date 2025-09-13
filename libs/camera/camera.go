@@ -47,9 +47,12 @@ func (c *Camera) Follow(e Recter) {
 	c.SetRoomBorders(false)
 }
 
-func (c *Camera) InFrame(e Recter, widthMult, heightMult float64) bool {
-	frameWidth, frameHeight := c.w*widthMult, c.h*heightMult
-	frame := bump.Rect{X: c.x - frameWidth, Y: c.y - frameHeight, W: 2 * frameWidth, H: 2 * frameHeight}
+func (c *Camera) InFrame(e Recter, widthAddedMult, heightAddedMult float64) bool {
+	frame := bump.Rect{X: c.x, Y: c.y, W: c.w, H: c.h}
+	frame.X -= c.w * widthAddedMult
+	frame.W += c.w * widthAddedMult * 2
+	frame.Y -= c.h * heightAddedMult
+	frame.H += c.h * heightAddedMult * 2
 	x, y, w, h := e.Rect()
 	rect := bump.Rect{X: x, Y: y, W: w, H: h}
 

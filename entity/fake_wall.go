@@ -9,10 +9,13 @@ import (
 	"game/libs/bump"
 	"game/vars"
 	"math/rand/v2"
+	"sync"
 	"time"
 )
 
 const fakeWallOpenNeighborDelay = 300 * time.Millisecond
+
+var mutex sync.Mutex
 
 type FakeWall struct {
 	*core.BaseEntity
@@ -58,6 +61,9 @@ func (fw *FakeWall) Update(_ float64) {}
 func (fw *FakeWall) Opened() bool { return fw.open }
 
 func (fw *FakeWall) OpenInChain() {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if fw.open {
 		return
 	}

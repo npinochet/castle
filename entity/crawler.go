@@ -54,7 +54,25 @@ func NewCrawler(x, y, _, _ float64, props *core.Properties) *Crawler {
 		view = &viewRect
 	}
 	if aiProp, ok := props.Custom["ai"]; !ok || (aiProp != "" && aiProp != "none") {
-		crawler.ai.SetAct(func() { crawler.aiScript(view) })
+		if aiProp == "move_left" {
+			crawler.ai.SetAct(func() {
+				crawler.ai.Add(0, actor.IdleAction(crawler.Control, view))
+				crawler.ai.Add(0, &ai.Action{
+					Name: "MoveLeft",
+					Next: func(dt float64) bool {
+						crawler.ai.Target = nil
+						crawler.anim.FlipX = false
+						if !crawler.PausingState() {
+							crawler.body.Vx -= crawlerSpeed * dt
+						}
+
+						return false
+					},
+				})
+			})
+		} else {
+			crawler.ai.SetAct(func() { crawler.aiScript(view) })
+		}
 	}
 
 	return crawler

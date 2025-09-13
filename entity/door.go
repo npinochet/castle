@@ -42,8 +42,8 @@ func NewDoor(x, y, _, h float64, props *core.Properties) *Door {
 		opensFromRight: props.FlipX,
 		open:           props.Custom["open"] == "true",
 	}
-	door.render.Image = door.image()
 	door.Add(door.render, door.body, door.hitbox)
+	door.setImage()
 
 	return door
 }
@@ -68,9 +68,9 @@ func (d *Door) Open() {
 	d.open = true
 	d.body.Remove()
 	d.hitbox.Remove()
-	d.render.Image = d.image()
+	d.setImage()
 	// Open subsequent doors.
-	for _, door := range ext.QueryFront(d, tileSize, d.H, !d.opensFromRight) {
+	for _, door := range ext.QueryFront(d, tileSize, d.H/2, !d.opensFromRight) {
 		door.Open()
 	}
 }
@@ -82,14 +82,14 @@ func (d *Door) Close() {
 	d.open = false
 	d.body.Init(d)
 	d.hitbox.Init(d)
-	d.render.Image = d.image()
+	d.setImage()
 	// Close subsequent doors.
-	for _, door := range ext.QueryFront(d, tileSize, d.H, !d.opensFromRight) {
+	for _, door := range ext.QueryFront(d, tileSize, d.H/2, !d.opensFromRight) {
 		door.Close()
 	}
 }
 
-func (d *Door) image() *ebiten.Image {
+func (d *Door) setImage() {
 	img := ebiten.NewImage(tileSize, int(d.H))
 	w := 0
 	if d.open {
@@ -107,8 +107,7 @@ func (d *Door) image() *ebiten.Image {
 		op.GeoM.Translate(0, tileSize)
 	}
 	img.DrawImage(doorBase, op)
-
-	return img
+	d.render.Image = img
 }
 
 func (d *Door) doorHurt(other core.Entity, _ *bump.Collision, _ float64, _ hitbox.ContactType) {
