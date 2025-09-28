@@ -393,7 +393,7 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 				id, _ := strconv.Atoi(prop.Value)
 				obj, err := m.FindObjectID(id)
 				if err != nil {
-					panic("tiled: cannot find view object with id " + prop.Value)
+					log.Panic("tiled: cannot find view object with id "+prop.Value+": ", err)
 				}
 				props.View = obj
 			default:

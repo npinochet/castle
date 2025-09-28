@@ -21,6 +21,7 @@ const (
 	batDamage                             = 15
 	batExp                                = 15
 	batPoise                              = 10
+	batHeightView                         = 80
 )
 
 type Bat struct {
@@ -82,6 +83,10 @@ func (r *Bat) Update(dt float64) {
 
 //nolint:mnd
 func (r *Bat) aiScript(view *bump.Rect) {
+	if view == nil {
+		x, y, w, h := r.Rect()
+		view = &bump.Rect{X: x - w, Y: y + h, W: w * 3, H: batHeightView}
+	}
 	idle := actor.IdleAction(r.Control, view)
 	idle.Exit = func() { r.awake = true }
 	r.ai.Add(0, idle)

@@ -94,8 +94,9 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 		if c.DebugRect != nil {
 			image := ebiten.NewImage(int(c.DebugRect.W), int(c.DebugRect.H))
 			image.Fill(color.NRGBA{255, 255, 0, 75})
-			op := &ebiten.DrawImageOptions{GeoM: entityPos}
-			op.GeoM.Translate(c.DebugRect.X, c.DebugRect.Y)
+			op := &ebiten.DrawImageOptions{}
+			cx, cy := vars.World.Camera.Position()
+			op.GeoM.Translate(c.DebugRect.X-cx, c.DebugRect.Y-cy)
 			screen.DrawImage(image, op)
 		}
 	})

@@ -166,7 +166,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64(vars.ScreenWidth-16), 1)
-	utils.DrawText(screen, fmt.Sprintf(`%0.2f`, ebiten.ActualFPS()), assets.NanoFont, op)
+	utils.DrawText(screen, fmt.Sprintf("%0.2f", ebiten.ActualFPS()), assets.NanoFont, op)
 }
 
 func (g *Game) Layout(_, _ int) (int, int) {

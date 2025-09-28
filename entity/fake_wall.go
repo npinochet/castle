@@ -8,6 +8,7 @@ import (
 	"game/ext"
 	"game/libs/bump"
 	"game/vars"
+	"log"
 	"math/rand/v2"
 	"sync"
 	"time"
@@ -29,7 +30,7 @@ type FakeWall struct {
 func NewFakeWall(x, y, _, _ float64, _ *core.Properties) *FakeWall {
 	tiles, err := vars.World.Map.TilesFromPosition(x, y, true, vars.World.Space)
 	if err != nil {
-		panic("fake wall: Failed to get tiles from position")
+		log.Panic("fake wall: Failed to get tiles from position: ", err)
 	}
 
 	wall := &FakeWall{

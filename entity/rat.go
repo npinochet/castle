@@ -75,6 +75,9 @@ func (r *Rat) Update(dt float64) {
 	if !r.body.Ground && (r.anim.State == vars.IdleTag || r.anim.State == vars.WalkTag) {
 		r.anim.SetState("Jump")
 	}
+	if r.body.Ground && r.anim.State == "Jump" {
+		r.anim.SetState(vars.IdleTag)
+	}
 }
 
 func (r *Rat) jumpAttackAction() *ai.Action {

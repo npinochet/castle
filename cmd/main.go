@@ -27,6 +27,7 @@ import (
 	- Art: Animate Boss
 	- Imp: This new boss
 	- Map: Add lights
+	- Imp: Particles on each hit, maybe some bloos pixels or something
 
 - Phase 3:
 	- Implement everything else -> TODO

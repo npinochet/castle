@@ -36,10 +36,10 @@ func IdleAction(a *Control, view *bump.Rect) *ai.Action {
 			// TODO: maybe check both views? There is a counter argument, when you want to lower the default enemy view
 			// The TODO can not work when you set a custom view to lower the default view
 			if view == nil {
-				_, _, w, h := a.actor.Rect()
+				x, y, w, h := a.actor.Rect()
 				targets = ext.QueryFront(a.actor, frontViewDist, h, a.anim.FlipX)
 
-				view := &bump.Rect{X: -frontViewDist, Y: -h, W: frontViewDist, H: h * 2}
+				view := &bump.Rect{X: x - frontViewDist, Y: y - h, W: frontViewDist, H: h * 2}
 				if a.anim.FlipX {
 					view.X += frontViewDist + w
 				}

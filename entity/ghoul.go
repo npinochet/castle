@@ -115,6 +115,7 @@ func (g *Ghoul) aiScript(view *bump.Rect, poacher bool) {
 	if poacher && g.rocks > 0 {
 		g.ai.Add(1, actor.BackUpAction(g.Control, ghoulSpeed, 0))
 		g.ai.Add(3, actor.AnimAction(g.Control, "Throw", func() { g.ThrowRock() }))
+		g.ai.Add(0.8, actor.WaitAction())
 
 		return
 	}

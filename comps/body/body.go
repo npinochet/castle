@@ -79,11 +79,13 @@ func (c *Comp) Draw(pipeline *core.Pipeline, entityPos ebiten.GeoM) {
 	pipeline.Add(vars.PipelineScreenTag, vars.PipelineUILayer, func(screen *ebiten.Image) {
 		screen.DrawImage(image, op)
 		op.GeoM.Translate(-5, -26)
-		utils.DrawText(screen, fmt.Sprintf(`V:%0.2g / %0.2g`, c.Vx, c.Vy), assets.NanoFont, op)
+		utils.DrawText(screen, fmt.Sprintf("V:%0.2g / %0.2g", c.Vx, c.Vy), assets.NanoFont, op)
 		op.GeoM.Translate(0, 6)
-		utils.DrawText(screen, fmt.Sprintf(`MAX:%g`, c.MaxX), assets.NanoFont, op)
+		utils.DrawText(screen, fmt.Sprintf("MAX:%g", c.MaxX), assets.NanoFont, op)
 		op.GeoM.Translate(0, 6)
-		utils.DrawText(screen, fmt.Sprintf(`FRIC:%v`, friction), assets.NanoFont, op)
+		utils.DrawText(screen, fmt.Sprintf("FRIC:%v", friction), assets.NanoFont, op)
+		op.GeoM.Translate(0, 6)
+		utils.DrawText(screen, fmt.Sprintf("GRD:%v", c.Ground), assets.NanoFont, op)
 	})
 }
 
