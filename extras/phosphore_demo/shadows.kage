@@ -1,0 +1,26 @@
+// https://www.youtube.com/watch?v=R6vQ9VmMz2w
+// https://slembcke.github.io/SuperFastHardShadows
+// https://www.shadertoy.com/view/tddXzj
+
+#define N 500.0
+
+float terrain(vec2 p)
+{
+    return step(0.25, texture(iChannel0, 0.0625 + p / 2.0).x);
+    // For element i of the return value, 0.0 is returned if x[i] < edge[i], and 1.0 is returned otherwise.
+}
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    vec2 p = fragCoord/iResolution.xy;
+    vec2 l = iMouse.xy/iResolution.xy;
+    float b = 1.0;
+    for(float i = 0.0; i < N; i++)
+    {
+        float t = i / N;
+	    float h = terrain(mix(p, l, t)); // p×(1−t)+l×t.
+        b *= h;
+    }
+    fragColor = b * texture(iChannel1, p);
+}
+

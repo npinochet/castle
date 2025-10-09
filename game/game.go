@@ -46,6 +46,7 @@ func main() { AddEntity("Hero", NewPlayer) }
 
 var (
 	backgroundColor = color.RGBA{50, 60, 57, 255}
+	pixelScreen     = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
 	pipeline        = core.NewPipeline()
 	entityBinds     = map[uint32]core.EntityContructor{
 		26:  toEntityContructor(entity.NewKnight),
@@ -84,7 +85,7 @@ func Load() {
 	vars.World = core.NewWorld(float64(vars.ScreenWidth), float64(vars.ScreenHeight))
 	vars.World.SetMap(worldMap, "rooms")
 	worldMap.LoadBumpObjects(vars.World.Space, "collisions")
-	shaderLoad(worldMap, torchGID)
+	loadShaders(worldMap, torchGID)
 	Reset()
 }
 
@@ -152,25 +153,30 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(backgroundColor)
+	pixelScreen.Fill(backgroundColor)
 	vars.World.Draw(pipeline)
-	pipeline.Compose(vars.PipelineScreenTag, screen)
-	shaderDrawLights(pipeline, screen)
-	pipeline.DisposeAll()
-	if restartTransition != nil {
-		restartTransition.Draw(screen)
-	}
-	if deathTransition != nil {
-		deathTransition.Draw(screen)
-	}
-
+	pipeline.Compose(vars.PipelineScreenTag, pixelScreen)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64(vars.ScreenWidth-16), 1)
-	utils.DrawText(screen, fmt.Sprintf("%0.2f", ebiten.ActualFPS()), assets.NanoFont, op)
+	utils.DrawText(pixelScreen, fmt.Sprintf("%0.2f", ebiten.ActualFPS()), assets.NanoFont, op)
+	shaderDrawLights(pipeline, pixelScreen)
+	pipeline.DisposeAll()
+
+	if restartTransition != nil {
+		restartTransition.Draw(pixelScreen)
+	}
+	if deathTransition != nil {
+		deathTransition.Draw(pixelScreen)
+	}
+
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(float64(vars.Scale), float64(vars.Scale))
+	screen.DrawImage(pixelScreen, op)
+	shaderDrawPhosphore(pipeline, screen)
 }
 
 func (g *Game) Layout(_, _ int) (int, int) {
-	return vars.ScreenWidth, vars.ScreenHeight
+	return vars.ScreenWidth * vars.Scale, vars.ScreenHeight * vars.Scale
 }
 
 func debugControls() {

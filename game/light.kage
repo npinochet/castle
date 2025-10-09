@@ -1,10 +1,9 @@
 //go:build ignore
 
 //kage:unit pixels
-
-//https://github.com/mattdesl/lwjgl-basics/wiki/ShaderLesson6
-
 package main
+
+// https://github.com/mattdesl/lwjgl-basics/wiki/ShaderLesson6
 
 const (
 	ambientLight          = 0.5
@@ -25,7 +24,7 @@ func rand(co vec2) float {
 	return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453)
 }
 
-func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+func Fragment(dstPos vec4, srcPos vec2) vec4 {
 	lightDir := 0.1 * (LightPosSize - vec3(dstPos.xy-imageDstOrigin(), 0))
 
 	normalValues := imageSrc0At(srcPos).xyzw
