@@ -33,7 +33,7 @@ type Spike struct {
 func NewSpike(x, y, _, _ float64, props *core.Properties) *Spike {
 	spike := &Spike{
 		BaseEntity: &core.BaseEntity{X: x + 1, Y: y, W: tileSize - 3, H: tileSize},
-		render:     &render.Comp{X: -2, Image: spikeImage, FlipX: props.FlipX, FlipY: props.FlipY, Layer: 1},
+		render:     &render.Comp{X: -2, Image: spikeImage, FlipX: props.FlipX, FlipY: props.FlipY, Layer: core.LayerIndex},
 		hitbox:     &hitbox.Comp{},
 	}
 	spike.Add(spike.render, spike.hitbox)

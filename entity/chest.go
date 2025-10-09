@@ -8,6 +8,7 @@ import (
 	"game/libs/bump"
 	"game/vars"
 	"image"
+	"strconv"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -45,11 +46,15 @@ func NewChest(x, y, _, _ float64, props *core.Properties) *Chest {
 		imageOffset = chestW - tileSize*2
 		x -= chestW - tileSize
 	}
+	reward := 100
+	if customReward, err := strconv.Atoi(props.Custom["reward"]); err == nil {
+		reward = customReward
+	}
 	chest := &Chest{
 		BaseEntity: &core.BaseEntity{X: x, Y: y, W: chestW, H: chestH},
 		render:     &render.Comp{X: imageOffset, Image: chestCloseImage, FlipX: props.FlipX, Layer: -1},
 		hitbox:     &hitbox.Comp{},
-		reward:     100,
+		reward:     reward,
 		open:       props.Custom["open"] == "true",
 	}
 	chest.Add(chest.render, chest.hitbox)

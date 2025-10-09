@@ -243,6 +243,22 @@ func (m *Map) TilesFromPosition(x, y float64, removeTiles bool, space *bump.Spac
 	if mapX < 0 || mapY < 0 || mapX >= m.data.Width || mapY >= m.data.Height {
 		return nil, fmt.Errorf("map: position out of bounds: %f, %f", x, y)
 	}
+	// TODO: Check animations too
+	/*
+		loop:
+		for _, layers := range m.layers {
+			for _, layer := range layers {
+				if anim, ok := layer.animations[gid]; ok {
+					for _, pos := range anim.positions {
+						positions = append(positions, [2]float64{pos.x, pos.y})
+					}
+
+					break loop
+				}
+			}
+		}
+	*/
+
 	position := mapY*m.data.Width + mapX
 	skipped := 0
 	for layerIndex := len(m.data.Layers) - 1; layerIndex >= 0; layerIndex-- {
@@ -419,18 +435,20 @@ func (m *Map) LoadEntityObjects(world *World, objectGroupName string, entityBind
 	}
 }
 
-func (m *Map) GetObjectsRects(objectGroupName string) ([]bump.Rect, bool) {
-	var objects []*tiled.Object
+func (m *Map) GetObjects(objectGroupName string) []*tiled.Object {
 	for _, group := range m.data.ObjectGroups {
 		if objectGroupName == group.Name {
-			objects = group.Objects
-
-			break
+			return group.Objects
 		}
 	}
 
+	return nil
+}
+
+func (m *Map) GetObjectsRects(objectGroupName string) []bump.Rect {
+	objects := m.GetObjects(objectGroupName)
 	if objects == nil {
-		return nil, false
+		return nil
 	}
 
 	rects := make([]bump.Rect, len(objects))
@@ -438,7 +456,7 @@ func (m *Map) GetObjectsRects(objectGroupName string) ([]bump.Rect, bool) {
 		rects[i] = bump.Rect{X: obj.X, Y: obj.Y, W: obj.Width, H: obj.Height}
 	}
 
-	return rects, true
+	return rects
 }
 
 func (m *Map) render() error {

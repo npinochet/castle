@@ -19,7 +19,7 @@ const (
 	rockSize               = 5
 	rockDamage             = 5
 	rockWeight             = 0.6
-	rockMinVel, rockMaxVel = 50.0, 100.0
+	rockMinVel, rockMaxVel = 30.0, 100.0
 	rockRollingTime        = 200 * time.Millisecond
 )
 

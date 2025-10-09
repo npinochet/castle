@@ -98,6 +98,7 @@ func Reset() {
 	vars.World.Speed = 1
 	vars.World.RemoveAll()
 	vars.World.Map.LoadEntityObjects(vars.World, "entities", entityBinds)
+	LoadMapEvents(vars.World.Map)
 	vars.World.Update(0)
 	ApplySaveData(saveData)
 	vars.World.Add(vars.Player)

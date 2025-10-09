@@ -138,11 +138,12 @@ func (w *World) Draw(pipeline *Pipeline) {
 
 func (w *World) SetMap(tiledMap *Map, roomsLayer string) {
 	w.Map = tiledMap
-	rooms, ok := tiledMap.GetObjectsRects(roomsLayer)
-	if !ok {
+	rooms := tiledMap.GetObjectsRects(roomsLayer)
+	if rooms == nil {
 		log.Println("world: room layer not found")
+	} else {
+		w.Camera.SetRooms(rooms)
 	}
-	w.Camera.SetRooms(rooms)
 	tiledMap.LoadTilesetCollisionObjects(w.Space)
 }
 
@@ -170,6 +171,18 @@ func (w *World) Remove(entity Entity) {
 	defer w.mutex.Unlock()
 
 	w.toRemove = append(w.toRemove, entity)
+}
+
+func (w *World) RemoveID(id uint) Entity {
+	entity := w.idToEntity[id]
+	if entity == nil {
+		return nil
+	}
+	delete(w.idToEntity, id)
+	delete(w.entityToID, entity)
+	w.Remove(entity)
+
+	return entity
 }
 
 func (w *World) RemoveAll() {

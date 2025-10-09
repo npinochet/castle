@@ -28,6 +28,7 @@ import (
 	- Imp: This new boss
 	- Map: Add lights
 	- Imp: Particles on each hit, maybe some bloos pixels or something
+	- Dbg: Fix charge move not reseting attack multiplier, and sometime get stuck charging
 
 - Phase 3:
 	- Implement everything else -> TODO
