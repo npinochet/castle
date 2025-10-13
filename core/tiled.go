@@ -35,9 +35,10 @@ type Properties struct {
 type EntityContructor func(x, y, w, h float64, props *Properties) Entity
 
 type Tile struct {
-	X, Y     float64
-	Image    *ebiten.Image
-	ImageTag string
+	X, Y                float64
+	FlipX, FlipY, FlipR bool
+	Image               *ebiten.Image
+	ImageTag            string
 }
 
 type animationFrame struct {
@@ -85,6 +86,7 @@ func (fs *extVariationFS) Open(name string) (fs.File, error) {
 }
 
 func RegisterEntityName[T Entity](name string, constructor func(x, y, w, h float64, p *Properties) T) {
+	// Can I get the name with reflect? from constructor?
 	entityObjects[name] = func(x, y, w, h float64, p *Properties) Entity { return constructor(x, y, w, h, p) }
 }
 
@@ -277,6 +279,7 @@ func (m *Map) TilesFromPosition(x, y float64, removeTiles bool, space *bump.Spac
 		for imageTag := range m.layers {
 			tileImage := &Tile{
 				X: float64(mapX * m.data.TileWidth), Y: float64(mapY * m.data.TileHeight),
+				FlipX: tile.HorizontalFlip, FlipY: tile.VerticalFlip, FlipR: tile.DiagonalFlip,
 				Image:    m.tileset[imageTag][tile.Tileset.FirstGID+tile.ID],
 				ImageTag: imageTag,
 			}

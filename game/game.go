@@ -12,6 +12,7 @@ import (
 	"game/entity"
 	"game/entity/actor"
 	"game/maps"
+	"game/shader"
 	"game/utils"
 	"game/vars"
 	"image/color"
@@ -49,16 +50,18 @@ var (
 	pixelScreen     = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
 	pipeline        = core.NewPipeline()
 	entityBinds     = map[uint32]core.EntityContructor{
-		26:  toEntityContructor(entity.NewKnight),
-		27:  toEntityContructor(entity.NewGhoul),
-		28:  toEntityContructor(entity.NewSkeleman),
-		29:  toEntityContructor(entity.NewCrawler),
-		30:  toEntityContructor(entity.NewRat),
-		31:  toEntityContructor(entity.NewBat),
-		32:  toEntityContructor(entity.NewEnt),
-		87:  toEntityContructor(entity.NewGram),
-		88:  toEntityContructor(entity.NewFerragus),
-		89:  toEntityContructor(entity.NewOscar),
+		26: toEntityContructor(entity.NewKnight),
+		27: toEntityContructor(entity.NewGhoul),
+		28: toEntityContructor(entity.NewSkeleman),
+		29: toEntityContructor(entity.NewCrawler),
+		30: toEntityContructor(entity.NewRat),
+		31: toEntityContructor(entity.NewBat),
+		32: toEntityContructor(entity.NewEnt),
+		87: toEntityContructor(entity.NewGram),
+		88: toEntityContructor(entity.NewFerragus),
+		89: toEntityContructor(entity.NewOscar),
+		90: toEntityContructor(entity.NewAcedian),
+		//89:  toEntityContructor(entity.New??),
 		149: toEntityContructor(entity.NewChest),
 		150: toEntityContructor(entity.NewGrave),
 		151: toEntityContructor(entity.NewDoor),
@@ -85,7 +88,7 @@ func Load() {
 	vars.World = core.NewWorld(float64(vars.ScreenWidth), float64(vars.ScreenHeight))
 	vars.World.SetMap(worldMap, "rooms")
 	worldMap.LoadBumpObjects(vars.World.Space, "collisions")
-	loadShaders(worldMap, torchGID)
+	shader.Load(worldMap, []uint32{torchGID, 931, 993})
 	Reset()
 }
 
@@ -115,7 +118,7 @@ func (g *Game) Update() error {
 	}
 	dt := 1.0 / 60
 	vars.World.Update(dt)
-	shaderUpdate(dt)
+	shader.Update(dt)
 	if vars.SaveGame {
 		vars.SaveGame = false
 		if err := Save(); err != nil {
@@ -157,10 +160,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	pixelScreen.Fill(backgroundColor)
 	vars.World.Draw(pipeline)
 	pipeline.Compose(vars.PipelineScreenTag, pixelScreen)
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(vars.ScreenWidth-16), 1)
-	utils.DrawText(pixelScreen, fmt.Sprintf("%0.2f", ebiten.ActualFPS()), assets.NanoFont, op)
-	shaderDrawLights(pipeline, pixelScreen)
+	shader.DrawLights(pipeline, pixelScreen)
 	pipeline.DisposeAll()
 
 	if restartTransition != nil {
@@ -170,10 +170,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		deathTransition.Draw(pixelScreen)
 	}
 
+	op := &ebiten.DrawImageOptions{}
+	fps := fmt.Sprintf("%0.2f", ebiten.ActualFPS())
+	w, _ := utils.TextSize(fps, assets.NanoFont)
+	op.GeoM.Translate(float64(vars.ScreenWidth-w-1), 1)
+	utils.DrawText(pixelScreen, fps, assets.NanoFont, op)
+
 	op = &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(float64(vars.Scale), float64(vars.Scale))
 	screen.DrawImage(pixelScreen, op)
-	shaderDrawPhosphore(pipeline, screen)
+	shader.DrawPhosphore(pipeline, screen)
 }
 
 func (g *Game) Layout(_, _ int) (int, int) {
@@ -195,5 +201,11 @@ func debugControls() {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key5) {
 		anim.DebugDraw = !anim.DebugDraw
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+		shader.Lights = !shader.Lights
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyO) {
+		shader.Phosphore = !shader.Phosphore
 	}
 }

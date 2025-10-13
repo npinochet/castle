@@ -1,0 +1,28 @@
+{ "frames": {
+   "acedian.aseprite": {
+    "frame": { "x": 1, "y": 1, "w": 18, "h": 20 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 2, "y": 5, "w": 18, "h": 20 },
+    "sourceSize": { "w": 25, "h": 25 },
+    "duration": 1
+   }
+ },
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.x-dev",
+  "image": "acedian.png",
+  "format": "RGBA8888",
+  "size": { "w": 20, "h": 22 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "Idle", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "Layer 1", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+   { "name": "hurtbox", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 8, "y": 9, "w": 10, "h": 16 } }] }
+  ]
+ }
+}

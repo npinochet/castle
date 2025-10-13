@@ -46,7 +46,7 @@ func (c *Comp) Init(entity core.Entity) {
 		c.Tags = []bump.Tag{"body"}
 	}
 	if c.QueryTags == nil {
-		c.QueryTags = []bump.Tag{"body", "map", "solid"}
+		c.QueryTags = []bump.Tag{"body", "map", "solid", "object"}
 	}
 	c.Friction = true
 	c.space = vars.World.Space

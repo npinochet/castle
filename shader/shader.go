@@ -1,4 +1,4 @@
-package game
+package shader
 
 import (
 	_ "embed" // Embed is used to embed the shader file.
@@ -14,18 +14,19 @@ import (
 )
 
 const (
-	Lights    = true
-	Phosphore = true
-	lightSize = 16
+	LightSize = 16
+	tileSize  = 8
 )
 
 var (
+	Lights             = true
+	Phosphore          = true
 	normalMapImage     = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
 	diffuseImage       = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
 	phosphoreMaskImage = ebiten.NewImage(vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale)
 	screenCopy         = ebiten.NewImage(vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale)
+	lights             = []Light{{0, 0, 0}}
 	shaderTime         float32
-	lights             []light
 	lightShader        *ebiten.Shader
 	phosphoreShader    *ebiten.Shader
 	//go:embed light.kage
@@ -34,43 +35,36 @@ var (
 	phosphoreShaderData []byte
 )
 
-type light struct{ x, y, size float64 }
+type Light struct{ X, Y, Size float64 }
 
-func loadShaders(worldMap *core.Map, lightTileGID uint32) {
-	if Lights {
-		var err error
-		if lightShader, err = ebiten.NewShader(lightShaderData); err != nil {
-			log.Fatal(err)
-		}
-		positions := worldMap.FindTilePosition(lightTileGID)
-		lights = make([]light, len(positions)+1)
-		lights[len(lights)-1] = light{0, 0, 0}
-		for i, pos := range positions {
-			lights[i] = light{pos[0] + 4, pos[1] + 4, lightSize}
+func Load(worldMap *core.Map, lightGIDs []uint32) {
+	var err error
+	if lightShader, err = ebiten.NewShader(lightShaderData); err != nil {
+		log.Fatal(err)
+	}
+	for _, gid := range lightGIDs {
+		for _, position := range worldMap.FindTilePosition(gid) {
+			AddLight(position[0]+tileSize/2, position[1]+tileSize/2, LightSize)
 		}
 	}
 
-	if Phosphore {
-		var err error
-		if phosphoreShader, err = ebiten.NewShader(phosphoreShaderData); err != nil {
-			log.Fatal(err)
-		}
-
-		maskImage, _, _ := ebitenutil.NewImageFromFileSystem(assets.FS, "phosphore_mask.png")
-		width, height := vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale
-		for y := 0; y < height; y += maskImage.Bounds().Dy() {
-			for x := 0; x < width; x += maskImage.Bounds().Dx() {
-				op := &ebiten.DrawImageOptions{}
-				op.GeoM.Translate(float64(x), float64(y))
-				phosphoreMaskImage.DrawImage(maskImage, op)
-			}
+	if phosphoreShader, err = ebiten.NewShader(phosphoreShaderData); err != nil {
+		log.Fatal(err)
+	}
+	maskImage, _, _ := ebitenutil.NewImageFromFileSystem(assets.FS, "phosphore_mask.png")
+	width, height := vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale
+	for y := 0; y < height; y += maskImage.Bounds().Dy() {
+		for x := 0; x < width; x += maskImage.Bounds().Dx() {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(x), float64(y))
+			phosphoreMaskImage.DrawImage(maskImage, op)
 		}
 	}
 }
 
-func shaderUpdate(dt float64) { shaderTime += float32(dt) }
+func Update(dt float64) { shaderTime += float32(dt) }
 
-func shaderDrawLights(pipeline *core.Pipeline, screen *ebiten.Image) {
+func DrawLights(pipeline *core.Pipeline, screen *ebiten.Image) {
 	if !Lights {
 		return
 	}
@@ -80,7 +74,7 @@ func shaderDrawLights(pipeline *core.Pipeline, screen *ebiten.Image) {
 	diffuseImage.Fill(color.Black)
 	cx, cy := vars.World.Camera.Position()
 	for i, light := range lights {
-		x, y := light.x-cx, light.y-cy
+		x, y := light.X-cx, light.Y-cy
 		w, h := float64(vars.ScreenWidth), float64(vars.ScreenHeight)
 		if x < -2*w || y < -2*h || x > 3*w || y > 3*h {
 			// TODO: This continue breaks shader if there are no lights near, the screen turns black.
@@ -89,7 +83,7 @@ func shaderDrawLights(pipeline *core.Pipeline, screen *ebiten.Image) {
 
 		op := &ebiten.DrawRectShaderOptions{
 			Uniforms: map[string]any{
-				"LightPosSize": []float32{float32(x), float32(y), float32(light.size)},
+				"LightPosSize": []float32{float32(x), float32(y), float32(light.Size)},
 				"Time":         shaderTime + float32(10*i),
 			},
 			Images: [4]*ebiten.Image{normalMapImage},
@@ -102,7 +96,7 @@ func shaderDrawLights(pipeline *core.Pipeline, screen *ebiten.Image) {
 	screen.DrawImage(diffuseImage, &ebiten.DrawImageOptions{CompositeMode: ebiten.CompositeModeMultiply})
 }
 
-func shaderDrawPhosphore(_ *core.Pipeline, screen *ebiten.Image) {
+func DrawPhosphore(_ *core.Pipeline, screen *ebiten.Image) {
 	if !Phosphore {
 		return
 	}
@@ -112,7 +106,11 @@ func shaderDrawPhosphore(_ *core.Pipeline, screen *ebiten.Image) {
 		Uniforms: map[string]any{"Scale": float32(vars.Scale)},
 		Images:   [4]*ebiten.Image{screenCopy, phosphoreMaskImage},
 	}
-	// panic: ebiten: all the source images must be the same size with the rectangle
 	screen.DrawRectShader(vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale, phosphoreShader, op)
+}
 
+func AddLight(x, y, size float64) *Light {
+	lights = append(lights, Light{x, y, size})
+
+	return &lights[len(lights)-1]
 }

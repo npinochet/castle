@@ -45,6 +45,24 @@
    <object id="1" x="0" y="0" width="8" height="8"/>
   </objectgroup>
  </tile>
+ <tile id="930">
+  <animation>
+   <frame tileid="931" duration="500"/>
+   <frame tileid="932" duration="300"/>
+   <frame tileid="931" duration="80"/>
+   <frame tileid="932" duration="200"/>
+  </animation>
+ </tile>
+ <tile id="992">
+  <animation>
+   <frame tileid="993" duration="100"/>
+   <frame tileid="994" duration="100"/>
+   <frame tileid="995" duration="100"/>
+   <frame tileid="996" duration="100"/>
+   <frame tileid="997" duration="100"/>
+   <frame tileid="998" duration="100"/>
+  </animation>
+ </tile>
  <tile id="1272">
   <objectgroup draworder="index" id="2">
    <object id="1" x="0" y="0" width="8" height="8"/>

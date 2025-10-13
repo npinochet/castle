@@ -11,22 +11,20 @@ import (
 
 /* Tasks
 - Phase 1:
+	- Fun Tasks:
+		- Imp: Breakable props like crates, tables, chairs...
+		- Imp: Finish other sorces of light
 	- Map: Finish defining events -> The most dificult
-		- Starting events:
-			- When you appear a door closing animation should play behind the player
-			- When you apporach the first NPC, Ferragus, he should tell you the context and ask for some money, but be very rude about it
-	- Map: Allow for bigger, empty corridors, a lot seems to be packed in
-	- Map: Define where to put the paralax corridor
+		- Map: Allow for bigger, empty corridors, a lot seems to be packed in
 	- Map: Define NPC and dialogs
 	- Decide: If the second world goes or not? No for now
 	- Imp: Mage
 	- Map: Add more detail, finish it
-	- Imp: Events one by one: Split into multiple tasks after events are defined
-	- Imp: Paralax corridor
+		- Map: Add lights
 	- Art: Design and draw a Boss
 	- Art: Animate Boss
 	- Imp: This new boss
-	- Map: Add lights
+	- Imp: Paralax corridor
 	- Imp: Particles on each hit, maybe some bloos pixels or something
 	- Dbg: Fix charge move not reseting attack multiplier, and sometime get stuck charging
 
