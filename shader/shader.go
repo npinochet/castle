@@ -19,8 +19,8 @@ const (
 )
 
 var (
-	Lights             = true
-	Phosphore          = true
+	Lights             = !vars.Debug
+	Phosphore          = !vars.Debug
 	normalMapImage     = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
 	diffuseImage       = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
 	phosphoreMaskImage = ebiten.NewImage(vars.ScreenWidth*vars.Scale, vars.ScreenHeight*vars.Scale)

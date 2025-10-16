@@ -50,7 +50,7 @@ func NewOscar(x, y, _, _ float64, props *core.Properties) *Oscar {
 				return bump.NewRect(x-oscarWidth*2, y-oscarHeight, oscarWidth*4, oscarHeight*2)
 			},
 		},
-		body:     &body.Comp{Unmovable: true, Solid: true},
+		body:     &body.Comp{Unmovable: true, NoUpdate: true},
 		hitbox:   &hitbox.Comp{},
 		stats:    &stats.Comp{MaxHealth: 200, Health: 80},
 		deadText: props.Custom["deadText"],

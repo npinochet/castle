@@ -17,18 +17,18 @@ import (
 var DebugDraw = false
 
 type Comp struct {
-	Solid, Unmovable, Friction bool
-	Ground, InsidePassThrough  bool
-	droppingThrough            bool
-	Vx, Vy                     float64
-	MaxX, MaxY                 float64
-	Weight                     float64
-	Tags, QueryTags            []bump.Tag
-	FilterOut                  []core.Entity
-	entity                     core.Entity
-	space                      *bump.Space
-	prevVx                     float64
-	coyoteTime                 float64
+	NoUpdate, Unmovable, Friction bool
+	Ground, InsidePassThrough     bool
+	droppingThrough               bool
+	Vx, Vy                        float64
+	MaxX, MaxY                    float64
+	Weight                        float64
+	Tags, QueryTags               []bump.Tag
+	FilterOut                     []core.Entity
+	entity                        core.Entity
+	space                         *bump.Space
+	prevVx                        float64
+	coyoteTime                    float64
 }
 
 func (c *Comp) Init(entity core.Entity) {
@@ -56,7 +56,7 @@ func (c *Comp) Init(entity core.Entity) {
 func (c *Comp) Remove() { c.space.Remove(c.entity) }
 
 func (c *Comp) Update(dt float64) {
-	if c.Solid {
+	if c.NoUpdate {
 		return
 	}
 	noForceApplied := !c.Ground || c.prevVx == c.Vx
@@ -157,7 +157,7 @@ func (c *Comp) updateMovement(dt float64, noForceApplied bool) {
 func (c *Comp) applyOverlapForce(col *bump.Collision) {
 	irect, orect := col.ItemRect, col.OtherRect
 	overlap := (math.Min(irect.X+irect.W, orect.X+orect.W) - math.Max(irect.X, orect.X)) / math.Min(irect.W, orect.W)
-	side := col.ItemRect.X + col.ItemRect.W/2 - (col.OtherRect.X + col.OtherRect.W/2)
+	side := irect.X + irect.W/2 - (orect.X + orect.W/2)
 	if side > 0 && c.Vx < 0 || side < 0 && c.Vx > 0 {
 		c.Vx = math.Min(vars.GroundFriction, math.Max(-vars.GroundFriction, c.Vx))
 	}
@@ -172,6 +172,12 @@ func (c *Comp) bodyFilter() func(bump.Item, bump.Item) (bump.ColType, bool) {
 			}
 			if c.space.Has(entity, "solid") {
 				return bump.Slide, true
+			}
+			if c.space.Has(entity, "object") {
+				itemRect, otherRect := c.space.Rect(item), c.space.Rect(other)
+				if itemRect.Y+itemRect.H <= otherRect.Y {
+					return bump.Slide, true
+				}
 			}
 
 			return bump.Cross, true

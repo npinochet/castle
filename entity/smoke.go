@@ -20,9 +20,7 @@ const (
 	smokeMaxDistance  = 40
 )
 
-var (
-	smokeImage, _, _ = ebitenutil.NewImageFromFileSystem(assets.FS, "smoke.png")
-)
+var smokeImage, _, _ = ebitenutil.NewImageFromFileSystem(assets.FS, "smoke.png")
 
 type Smoke struct {
 	*core.BaseEntity

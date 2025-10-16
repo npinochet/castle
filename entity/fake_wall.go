@@ -35,7 +35,7 @@ func NewFakeWall(x, y, _, _ float64, _ *core.Properties) *FakeWall {
 
 	wall := &FakeWall{
 		BaseEntity:   &core.BaseEntity{X: x, Y: y, W: tileSize, H: tileSize},
-		body:         &body.Comp{Solid: true, Tags: []bump.Tag{"solid", "fakeWall"}},
+		body:         &body.Comp{NoUpdate: true, Tags: []bump.Tag{"solid", "fakeWall"}},
 		hitbox:       &hitbox.Comp{},
 		render:       &render.Comp{Image: tiles[vars.PipelineScreenTag].Image},
 		renderNormal: &render.Comp{Image: tiles[vars.PipelineNormalMapTag].Image, Normal: true},

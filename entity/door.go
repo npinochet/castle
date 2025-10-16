@@ -37,7 +37,7 @@ func NewDoor(x, y, _, h float64, props *core.Properties) *Door {
 	door := &Door{
 		BaseEntity:     &core.BaseEntity{X: x, Y: y, W: doorW, H: h},
 		render:         &render.Comp{X: imageOffset, FlipX: props.FlipX, Layer: -1},
-		body:           &body.Comp{Solid: true, Tags: []bump.Tag{"solid"}},
+		body:           &body.Comp{NoUpdate: true, Tags: []bump.Tag{"solid"}},
 		hitbox:         &hitbox.Comp{},
 		opensFromRight: props.FlipX,
 		open:           props.Custom["open"] == "true",
