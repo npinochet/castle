@@ -59,15 +59,19 @@ type animation struct {
 }
 
 type layerData struct {
-	image      *ebiten.Image
-	animations map[uint32]*animation
-	fs         fs.FS
+	image                *ebiten.Image
+	animations           map[uint32]*animation
+	offsetX, offsetY     int
+	parallaxX, parallaxY float64
+	fs                   fs.FS
 }
 
 type Map struct {
 	data                *tiled.Map
 	layers              map[string][]*layerData
+	objectLayers        []*layerData
 	tileset             map[string][]*ebiten.Image
+	firstImageTag       string
 	backgroundLayersNum int
 }
 
@@ -106,12 +110,17 @@ func NewMap(mapPath string, backLayersNum int, fs fs.FS, drawImagesTags ...strin
 		if tilesets[tag], err = buildTileset(data, vfs); err != nil {
 			log.Println("Error building tileset from Tiled map:", err)
 		}
-		if layers[tag], err = buildLayers(data, vfs, tilesets[tag], i == len(drawImagesTags)-1); err != nil {
+		lastImageTag := i == len(drawImagesTags)-1
+		if layers[tag], err = buildLayers(data, vfs, tilesets[tag], lastImageTag); err != nil {
 			log.Println("Error building layers data from Tiled map:", err)
 		}
 	}
+	objectLayers, err := buildObjectLayers(data, fs)
+	if err != nil {
+		log.Println("Error building object layers from Tiled map:", err)
+	}
 
-	m := &Map{data, layers, tilesets, backLayersNum}
+	m := &Map{data, layers, objectLayers, tilesets, drawImagesTags[0], backLayersNum}
 	if err := m.render(); err != nil {
 		log.Println("Error rendering Tiled map:", err)
 	}
@@ -133,13 +142,20 @@ func (m *Map) Update(dt float64) {
 }
 
 func (m *Map) Draw(pipeline *Pipeline, camera *camera.Camera) {
+	for _, layer := range m.objectLayers {
+		layerDepth := -LayerIndex
+		bounds := camera.BoundsWithOffsetAndParallax(layer.offsetX, layer.offsetY, float64(layer.parallaxX), float64(layer.parallaxY))
+		localImage, _ := layer.image.SubImage(bounds).(*ebiten.Image)
+		pipeline.Add(m.firstImageTag, layerDepth, func(screen *ebiten.Image) { screen.DrawImage(localImage, nil) })
+	}
 	for imageTag, layers := range m.layers {
 		for i, layer := range layers {
 			layerDepth := -LayerIndex
 			if i >= m.backgroundLayersNum {
 				layerDepth = LayerIndex
 			}
-			localImage, _ := layer.image.SubImage(camera.Bounds()).(*ebiten.Image)
+			bounds := camera.BoundsWithOffsetAndParallax(layer.offsetX, layer.offsetY, float64(layer.parallaxX), float64(layer.parallaxY))
+			localImage, _ := layer.image.SubImage(bounds).(*ebiten.Image)
 			pipeline.Add(imageTag, layerDepth, func(screen *ebiten.Image) { screen.DrawImage(localImage, nil) })
 			cx, cy := camera.Position()
 			for _, anim := range layer.animations {
@@ -485,6 +501,27 @@ func (m *Map) render() error {
 			layers[layerIndex].image = ebiten.NewImageFromImage(renderer.Result)
 		}
 	}
+	skipped = 0
+	for i, objectGroup := range m.data.ObjectGroups {
+		if !objectGroup.Visible || !objectGroup.Properties.GetBool("draw") {
+			skipped++
+
+			continue
+		}
+		layerIndex := i - skipped
+		objectLayer := m.objectLayers[layerIndex]
+		renderer, err := render.NewRendererWithFileSystem(m.data, objectLayer.fs)
+		if err != nil {
+			return fmt.Errorf("map: tiled map unsupported for rendering: %w", err)
+		}
+		if err := renderer.RenderObjectGroup(i); err != nil {
+			return fmt.Errorf("map: tiled object group %s unsupported for rendering: %w", objectGroup.Name, err)
+		}
+		if objectLayer.image != nil {
+			objectLayer.image.Deallocate()
+		}
+		objectLayer.image = ebiten.NewImageFromImage(renderer.Result)
+	}
 
 	return nil
 }
@@ -499,7 +536,33 @@ func buildLayers(data *tiled.Map, fs fs.FS, tileImages []*ebiten.Image, removeAn
 		if err != nil {
 			return nil, fmt.Errorf("map: error extracting %s animations: %w", layer.Name, err)
 		}
-		layersData = append(layersData, &layerData{nil, anims, fs})
+		parallaxX, parallaxY := 1.0, 1.0
+		if layer.ParallaxX != 0 {
+			parallaxX = float64(layer.ParallaxX)
+		}
+		if layer.ParallaxY != 0 {
+			parallaxY = float64(layer.ParallaxY)
+		}
+
+		layersData = append(layersData, &layerData{nil, anims, layer.OffsetX, layer.OffsetY, parallaxX, parallaxY, fs})
+	}
+
+	return layersData, nil
+}
+
+func buildObjectLayers(data *tiled.Map, fs fs.FS) ([]*layerData, error) {
+	layersData := []*layerData{}
+	for _, layer := range data.ObjectGroups {
+		if layer.Visible && layer.Properties.GetBool("draw") {
+			parallaxX, parallaxY := 1.0, 1.0
+			if layer.ParallaxX != 0 {
+				parallaxX = float64(layer.ParallaxX)
+			}
+			if layer.ParallaxY != 0 {
+				parallaxY = float64(layer.ParallaxY)
+			}
+			layersData = append(layersData, &layerData{nil, nil, layer.OffsetX, layer.OffsetY, parallaxX, parallaxY, fs})
+		}
 	}
 
 	return layersData, nil
@@ -508,6 +571,9 @@ func buildLayers(data *tiled.Map, fs fs.FS, tileImages []*ebiten.Image, removeAn
 func buildTileset(data *tiled.Map, fs fs.FS) ([]*ebiten.Image, error) {
 	tileImages := []*ebiten.Image{nil}
 	for _, tileset := range data.Tilesets {
+		if tileset.Image == nil {
+			continue
+		}
 		sf, err := fs.Open(filepath.ToSlash(tileset.GetFileFullPath(tileset.Image.Source)))
 		if err != nil {
 			return nil, err

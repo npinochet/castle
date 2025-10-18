@@ -68,6 +68,17 @@ func (c *Camera) Bounds() image.Rectangle {
 	return image.Rect(int(c.x), int(c.y), int(c.x+c.w), int(c.y+c.h))
 }
 
+func (c *Camera) BoundsWithOffsetAndParallax(offsetX, offsetY int, parallaxX, parallaxY float64) image.Rectangle {
+	if offsetX == 0 && offsetY == 0 && parallaxX == 1 && parallaxY == 1 {
+		return c.Bounds()
+	}
+	x, y := c.Position()
+	x *= parallaxX
+	y *= parallaxY
+
+	return image.Rect(int(x+1), int(y+1), int(x+c.w), int(y+c.h)).Add(image.Point{-offsetX, -offsetY})
+}
+
 func (c *Camera) Update(dt float64) {
 	if c.following == nil {
 		return

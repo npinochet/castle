@@ -11,9 +11,6 @@ import (
 
 /* Tasks
 - Phase 1:
-	- Fun Tasks:
-		- Imp: Breakable props like crates, tables, chairs...
-		- Imp: Finish other sorces of light
 	- Map: Finish defining events -> The most dificult
 		- Map: Allow for bigger, empty corridors, a lot seems to be packed in
 	- Map: Define NPC and dialogs
@@ -24,7 +21,6 @@ import (
 	- Art: Design and draw a Boss
 	- Art: Animate Boss
 	- Imp: This new boss
-	- Imp: Paralax corridor
 	- Imp: Particles on each hit, maybe some bloos pixels or something
 	- Dbg: Fix charge move not reseting attack multiplier, and sometime get stuck charging
 

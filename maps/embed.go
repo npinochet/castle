@@ -4,5 +4,5 @@ import "embed"
 
 // IntroFS is the embed.FS for the intro map.
 //
-//go:embed intro/*.png intro/playground_imp.tmx intro/tiles.tsx
+//go:embed intro/*.png intro/*.tsx intro/playground_imp.tmx
 var IntroFS embed.FS
