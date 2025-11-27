@@ -70,7 +70,7 @@ type Comp struct {
 	healthTween, staminaTween, poiseTween, attackMultTween *gween.Tween
 	healthLag, staminaLag, poiseLag                        float64
 	poiseTimer                                             *time.Timer
-	entityW                                                float64
+	entity                                                 core.Entity
 	headHealthTimer                                        float64
 }
 
@@ -114,7 +114,7 @@ func (c *Comp) Init(entity core.Entity) {
 	c.healthLag = c.Health
 	c.staminaLag = c.Stamina
 	c.poiseLag = c.Poise
-	_, _, c.entityW, _ = entity.Rect()
+	c.entity = entity
 }
 
 func (c *Comp) Remove() {
@@ -204,6 +204,7 @@ func (c *Comp) AddHealth(amount float64) {
 func (c *Comp) AddStamina(amount float64) {
 	c.staminaLag = c.Stamina
 	c.Stamina = math.Min(c.Stamina+amount, c.MaxStamina)
+	c.Stamina = math.Max(c.Stamina, vars.DefaultMinStamina)
 	c.staminaTween = gween.New(float32(c.staminaLag), float32(c.Stamina), 1, ease.Linear)
 }
 func (c *Comp) AddPoise(amount float64) {
@@ -344,7 +345,8 @@ func (c *Comp) drawAttackMult(pipeline *core.Pipeline, geoM ebiten.GeoM) {
 func (c *Comp) drawHeadHealthBar(pipeline *core.Pipeline, entityPos ebiten.GeoM, current, max, lag float64) {
 	op := &ebiten.DrawImageOptions{GeoM: entityPos}
 	barW := float64(headBar.Bounds().Dx())
-	op.GeoM.Translate((c.entityW-barW)/2, -7)
+	_, _, entityW, _ := c.entity.Rect()
+	op.GeoM.Translate((entityW-barW)/2, -7)
 	normalOp := &ebiten.DrawImageOptions{GeoM: op.GeoM, Blend: ebiten.BlendDestinationOut}
 	pipeline.Add(vars.PipelineNormalMapTag, vars.PipelineUILayer, func(normalMap *ebiten.Image) {
 		normalMap.DrawImage(headBar, normalOp)

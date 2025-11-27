@@ -1,6 +1,7 @@
 package game
 
 import (
+	"game/comps/anim"
 	"game/comps/hitbox"
 	"game/comps/stats"
 	"game/core"
@@ -61,6 +62,23 @@ var (
 
 			return func() bool {
 				targetStats.Health = 0
+
+				return true
+			}
+		},
+		"TurnAround": func(object *tiled.Object) func() bool {
+			id, _ := strconv.Atoi(object.Properties.GetString("entity"))
+			entity := vars.World.Get(uint(id))
+			if entity == nil {
+				return nil
+			}
+			entityAnim := core.Get[*anim.Comp](entity)
+			if entityAnim == nil {
+				return nil
+			}
+
+			return func() bool {
+				entityAnim.FlipX = !entityAnim.FlipX
 
 				return true
 			}

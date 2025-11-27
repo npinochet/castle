@@ -44,6 +44,7 @@ const (
 	// Stats.
 	DefaultHealth         = 100
 	DefaultStamina        = 80
+	DefaultMinStamina     = -20
 	DefaultPoise          = 30
 	DefaultHeal           = 2
 	DefaultHealAmount     = 20
@@ -67,6 +68,14 @@ const (
 	BoxW, BoxH                   = ScreenWidth - BoxX*2, 3.0
 	LineWidth, LineHeight        = (BoxW - 8), 6 + 1
 	MaxLines                     = 4
+
+	// Body.
+	Gravity                     = 300.0
+	DefaultMaxX, DefaultMaxY    = 20.0, 200.0
+	GroundFriction, AirFriction = 8.0, 2.0 // TODO: Tune this variables. They might be too high.
+	CollisionStiffness          = 1.0
+	FrictionEpsilon             = 0.05
+	CoyoteTimeSeconds           = 0.1
 )
 
 var (
@@ -79,12 +88,4 @@ var (
 
 	// Player.
 	Pad utils.ControlPack
-
-	// Body.
-	Gravity                     = 300.0
-	DefaultMaxX, DefaultMaxY    = 20.0, 200.0
-	GroundFriction, AirFriction = 8.0, 2.0 // TODO: Tune this variables. They might be too high.
-	CollisionStiffness          = 1.0
-	FrictionEpsilon             = 0.05
-	CoyoteTimeSeconds           = 0.1
 )

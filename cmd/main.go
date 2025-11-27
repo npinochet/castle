@@ -21,10 +21,10 @@ import (
 	- Art: Design and draw a Boss
 	- Art: Animate Boss
 	- Imp: This new boss
-	- Imp: Particles on each hit, maybe some bloos pixels or something
 	- Dbg: Fix charge move not reseting attack multiplier, and sometime get stuck charging
 
 - Phase 3:
+	- Imp: Particles on each hit, maybe some bloos pixels or something
 	- Implement everything else -> TODO
 
 - Phase 3:

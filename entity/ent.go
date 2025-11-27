@@ -43,12 +43,14 @@ func NewEnt(x, y, _, _ float64, props *core.Properties) *Ent {
 	ent.Add(ent.anim, ent.body, ent.hitbox, ent.stats, ent.ai)
 	ent.Control = actor.NewControl(ent)
 
-	var view *bump.Rect
-	if props.View != nil {
-		viewRect := bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
-		view = &viewRect
+	if props.Custom["ai"] != "none" {
+		var view *bump.Rect
+		if props.View != nil {
+			viewRect := bump.NewRect(props.View.X, props.View.Y, props.View.Width, props.View.Height)
+			view = &viewRect
+		}
+		ent.ai.SetAct(func() { ent.aiScript(view) })
 	}
-	ent.ai.SetAct(func() { ent.aiScript(view) })
 
 	return ent
 }
