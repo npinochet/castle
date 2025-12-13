@@ -96,3 +96,5 @@ func (f *Flake) Update(dt float64) {
 		core.Get[*stats.Comp](f.target).AddExp(1)
 	}
 }
+
+func (f *Flake) Destroy() {}

@@ -1,0 +1,70 @@
+{ "frames": {
+   "varg 0.aseprite": {
+    "frame": { "x": 1, "y": 1, "w": 19, "h": 33 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 16, "y": 17, "w": 19, "h": 33 },
+    "sourceSize": { "w": 50, "h": 50 },
+    "duration": 1
+   },
+   "varg 1.aseprite": {
+    "frame": { "x": 22, "y": 1, "w": 19, "h": 33 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 16, "y": 17, "w": 19, "h": 33 },
+    "sourceSize": { "w": 50, "h": 50 },
+    "duration": 150
+   },
+   "varg 2.aseprite": {
+    "frame": { "x": 43, "y": 1, "w": 19, "h": 33 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 16, "y": 17, "w": 19, "h": 33 },
+    "sourceSize": { "w": 50, "h": 50 },
+    "duration": 150
+   },
+   "varg 3.aseprite": {
+    "frame": { "x": 64, "y": 1, "w": 19, "h": 33 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 16, "y": 17, "w": 19, "h": 33 },
+    "sourceSize": { "w": 50, "h": 50 },
+    "duration": 400
+   },
+   "varg 4.aseprite": {
+    "frame": { "x": 85, "y": 1, "w": 19, "h": 33 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 16, "y": 17, "w": 19, "h": 33 },
+    "sourceSize": { "w": 50, "h": 50 },
+    "duration": 150
+   },
+   "varg 5.aseprite": {
+    "frame": { "x": 106, "y": 1, "w": 19, "h": 33 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 16, "y": 17, "w": 19, "h": 33 },
+    "sourceSize": { "w": 50, "h": 50 },
+    "duration": 200
+   }
+ },
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.x-dev",
+  "image": "varg.png",
+  "format": "RGBA8888",
+  "size": { "w": 126, "h": 35 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "Idle", "from": 1, "to": 1, "direction": "forward", "color": "#000000ff" },
+   { "name": "Walk", "from": 2, "to": 5, "direction": "forward", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "Layer 1", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+   { "name": "hurtbox", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 18, "y": 17, "w": 15, "h": 18 } }, { "frame": 1, "bounds": {"x": 18, "y": 17, "w": 15, "h": 18 } }, { "frame": 2, "bounds": {"x": 18, "y": 17, "w": 15, "h": 18 } }, { "frame": 3, "bounds": {"x": 18, "y": 17, "w": 15, "h": 18 } }, { "frame": 4, "bounds": {"x": 18, "y": 17, "w": 15, "h": 18 } }] },
+   { "name": "hitbox", "color": "#fe5b59ff", "keys": [{ "frame": 2, "bounds": {"x": 19, "y": 18, "w": 13, "h": 16 } }, { "frame": 4, "bounds": {"x": 19, "y": 18, "w": 13, "h": 16 } }] }
+  ]
+ }
+}

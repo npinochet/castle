@@ -90,7 +90,7 @@ func (r *Rat) jumpAttackAction() *ai.Action {
 			if r.PausingState() {
 				return
 			}
-			r.Control.Attack("Attack", ratDamage, ratDamage, 10, 10)
+			r.Control.Attack("Attack", ratDamage, ratDamage, 10, 10, nil)
 			r.anim.OnFrame(r.jumpFrame, func() {
 				jumped = true
 				r.body.MaxX = ratMaxSpeed * 2

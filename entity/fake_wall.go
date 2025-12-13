@@ -51,6 +51,7 @@ func (fw *FakeWall) Init() {
 }
 
 func (fw *FakeWall) Update(_ float64) {}
+func (fw *FakeWall) Destroy()         {}
 
 func (fw *FakeWall) Opened() bool { return fw.open }
 

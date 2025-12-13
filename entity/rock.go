@@ -75,6 +75,8 @@ func (r *Rock) Update(_ float64) {
 	}
 }
 
+func (r *Rock) Destroy() {}
+
 func (r *Rock) RockHurt(other core.Entity, _ *bump.Collision, _ float64, _ hitbox.ContactType) {
 	if other != r.owner {
 		vars.World.Remove(r)

@@ -68,3 +68,5 @@ func (s *Spike) Update(dt float64) {
 		spikeContacted = append(spikeContacted, c)
 	}
 }
+
+func (s *Spike) Destroy() {}

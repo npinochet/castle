@@ -35,7 +35,6 @@ type Bat struct {
 	awake  bool
 }
 
-// TODO: Bats do not attack yet
 func NewBat(x, y, _, _ float64, props *core.Properties) *Bat {
 	bat := &Bat{
 		BaseEntity: &core.BaseEntity{X: x, Y: y, W: batWidth, H: batHeight},

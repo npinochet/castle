@@ -60,3 +60,5 @@ func (g *Grave) Update(_ float64) {
 		vars.ResetGame = true
 	}
 }
+
+func (g *Grave) Destroy() {}

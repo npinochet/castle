@@ -59,6 +59,8 @@ func (o *Object) Update(_ float64) {
 	}
 }
 
+func (o *Object) Destroy() {}
+
 func (o *Object) hurt(other core.Entity, _ *bump.Collision, _ float64, _ hitbox.ContactType) {
 	for range 5 + rand.IntN(5) {
 		vars.World.Add(NewSmoke(o))
@@ -144,6 +146,8 @@ func (d *Debris) Init() {
 	vy := flakeSpawnMinY + rand.Float64()*(flakeSpawnMaxY-flakeSpawnMinY)
 	d.body.Vx, d.body.Vy = vx, vy
 }
+
+func (d *Debris) Destroy() {}
 
 func (d *Debris) Update(dt float64) {
 	if d.body.Ground {

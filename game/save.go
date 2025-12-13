@@ -35,9 +35,10 @@ type PlayerData struct {
 }
 
 type SaveData struct {
-	PlayerData PlayerData        `json:"player_data"`
-	Pad        utils.ControlPack `json:"keys"`
-	Opened     []uint            `json:"opened"`
+	PlayerData      PlayerData        `json:"player_data"`
+	Pad             utils.ControlPack `json:"keys"`
+	Opened          []uint            `json:"opened"`
+	TriggeredEvents map[string][]uint `json:"events"`
 }
 
 func NewSaveData() *SaveData {
@@ -128,6 +129,19 @@ func ApplySaveData(sd *SaveData) {
 			opener.Open()
 		}
 	}
+	for name, event := range Events {
+		if !event.Saveable {
+			continue
+		}
+		for _, id := range sd.TriggeredEvents[name] {
+			for _, instance := range event.Instances {
+				if instance.ID == id {
+					instance.Trigger()
+					break
+				}
+			}
+		}
+	}
 }
 
 func populateSaveData(sd *SaveData) {
@@ -153,6 +167,18 @@ func populateSaveData(sd *SaveData) {
 		}
 		if opener, ok := e.(Opener); ok && opener.Opened() {
 			sd.Opened = append(sd.Opened, id)
+		}
+	}
+
+	sd.TriggeredEvents = map[string][]uint{}
+	for name, event := range Events {
+		if !event.Saveable {
+			continue
+		}
+		for _, instance := range event.Instances {
+			if instance.Triggered {
+				sd.TriggeredEvents[name] = append(sd.TriggeredEvents[name], instance.ID)
+			}
 		}
 	}
 }

@@ -50,18 +50,18 @@ var (
 	pixelScreen     = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
 	pipeline        = core.NewPipeline()
 	entityBinds     = map[uint32]core.EntityContructor{
-		26: toEntityContructor(entity.NewKnight),
-		27: toEntityContructor(entity.NewGhoul),
-		28: toEntityContructor(entity.NewSkeleman),
-		29: toEntityContructor(entity.NewCrawler),
-		30: toEntityContructor(entity.NewRat),
-		31: toEntityContructor(entity.NewBat),
-		32: toEntityContructor(entity.NewEnt),
-		87: toEntityContructor(entity.NewGram),
-		88: toEntityContructor(entity.NewFerragus),
-		89: toEntityContructor(entity.NewOscar),
-		90: toEntityContructor(entity.NewAcedian),
-		//89:  toEntityContructor(entity.New??),
+		26:  toEntityContructor(entity.NewKnight),
+		27:  toEntityContructor(entity.NewGhoul),
+		28:  toEntityContructor(entity.NewSkeleman),
+		29:  toEntityContructor(entity.NewCrawler),
+		30:  toEntityContructor(entity.NewRat),
+		31:  toEntityContructor(entity.NewBat),
+		32:  toEntityContructor(entity.NewEnt),
+		87:  toEntityContructor(entity.NewGram),
+		88:  toEntityContructor(entity.NewFerragus),
+		89:  toEntityContructor(entity.NewOscar),
+		90:  toEntityContructor(entity.NewAcedian),
+		91:  toEntityContructor(entity.NewVarg),
 		149: toEntityContructor(entity.NewChest),
 		150: toEntityContructor(entity.NewGrave),
 		151: toEntityContructor(entity.NewDoor),
@@ -101,7 +101,7 @@ func Reset() {
 	vars.World.Speed = 1
 	vars.World.RemoveAll()
 	vars.World.Map.LoadEntityObjects(vars.World, "entities", entityBinds)
-	LoadMapEvents(vars.World.Map)
+	ReloadMapEvents(vars.World.Map)
 	vars.World.Update(0)
 	ApplySaveData(saveData)
 	vars.World.Add(vars.Player)

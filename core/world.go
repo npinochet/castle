@@ -14,6 +14,7 @@ import (
 type Entity interface {
 	Init()
 	Update(dt float64)
+	Destroy()
 	Components() []Component
 	Component(name string) Component
 	Position() (float64, float64)
@@ -30,17 +31,17 @@ type Component interface {
 }
 
 type World struct {
-	Space      *bump.Space
-	Camera     *camera.Camera
-	Speed      float64
-	Map        *Map
-	entities   []Entity
-	idToEntity map[uint]Entity
-	entityToID map[Entity]uint
-	toInit     []Entity
-	toRemove   []Entity
-	removed    []Entity
-	mutex      sync.Mutex
+	Space                 *bump.Space
+	Camera                *camera.Camera
+	Speed                 float64
+	Map                   *Map
+	entities              []Entity
+	idToEntity            map[uint]Entity
+	entityToID            map[Entity]uint
+	toInit                []Entity
+	toRemove              []Entity
+	removed               []Entity
+	addMutex, removeMutex sync.Mutex
 
 	freezeTimer float64
 }
@@ -56,8 +57,8 @@ func NewWorld(width, height float64) *World {
 }
 
 func (w *World) Add(entity Entity) Entity {
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
+	w.addMutex.Lock()
+	defer w.addMutex.Unlock()
 
 	w.toInit = append(w.toInit, entity)
 
@@ -65,6 +66,9 @@ func (w *World) Add(entity Entity) Entity {
 }
 
 func (w *World) AddWithID(entity Entity, id uint) Entity {
+	if _, exists := w.idToEntity[id]; exists {
+		log.Fatalf("core: entity with id %d already exists", id)
+	}
 	w.idToEntity[id] = entity
 	w.entityToID[entity] = id
 
@@ -72,7 +76,7 @@ func (w *World) AddWithID(entity Entity, id uint) Entity {
 }
 
 func (w *World) Update(dt float64) {
-	w.mutex.Lock()
+	w.addMutex.Lock()
 	for _, entity := range w.toInit {
 		for _, c := range entity.Components() {
 			c.Init(entity)
@@ -81,7 +85,7 @@ func (w *World) Update(dt float64) {
 		w.entities = append(w.entities, entity)
 	}
 	w.toInit = nil
-	w.mutex.Unlock()
+	w.addMutex.Unlock()
 
 	dt *= w.Speed
 	w.Camera.Update(dt)
@@ -99,8 +103,8 @@ func (w *World) Update(dt float64) {
 		e.Update(dt)
 	}
 
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
+	w.removeMutex.Lock()
+	defer w.removeMutex.Unlock()
 	for _, entity := range w.toRemove {
 		for i, e := range w.entities {
 			if entity != e {
@@ -109,6 +113,7 @@ func (w *World) Update(dt float64) {
 			for _, c := range e.Components() {
 				c.Remove()
 			}
+			entity.Destroy()
 			w.entities[i] = w.entities[len(w.entities)-1]
 			w.entities = w.entities[:len(w.entities)-1]
 			w.removed = append(w.removed, e)
@@ -167,8 +172,8 @@ func GetWithTag[T Component](entity Entity, tag string) T {
 }
 
 func (w *World) Remove(entity Entity) {
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
+	w.removeMutex.Lock()
+	defer w.removeMutex.Unlock()
 
 	w.toRemove = append(w.toRemove, entity)
 }
@@ -186,8 +191,8 @@ func (w *World) RemoveID(id uint) Entity {
 }
 
 func (w *World) RemoveAll() {
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
+	w.removeMutex.Lock()
+	defer w.removeMutex.Unlock()
 
 	for _, e := range w.entities {
 		for _, c := range e.Components() {

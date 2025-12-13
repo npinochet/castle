@@ -39,6 +39,6 @@ func NewStartDoor(x, y, w, h float64, _ *core.Properties) *StartDoor {
 	return door
 }
 
-func (sd *StartDoor) Init() {}
-
+func (sd *StartDoor) Init()          {}
 func (sd *StartDoor) Update(float64) {}
+func (sd *StartDoor) Destroy()       {}

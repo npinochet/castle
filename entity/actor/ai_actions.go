@@ -72,7 +72,7 @@ func AnimAction(a *Control, tag string, entry func()) *ai.Action {
 func AttackAction(a *Control, tag string, damage float64) *ai.Action {
 	return &ai.Action{
 		Name:  tag,
-		Entry: func() { a.Attack(tag, damage, damage, reactForce, pushForce) },
+		Entry: func() { a.Attack(tag, damage, damage, reactForce, pushForce, nil) },
 		Next:  func(_ float64) bool { return a.anim.State != tag },
 	}
 }

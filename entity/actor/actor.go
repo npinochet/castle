@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	dieSeconds   = 1
-	flashSeconds = 0.05
+	defaultDieSeconds = 1
+	flashSeconds      = 0.05
 )
 
 var DieParticle func(core.Entity) core.Entity
@@ -40,7 +40,7 @@ type Control struct {
 }
 
 func NewControl(a Actor) *Control {
-	c := &Control{actor: a, dieTimer: dieSeconds}
+	c := &Control{actor: a}
 	c.anim, c.body, c.hitbox, c.stats, c.ai = a.Comps()
 
 	return c
@@ -61,10 +61,11 @@ func (c *Control) Init() {
 		}
 	}
 }
+func (c *Control) Destroy() {}
 
 func (c *Control) SimpleUpdate(dt float64) {
 	if c.stats.Health <= 0 {
-		c.Die(dt)
+		c.Die(dt, -1)
 
 		return
 	}
@@ -131,12 +132,15 @@ func (c *Control) Block(other core.Entity, damage, reactForce float64, contactTy
 	}
 }
 
-func (c *Control) Die(dt float64) {
+func (c *Control) Die(dt float64, seconds float64) {
 	c.Paused = true
 	c.Stagger(0, false, 1)
 	const minAlpha = 50
-	if c.dieTimer -= dt; c.dieTimer > 0 {
-		alpha := uint8(minAlpha + (math.MaxUint8-minAlpha)*c.dieTimer/dieSeconds)
+	if seconds < 0 {
+		seconds = defaultDieSeconds
+	}
+	if c.dieTimer += dt; c.dieTimer < seconds {
+		alpha := uint8(minAlpha + (math.MaxUint8-minAlpha)*(seconds-c.dieTimer)/seconds)
 		c.anim.ColorScale = color.RGBA{alpha, alpha, alpha, alpha}
 
 		return
@@ -150,13 +154,49 @@ func (c *Control) Die(dt float64) {
 	}
 }
 
-func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pushForce float64) {
-	mult := 0.0
-	c.MultAttack(attackTag, damage, staminaDamage, reactForce, pushForce, &mult)
+// TODO: This is a mess...
+func (c *Control) SetAttack(damage, staminaDamage, reactForce, pushForce float64, mult *float64) {
+	var contactType hitbox.ContactType
+	var contacted []*hitbox.Comp
+	var shakeNum int
+	var first bool
+	c.anim.OnSlicePresent(vars.HitboxSliceName, func(slice bump.Rect, segmented bool) {
+		if segmented {
+			contacted = nil
+			shakeNum = 0
+		}
+		attackMult := 1.0
+		if mult != nil {
+			attackMult = 1 + *mult
+		}
+		totalDamage := damage * attackMult
+		contactType, contacted = c.hitbox.HitFromHitBox(slice, totalDamage, contacted)
+		if c.actor == vars.Player && shakeNum != len(contacted) {
+			shakeNum = len(contacted)
+			vars.World.Camera.Shake(0.1*float32(attackMult), 0.5*(attackMult))
+		}
+		if contactType == hitbox.ParryBlock {
+			if c.stats.AddPoise(-totalDamage); c.stats.Poise <= 0 {
+				c.Stagger(reactForce*(totalDamage/c.stats.MaxHealth), true, 1)
+			}
+		}
+		if !first {
+			first = true
+			c.stats.AddStamina(-staminaDamage * attackMult)
+			force := pushForce
+			blocked := contactType >= hitbox.Block
+			if blocked {
+				force = reactForce
+			}
+			if (blocked && c.anim.FlipX) || (!blocked && !c.anim.FlipX) {
+				force *= -1
+			}
+			c.body.Vx += force
+		}
+	})
 }
 
-// TODO: This is a mess...
-func (c *Control) MultAttack(attackTag string, damage, staminaDamage, reactForce, pushForce float64, mult *float64) {
+func (c *Control) Attack(attackTag string, damage, staminaDamage, reactForce, pushForce float64, mult *float64) {
 	if c.PausingState() || c.stats.Stamina <= 0 {
 		return
 	}
@@ -174,44 +214,11 @@ func (c *Control) MultAttack(attackTag string, damage, staminaDamage, reactForce
 	})
 
 	if c.anim.Data.Animation(attackTag+"C") != nil {
-		lastFrame := c.anim.Data.CurrentAnimation.To - c.anim.Data.CurrentAnimation.From
-		c.anim.OnFrame(lastFrame, func() { c.Paused = false })
+		lastFrameForChainWindow := c.anim.Data.CurrentAnimation.To - c.anim.Data.CurrentAnimation.From
+		c.anim.OnFrame(lastFrameForChainWindow, func() { c.Paused = false })
 	}
 
-	var contactType hitbox.ContactType
-	var contacted []*hitbox.Comp
-	var shakeNum int
-	var once bool
-	c.anim.OnSlicePresent(vars.HitboxSliceName, func(slice bump.Rect, segmented bool) {
-		if segmented {
-			contacted = nil
-			shakeNum = 0
-		}
-		attackMult := *mult + 1
-		totalDamage := damage * attackMult
-		contactType, contacted = c.hitbox.HitFromHitBox(slice, totalDamage, contacted)
-		if c.actor == vars.Player && shakeNum != len(contacted) { // TODO: This is an ugly hack
-			shakeNum = len(contacted)
-			vars.World.Camera.Shake(0.1*float32(attackMult), 0.5*(attackMult))
-		}
-		if contactType == hitbox.ParryBlock {
-			if c.stats.AddPoise(-totalDamage); c.stats.Poise <= 0 {
-				c.Stagger(reactForce*(totalDamage/c.stats.MaxHealth), true, 1)
-			}
-		}
-		if !once {
-			once = true
-			c.stats.AddStamina(-staminaDamage * attackMult)
-			force := pushForce
-			if contactType >= hitbox.Block {
-				force = reactForce
-			}
-			if (contactType >= hitbox.Block && c.anim.FlipX) || (contactType < hitbox.Block && !c.anim.FlipX) {
-				force *= -1
-			}
-			c.body.Vx += force
-		}
-	})
+	c.SetAttack(damage, staminaDamage, reactForce, pushForce, mult)
 }
 
 func (c *Control) ShieldUp() {

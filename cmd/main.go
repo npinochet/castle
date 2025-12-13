@@ -15,22 +15,26 @@ import (
 		- Map: Allow for bigger, empty corridors, a lot seems to be packed in
 	- Map: Define NPC and dialogs
 	- Decide: If the second world goes or not? No for now
-	- Imp: Mage
 	- Map: Add more detail, finish it
 		- Map: Add lights
 	- Art: Design and draw a Boss
+	- Imp: Same way to make the HUD not cover the screen
 	- Art: Animate Boss
 	- Imp: This new boss
-	- Dbg: Fix charge move not reseting attack multiplier, and sometime get stuck charging
+	- Imp: After a dead enemy dies, it should not be posible to hit it and shake screen again
 
 - Phase 3:
 	- Imp: Particles on each hit, maybe some bloos pixels or something
 	- Implement everything else -> TODO
+	- Imp: Mage
 
 - Phase 3:
 	- Polish
 
 /* TODO
+- Maybe add a torch mechanic?
+- Automate the spritesheet Offsets calculations somehow, it should be easy.
+- Try to make rooms feel more realistic, less square, tiny details, cluttered, maybe add half tiles?
 - Don't cap max speed when guarding in mid-air.
 - Change background color and characters outline color. Experiment more.
 - Experiment implementing a backstepping (kind of like rolling). (think about adding I frames or not, maybe just shrink the hurtbox).

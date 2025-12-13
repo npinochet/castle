@@ -88,7 +88,7 @@ func (g *Ghoul) jumpAttackAction() *ai.Action {
 				return
 			}
 			g.body.MaxX = ghoulMaxSpeed * 2
-			time.AfterFunc(1*time.Millisecond, func() { g.Control.Attack("AttackShort", skelemanDamage, 0, 10, 10) })
+			time.AfterFunc(1*time.Millisecond, func() { g.Control.Attack("AttackShort", skelemanDamage, 0, 10, 10, nil) })
 			g.body.Vy = -skelemanSpeed / 2
 			g.body.Ground = false
 			if g.anim.FlipX {

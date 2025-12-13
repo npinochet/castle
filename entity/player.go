@@ -40,7 +40,7 @@ type Player struct {
 
 	speed, jumpSpeed            float64
 	reactForce, attackPushForce float64
-	attackLevel                 float64
+	attackHoldLevel             float64
 }
 
 func NewPlayer(x, y float64) *Player {
@@ -101,21 +101,25 @@ func (p *Player) heavyAttackUpdate() {
 	if attacking := strings.HasPrefix(p.anim.State, vars.AttackTag); !attacking {
 		return
 	}
-	holdAnim := p.anim.Data.Animation(p.anim.State + "Hold") // TODO: define a name
+	holdAnim := p.anim.Data.Animation(p.anim.State + "Hold")
 	if holdAnim == nil {
 		return
 	}
 
-	startingFrames := holdAnim.From - p.anim.Data.CurrentAnimation.From
+	prevHoldFrames := holdAnim.From - p.anim.Data.CurrentAnimation.From
 	frame := p.anim.Data.CurrentFrame
 	if inHold := frame >= holdAnim.From && frame <= holdAnim.To; inHold {
-		p.attackLevel = float64(frame-holdAnim.From+startingFrames) / float64(holdAnim.To-holdAnim.From+startingFrames) // 0, 0.5, 1 || 0, 0.33, 0.66, 1
-		if vars.Pad.KeyReleased(utils.KeyAction) {
+		// 0, 0.5, 1 || 0, 0.33, 0.66, 1
+		p.attackHoldLevel = float64(prevHoldFrames+frame-holdAnim.From) / float64(prevHoldFrames+holdAnim.To-holdAnim.From)
+		if !vars.Pad.KeyDown(utils.KeyAction) {
 			p.anim.Data.CurrentFrame = holdAnim.To + 2
 			p.anim.Data.FrameCounter = 0
 		}
-	} else if p.anim.Data.CurrentFrame == holdAnim.From-startingFrames && vars.Pad.KeyReleased(utils.KeyAction) {
-		p.anim.Data.CurrentFrame = holdAnim.To + 1
+	} else if frame < holdAnim.From {
+		p.attackHoldLevel = 0
+		if !vars.Pad.KeyDown(utils.KeyAction) {
+			p.anim.Data.CurrentFrame = holdAnim.To + 1
+		}
 	}
 }
 
@@ -127,7 +131,7 @@ func (p *Player) input(dt float64) {
 		return
 	}
 	if actionPressed() {
-		p.MultAttack(vars.AttackTag, playerDamage, playerDamage, p.reactForce, p.attackPushForce, &p.attackLevel)
+		p.Attack(vars.AttackTag, playerDamage, playerDamage, p.reactForce, p.attackPushForce, &p.attackHoldLevel)
 	}
 	if healPressed() {
 		p.Heal()

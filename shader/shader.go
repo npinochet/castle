@@ -8,6 +8,7 @@ import (
 	"game/vars"
 	"image/color"
 	"log"
+	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -36,6 +37,15 @@ var (
 )
 
 type Light struct{ X, Y, Size float64 }
+
+func (l *Light) Remove() {
+	for i := range lights {
+		if &lights[i] == l {
+			lights = slices.Delete(lights, i, i+1)
+			return
+		}
+	}
+}
 
 func Load(worldMap *core.Map, lightGIDs []uint32) {
 	var err error

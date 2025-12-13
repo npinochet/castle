@@ -58,6 +58,7 @@ func (d *Door) Init() {
 }
 
 func (d *Door) Update(_ float64) {}
+func (d *Door) Destroy()         {}
 
 func (d *Door) Opened() bool { return d.open }
 

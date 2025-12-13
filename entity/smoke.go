@@ -68,6 +68,8 @@ func (s *Smoke) Update(dt float64) {
 	s.render.ColorScale = color.RGBA{alpha, alpha, alpha, alpha}
 }
 
+func (s *Smoke) Destroy() {}
+
 func RandSignedFloat() float64 {
 	return (rand.Float64() - 0.5) * 2 //nolint: mnd
 }

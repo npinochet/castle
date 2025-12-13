@@ -71,6 +71,7 @@ func (c *Chest) Init() {
 }
 
 func (c *Chest) Update(_ float64) {}
+func (c *Chest) Destroy()         {}
 
 func (c *Chest) Opened() bool { return c.open }
 
