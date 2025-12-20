@@ -97,6 +97,21 @@ var (
 					return true
 				}
 			}},
+		"Remove": {
+			Saveable: true,
+			PrepareEffect: func(object *tiled.Object) func() bool {
+				id, _ := strconv.Atoi(object.Properties.GetString("target"))
+				target := vars.World.Get(uint(id))
+				if target == nil {
+					return nil
+				}
+
+				return func() bool {
+					vars.World.RemoveID(uint(id))
+
+					return true
+				}
+			}},
 		"TurnAround": {
 			Saveable: false,
 			PrepareEffect: func(object *tiled.Object) func() bool {

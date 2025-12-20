@@ -80,8 +80,9 @@ const (
 
 var (
 	// Global.
-	World  *core.World
-	Player core.Entity
+	World     *core.World
+	Player    core.Entity
+	SaveFlags = map[string]bool{}
 
 	// Signaling.
 	SaveGame, ResetGame bool

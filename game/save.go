@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	Persistent = false
+	Persistent = !vars.Debug
 	SavePath   = "save.json"
 	fileMode   = 0666
 )
@@ -37,6 +37,7 @@ type PlayerData struct {
 type SaveData struct {
 	PlayerData      PlayerData        `json:"player_data"`
 	Pad             utils.ControlPack `json:"keys"`
+	Flags           map[string]bool   `json:"flags"`
 	Opened          []uint            `json:"opened"`
 	TriggeredEvents map[string][]uint `json:"events"`
 }
@@ -67,7 +68,6 @@ func Save() error {
 	}
 
 	populateSaveData(saveData)
-
 	if saveDataCache, err = json.Marshal(saveData); err != nil {
 		return err
 	}
@@ -124,6 +124,7 @@ func ApplySaveData(sd *SaveData) {
 	vars.Player = entity.NewPlayer(sd.PlayerData.X, sd.PlayerData.Y)
 	core.Get[*stats.Comp](vars.Player).Exp = sd.PlayerData.Exp
 	vars.Pad = sd.Pad
+	vars.SaveFlags = sd.Flags
 	for _, opened := range sd.Opened {
 		if opener, ok := vars.World.Get(opened).(Opener); ok {
 			opener.Open()
@@ -149,7 +150,9 @@ func populateSaveData(sd *SaveData) {
 	sd.PlayerData.X, sd.PlayerData.Y = vars.Player.Position()
 	sd.PlayerData.Exp = playerStats.Exp
 	sd.Pad = vars.Pad
+	sd.Flags = vars.SaveFlags
 
+	sd.Opened = []uint{}
 	for _, e := range vars.World.GetAll() {
 		id := vars.World.GetID(e)
 		if id == 0 {

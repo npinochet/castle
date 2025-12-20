@@ -14,19 +14,21 @@ import (
 	- Map: Finish defining events -> The most dificult
 		- Map: Allow for bigger, empty corridors, a lot seems to be packed in
 	- Map: Define NPC and dialogs
-	- Decide: If the second world goes or not? No for now
 	- Map: Add more detail, finish it
 		- Map: Add lights
-	- Art: Design and draw a Boss
 	- Imp: Same way to make the HUD not cover the screen
-	- Art: Animate Boss
-	- Imp: This new boss
-	- Imp: After a dead enemy dies, it should not be posible to hit it and shake screen again
+	- Art: Design and draw a Boss -> Headless King
+		- Art: Animate Boss
+		- Imp: This new boss
+		- Has a weapon first, that he tosses mid fight before fighting bare fists
+		- Add attack that slams the ground, creating shockwaves, or something that you have to jump
+	- Imp: After a dead enemy dies, it should not be posible to hit it and shake the screen again
 
 - Phase 3:
 	- Imp: Particles on each hit, maybe some bloos pixels or something
 	- Implement everything else -> TODO
 	- Imp: Mage
+	- Decide: The under world idea
 
 - Phase 3:
 	- Polish
@@ -47,7 +49,7 @@ import (
 - Experiment with shaders, change background to be more dark (maybe gradient, from blue to black?),
 	maybe keep background color for a paralax layer details background.
 - Lograr 2 cosas:
-	- Deadly enemies
+	- Deadlier enemies
 	- Dread of loosing and urgency to get to the next checkpoint
 - Add item that restores your dropped loot, but spawns a high level enemy at the loot spot.
 	To encourage taking other routes.
@@ -56,7 +58,6 @@ import (
 - Think of ways to make the game more brutal
 	- Add a cripple mechanic when you are low on health, you move slower
 	- Add a bleed mechanic when you get hit by a heavy attack, you lose health over time
-- Hold attack has some bugs, the bonus damaged carries over to the normal attack sometimes, it does not reset.
 - Make hurtbox change depending on frame.
 
 - Video playtest things: https://drive.google.com/file/d/1GZ48vG0wAzkD09A6MYnGKDKIRahOqUev/view
@@ -84,6 +85,7 @@ import (
 			- more hazards, like spikes
 				- Maybe one more hazard?
 			- Limbo map that you have to clear everytime you die 3 times (more info in mobile notes...)
+				- Mobile notes: Every 3 deaths, punish the player by sending them to hell, a special short stage that is always the same, and if they beat hell, they get 3 more chances at the last real bonfire. Make the hell part be a little friendly by placing NPCs that comment on you always returning there. The reason behind this is that the player should feel dread and apply caution when they are on the last chance, if not, they will lose time on a stage they already have beaten multiple times.
 			- Add a new enemy (low priority)
 			- Add enemy that can only be hit from behind.
 			- Enemies that explode on death?
@@ -110,7 +112,7 @@ import (
 
 - Demo 3 Roadmap/ideas?:
 	- Boss fight:
-		- A boss that similar to you, but can dash after charging an attack to surprise you, can also block and fake you atacking to it´s back
+		- A boss that similar to you, but can dash after charging an attack to surprise you, can also block and fake you attacking to it´s back
 	- Add status effects
 		- One where the hud hides the current health and/or stamina
 	- Add items and inventory, a menu where you can see items and status effects

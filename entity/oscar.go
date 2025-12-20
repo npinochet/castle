@@ -10,6 +10,7 @@ import (
 	"game/core"
 	"game/entity/actor"
 	"game/libs/bump"
+	"game/vars"
 )
 
 const (
@@ -63,6 +64,13 @@ func NewOscar(x, y, _, _ float64, props *core.Properties) *Oscar {
 	return oscar
 }
 
+func (g *Oscar) Init() {
+	g.Control.Init()
+	if vars.SaveFlags["oscar_dead"] {
+		g.stats.Health = 0
+	}
+}
+
 func (g *Oscar) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Comp, stats *stats.Comp, ai *ai.Comp) {
 	return g.anim, g.body, g.hitbox, g.stats, nil
 }
@@ -72,5 +80,6 @@ func (g *Oscar) Update(dt float64) {
 		g.anim.SetState("Stagger")
 		g.textbox.NewText(g.deadText)
 		g.textbox.Indicator = false
+		vars.SaveFlags["oscar_dead"] = true
 	}
 }
