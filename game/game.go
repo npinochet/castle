@@ -62,6 +62,8 @@ var (
 		89:  toEntityContructor(entity.NewOscar),
 		90:  toEntityContructor(entity.NewAcedian),
 		91:  toEntityContructor(entity.NewVarg),
+		92:  toEntityContructor(entity.NewHeadless),
+		93:  toEntityContructor(entity.NewRerir),
 		149: toEntityContructor(entity.NewChest),
 		150: toEntityContructor(entity.NewGrave),
 		151: toEntityContructor(entity.NewDoor),

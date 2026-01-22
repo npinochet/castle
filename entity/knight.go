@@ -17,7 +17,7 @@ import (
 const (
 	knightAnimFile                                 = "knight"
 	knightWidth, knightHeight                      = 8, 11
-	knightOffsetX, knightOffsetY, knightOffsetFlip = -10, -3, 17
+	knightOffsetX, knightOffsetY, knightOffsetFlip = -10, -3, 16
 	knightDamage                                   = 25
 	knightHealth, knightPosie                      = 180, 25
 	knightExp                                      = 50
