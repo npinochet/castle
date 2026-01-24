@@ -61,6 +61,7 @@ func NewAcedian(x, y, _, _ float64, props *core.Properties) *Acedian {
 	}
 	acedian.Add(acedian.anim, acedian.body, acedian.hitbox, acedian.stats, acedian.textbox)
 	acedian.Control = actor.NewControl(acedian)
+	acedian.Control.DieTimeSeconds = 2.5
 
 	return acedian
 }
@@ -79,7 +80,7 @@ func (a *Acedian) Update(dt float64) {
 		a.textbox.NewText(a.finalText)
 		a.light.Y -= 4
 		a.light.X += 2
-		a.Die(dt, 2.5)
+		a.Die(dt)
 	}
 }
 

@@ -64,7 +64,7 @@ func (r *Varg) Init() {
 
 func (v *Varg) Update(dt float64) {
 	if v.stats.Health <= 0 {
-		v.Die(dt, -1)
+		v.Die(dt)
 	}
 }
 

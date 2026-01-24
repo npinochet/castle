@@ -36,11 +36,12 @@ type Control struct {
 	stats                *stats.Comp
 	ai                   *ai.Comp
 	Paused               bool
+	DieTimeSeconds       float64
 	dieTimer, flashTimer float64
 }
 
 func NewControl(a Actor) *Control {
-	c := &Control{actor: a}
+	c := &Control{actor: a, DieTimeSeconds: defaultDieSeconds}
 	c.anim, c.body, c.hitbox, c.stats, c.ai = a.Comps()
 
 	return c
@@ -65,7 +66,7 @@ func (c *Control) Destroy() {}
 
 func (c *Control) SimpleUpdate(dt float64) {
 	if c.stats.Health <= 0 {
-		c.Die(dt, -1)
+		c.Die(dt)
 
 		return
 	}
@@ -132,15 +133,12 @@ func (c *Control) Block(other core.Entity, damage, reactForce float64, contactTy
 	}
 }
 
-func (c *Control) Die(dt float64, seconds float64) {
+func (c *Control) Die(dt float64) {
 	c.Paused = true
 	c.Stagger(0, false, 1)
 	const minAlpha = 50
-	if seconds < 0 {
-		seconds = defaultDieSeconds
-	}
-	if c.dieTimer += dt; c.dieTimer < seconds {
-		alpha := uint8(minAlpha + (math.MaxUint8-minAlpha)*(seconds-c.dieTimer)/seconds)
+	if c.dieTimer += dt; c.dieTimer < c.DieTimeSeconds {
+		alpha := uint8(minAlpha + (math.MaxUint8-minAlpha)*(c.DieTimeSeconds-c.dieTimer)/c.DieTimeSeconds)
 		c.anim.ColorScale = color.RGBA{alpha, alpha, alpha, alpha}
 
 		return

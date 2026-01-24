@@ -6,6 +6,7 @@ import (
 	"game/ext"
 	"game/libs/bump"
 	"game/vars"
+	"log"
 )
 
 var (
@@ -75,6 +76,29 @@ func AttackAction(a *Control, tag string, damage float64) *ai.Action {
 		Entry: func() { a.Attack(tag, damage, damage, reactForce, pushForce, nil) },
 		Next:  func(_ float64) bool { return a.anim.State != tag },
 	}
+}
+
+func AttackLoopAction(a *Control, tag string, damage float64, loops int) (*ai.Action, *int) {
+	loopTag := tag + "Loop"
+	loopAnim := a.anim.Data.Animation(loopTag)
+	if loopAnim == nil {
+		log.Printf("attack loop action: no animation found for tag '%s'", loopTag)
+
+		return AttackAction(a, tag, damage), nil
+	}
+
+	return &ai.Action{
+		Name:  tag,
+		Entry: func() { a.Attack(tag, damage, 0, reactForce, pushForce, nil) },
+		Next: func(_ float64) bool {
+			if loops > 1 && a.anim.Data.CurrentFrame == loopAnim.To+1 {
+				a.anim.Data.CurrentFrame = loopAnim.From
+				loops--
+			}
+
+			return a.anim.State != tag
+		},
+	}, &loops
 }
 
 func ShieldAction(a *Control) *ai.Action {

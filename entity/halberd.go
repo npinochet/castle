@@ -37,7 +37,7 @@ type Halberd struct {
 
 func NewHalberd(x, y float64, owner actor.Actor) *Halberd {
 	ownerAnim, _, ownerHitbox, _, _ := owner.Comps()
-	vx, vy := -halberdMaxVel, 60.0
+	vx, vy := -halberdMaxVel, 40.0
 	if ownerAnim.FlipX {
 		vx = -vx
 	}
@@ -66,12 +66,14 @@ func (h *Halberd) Init() {
 }
 
 func (h *Halberd) Update(dt float64) {
-	_, h.filterOutHitbox = h.hitbox.HitFromHitBox(bump.Rect{H: halberdSize, W: halberdSize}, halberdDamage, h.filterOutHitbox)
-	if h.body.Ground {
-		h.body.Friction = true
-		if h.removeTimer -= dt; h.removeTimer <= 0 {
-			vars.World.Remove(h)
-		}
+	if !h.body.Ground {
+		_, h.filterOutHitbox = h.hitbox.HitFromHitBox(bump.Rect{H: halberdSize, W: halberdSize}, halberdDamage, h.filterOutHitbox)
+
+		return
+	}
+	h.body.Friction = true
+	if h.removeTimer -= dt; h.removeTimer <= 0 {
+		vars.World.Remove(h)
 	}
 }
 

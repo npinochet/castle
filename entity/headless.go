@@ -19,7 +19,7 @@ const (
 	headlessOffsetX, headlessOffsetY, headlessOffsetFlip = -17, -11, 29
 
 	headlessSpeed, headlessMaxSpeed = 100, 50
-	headlessHealth                  = 100 //420
+	headlessHealth                  = 420
 	headlessDamage                  = 18
 	headlessExp                     = 500
 	headlessPoise                   = 40
@@ -30,12 +30,13 @@ const (
 type Headless struct {
 	*core.BaseEntity
 	*actor.Control
-	anim      *anim.Comp
-	body      *body.Comp
-	hitbox    *hitbox.Comp
-	stats     *stats.Comp
-	ai        *ai.Comp
-	bareHands bool
+	anim              *anim.Comp
+	body              *body.Comp
+	hitbox            *hitbox.Comp
+	stats             *stats.Comp
+	ai                *ai.Comp
+	bareHands         bool
+	currentAttackPart int
 }
 
 func NewHeadless(x, y, _, _ float64, props *core.Properties) *Headless {
@@ -54,6 +55,7 @@ func NewHeadless(x, y, _, _ float64, props *core.Properties) *Headless {
 	}
 	headless.Add(headless.anim, headless.body, headless.hitbox, headless.stats, headless.ai)
 	headless.Control = actor.NewControl(headless)
+	headless.Control.DieTimeSeconds = 3
 
 	var view *bump.Rect
 	if props.View != nil {
@@ -72,8 +74,6 @@ func (h *Headless) Comps() (anim *anim.Comp, body *body.Comp, hitbox *hitbox.Com
 func (h *Headless) Update(dt float64) {
 	h.SimpleUpdate(dt)
 	if h.bareHands && h.anim.State != "Throw" && !strings.HasSuffix(h.anim.State, "Bare") {
-		//TODO: Finish long and short punch animation and remove next line
-		h.anim.State = strings.ReplaceAll(strings.ReplaceAll(h.anim.State, "Short", ""), "Long", "")
 		h.anim.SetState(h.anim.State + "Bare")
 	}
 }
@@ -83,11 +83,34 @@ func (h *Headless) ThrowWeapon() {
 	if h.anim.State == tag || h.PausingState() {
 		return
 	}
+	h.SimpleUpdate(0)
 	h.anim.SetState(tag)
 	h.anim.OnFrame(headlessThrowFrame, func() {
 		vars.World.Add(NewHalberd(h.X-2, h.Y-4, h))
 		h.bareHands = true
 	})
+}
+
+func (h *Headless) InterruptableAttackAction(loops int) *ai.Action {
+	tag := "Attack"
+	if h.bareHands {
+		tag += "Bare"
+	}
+	action, currentLoops := actor.AttackLoopAction(h.Control, tag, headlessDamage, loops)
+	actionNext := action.Next
+
+	action.Next = func(dt float64) bool {
+		if target := h.ai.Target; target != nil {
+			tx, _ := target.Position()
+			if (h.anim.FlipX && tx < h.X) || (!h.anim.FlipX && tx > h.X) {
+				*currentLoops = 0
+			}
+		}
+
+		return actionNext(dt)
+	}
+
+	return action
 }
 
 //nolint:mnd
@@ -104,8 +127,8 @@ func (h *Headless) aiScript(view *bump.Rect) {
 	h.ai.Add(0.1, actor.WaitAction())
 
 	ai.Choices{
-		{2, func() { h.ai.Add(5, actor.AttackAction(h.Control, "AttackShort", headlessDamage)) }},
-		{2, func() { h.ai.Add(5, actor.AttackAction(h.Control, "AttackLong", headlessDamage)) }},
+		{2, func() { h.ai.Add(5, h.InterruptableAttackAction(2)) }},
+		{2, func() { h.ai.Add(5, h.InterruptableAttackAction(4)) }},
 		{1, func() { h.ai.Add(1, actor.BackUpAction(h.Control, headlessSpeed, 0)) }},
 		{1, func() { h.ai.Add(0.8, actor.WaitAction()) }},
 	}.Play()
