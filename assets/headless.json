@@ -77,7 +77,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 14, "w": 29, "h": 23 },
     "sourceSize": { "w": 64, "h": 64 },
-    "duration": 300
+    "duration": 100
    },
    "headless 10.aseprite": {
     "frame": { "x": 125, "y": 26, "w": 29, "h": 23 },
@@ -205,7 +205,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 14, "w": 29, "h": 23 },
     "sourceSize": { "w": 64, "h": 64 },
-    "duration": 300
+    "duration": 240
    },
    "headless 26.aseprite": {
     "frame": { "x": 1, "y": 101, "w": 29, "h": 23 },

@@ -51,6 +51,7 @@ func NewSaveData() *SaveData {
 	return &SaveData{
 		PlayerData: PlayerData{X: obj.X, Y: obj.Y},
 		Pad:        utils.NewControlPack(),
+		Flags:      map[string]bool{},
 	}
 }
 

@@ -10,25 +10,25 @@ import (
 )
 
 /* Tasks
+- Phase 0: (Iterate) Find a hook/cool move/innovation to make it more fun.
 - Phase 1:
 	- Map: Finish defining events -> The most dificult
 		- Map: Allow for bigger, empty corridors, a lot seems to be packed in
 	- Map: Define NPC and dialogs
 	- Map: Add more detail, finish it
 		- Map: Add lights
-	- Imp: Same way to make the HUD not cover the screen
+	- Imp: Some way to make the HUD not cover the screen
 	- Art: Design and draw a Boss -> Headless King
-		- Art: Animate Boss
-		- Imp: This new boss
-		- Has a weapon first, that he tosses mid fight before fighting bare fists
+		- Art: Animate Boss DONE
+		- Imp: This new boss DONE
+		- Has a weapon first, that he tosses mid fight before fighting bare fists DONE
+		- Add another enemy on the second phase, the second phase is easier
 		- Add attack that slams the ground, creating shockwaves, or something that you have to jump
-	- Imp: After a dead enemy dies, it should not be posible to hit it and shake the screen again
 
 - Phase 3:
+	- Decide: The underworld idea
 	- Imp: Particles on each hit, maybe some bloos pixels or something
-	- Implement everything else -> TODO
 	- Imp: Mage
-	- Decide: The under world idea
 
 - Phase 3:
 	- Polish

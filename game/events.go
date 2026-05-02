@@ -194,7 +194,7 @@ func hitboxEntity(rect bump.Rect, instance *EventInstance) core.Entity {
 	comp := &hitbox.Comp{}
 	comp.HitFunc = func(core.Entity, *bump.Collision, float64, hitbox.ContactType) { instance.Trigger() }
 	entity.Add(comp)
-	entity.init = func() { comp.PushHitbox(rect, hitbox.Hit, nil) }
+	entity.init = func() { comp.PushHitbox(bump.NewRect(0, 0, rect.W, rect.H), hitbox.Hit, nil) }
 
 	return entity
 }

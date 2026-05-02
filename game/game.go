@@ -27,24 +27,6 @@ const (
 	torchGID = 378
 )
 
-/*
-package main
-
-type Entity interface{ Name() string }
-type Constructor func(name string) Entity
-
-type Player struct{ name string }
-
-func (p *Player) Name() string      { return p.name }
-func NewPlayer(name string) *Player { return &Player{name} }
-
-var entities = map[string]Constructor{}
-
-func AddEntity(entityID string, constructor Constructor) { entities[entityID] = constructor }
-
-func main() { AddEntity("Hero", NewPlayer) }
-*/
-
 var (
 	backgroundColor = color.RGBA{50, 60, 57, 255}
 	pixelScreen     = ebiten.NewImage(vars.ScreenWidth, vars.ScreenHeight)
@@ -85,7 +67,6 @@ func toEntityContructor[T core.Entity](contructor func(x, y, w, h float64, p *co
 
 func Load() {
 	actor.DieParticle = func(e core.Entity) core.Entity { return entity.NewFlake(e) }
-	//worldMap := core.NewMap("intro/intro.tmx", 1, maps.IntroFS, vars.PipelineScreenTag, vars.PipelineNormalMapTag)
 	worldMap := core.NewMap("intro/playground_imp.tmx", 1, maps.IntroFS, vars.PipelineScreenTag, vars.PipelineNormalMapTag)
 	vars.World = core.NewWorld(float64(vars.ScreenWidth), float64(vars.ScreenHeight))
 	vars.World.SetMap(worldMap, "rooms")
@@ -172,13 +153,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		deathTransition.Draw(pixelScreen)
 	}
 
-	op := &ebiten.DrawImageOptions{}
-	fps := fmt.Sprintf("%0.2f", ebiten.ActualFPS())
-	w, _ := utils.TextSize(fps, assets.NanoFont)
-	op.GeoM.Translate(float64(vars.ScreenWidth-w-1), 1)
-	utils.DrawText(pixelScreen, fps, assets.NanoFont, op)
+	if vars.Debug {
+		op := &ebiten.DrawImageOptions{}
+		fps := fmt.Sprintf("%0.2f", ebiten.ActualFPS())
+		w, _ := utils.TextSize(fps, assets.NanoFont)
+		op.GeoM.Translate(float64(vars.ScreenWidth-w-1), 1)
+		utils.DrawText(pixelScreen, fps, assets.NanoFont, op)
+	}
 
-	op = &ebiten.DrawImageOptions{}
+	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(float64(vars.Scale), float64(vars.Scale))
 	screen.DrawImage(pixelScreen, op)
 	shader.DrawPhosphore(pipeline, screen)

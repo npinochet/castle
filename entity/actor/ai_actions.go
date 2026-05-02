@@ -91,6 +91,9 @@ func AttackLoopAction(a *Control, tag string, damage float64, loops int) (*ai.Ac
 		Name:  tag,
 		Entry: func() { a.Attack(tag, damage, 0, reactForce, pushForce, nil) },
 		Next: func(_ float64) bool {
+			if loops <= 0 && a.anim.Data.CurrentFrame == loopAnim.From {
+				a.anim.Data.CurrentFrame = loopAnim.To
+			}
 			if loops > 1 && a.anim.Data.CurrentFrame == loopAnim.To+1 {
 				a.anim.Data.CurrentFrame = loopAnim.From
 				loops--

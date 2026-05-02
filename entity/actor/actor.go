@@ -134,6 +134,12 @@ func (c *Control) Block(other core.Entity, damage, reactForce float64, contactTy
 }
 
 func (c *Control) Die(dt float64) {
+	if c.dieTimer == 0 {
+		c.hitbox.Remove()
+		c.body.Tags = nil
+		vars.World.Space.Remove(c.actor)
+		vars.World.Space.Set(c.actor, bump.NewRect(c.actor.Rect()), c.body.Tags...)
+	}
 	c.Paused = true
 	c.Stagger(0, false, 1)
 	const minAlpha = 50
